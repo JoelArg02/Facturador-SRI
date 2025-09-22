@@ -1,0 +1,353 @@
+[
+  {
+    "name": "BORRADOR GRANDE PZ 20",
+    "code": "7703064446502",
+    "category": "LOCAL",
+    "price": "2.2500",
+    "pvp": "2.2500",
+    "is_inventoried": true,
+    "has_tax": true
+  },
+  {
+    "name": "PINTURA MI NOTA LARGA X 12",
+    "code": "7862116784464",
+    "category": "LOCAL",
+    "price": "5.5000",
+    "pvp": "5.5000",
+    "is_inventoried": true,
+    "has_tax": true
+  },
+  {
+    "name": "CARPETA TAPA TRANSPARENTE DM OFICIO",
+    "code": "7862108142807",
+    "category": "BODEGA 3",
+    "price": "4.2500",
+    "pvp": "4.2500",
+    "is_inventoried": true,
+    "has_tax": true
+  },
+  {
+    "name": "CARTULINAS A4 MI NOTA X 25 COLORES",
+    "code": "7862116781197",
+    "category": "LOCAL",
+    "price": "1.5000",
+    "pvp": "1.5000",
+    "is_inventoried": true,
+    "has_tax": true
+  },
+  {
+    "name": "GOMA SOL 250 GR",
+    "code": "7862102580810",
+    "category": "LOCAL",
+    "price": "1.0900",
+    "pvp": "1.2500",
+    "is_inventoried": true,
+    "has_tax": true
+  },
+  {
+    "name": "GOMA EN BARRA GRANDE 36 GR ESTILO",
+    "code": "7861098342631",
+    "category": "LOCAL",
+    "price": "0.6500",
+    "pvp": "0.7500",
+    "is_inventoried": true,
+    "has_tax": true
+  },
+  {
+    "name": "FOMIX A4 LLANO SURTIDO X 10",
+    "code": "8699101005636",
+    "category": "LOCAL",
+    "price": "0.8700",
+    "pvp": "1.0000",
+    "is_inventoried": true,
+    "has_tax": true
+  },
+  {
+    "name": "FOMIX A4 ESCARCHADO SURTIDO X 10 IMPORTADO",
+    "code": "8699010005819",
+    "category": "LOCAL",
+    "price": "1.3000",
+    "pvp": "1.5000",
+    "is_inventoried": true,
+    "has_tax": true
+  },
+  {
+    "name": "PAPEL BOND X 100",
+    "code": "173605",
+    "category": "LOCAL",
+    "price": "0.8700",
+    "pvp": "1.0000",
+    "is_inventoried": true,
+    "has_tax": true
+  },
+  {
+    "name": "PLIEGO PAPEL BOND 4L",
+    "code": "173626",
+    "category": "LOCAL",
+    "price": "0.2200",
+    "pvp": "0.2500",
+    "is_inventoried": true,
+    "has_tax": true
+  },
+  {
+    "name": "CREPE PAPEL",
+    "code": "173628",
+    "category": "LOCAL",
+    "price": "0.2200",
+    "pvp": "0.2500",
+    "is_inventoried": true,
+    "has_tax": true
+  },
+  {
+    "name": "PAPEL BRILLANTE A4 MI NOTA",
+    "code": "7862116780671",
+    "category": "BODEGA 4",
+    "price": "0.4300",
+    "pvp": "0.4900",
+    "is_inventoried": true,
+    "has_tax": true
+  },
+  {
+    "name": "LAPIZ MONGOL",
+    "code": "7808718509586",
+    "category": "LOCAL",
+    "price": "0.2600",
+    "pvp": "0.3000",
+    "is_inventoried": true,
+    "has_tax": true
+  },
+  {
+    "name": "MARCADOR BORRABLE NEGRO MI NOTA",
+    "code": "7862116789971",
+    "category": "BODEGA 1",
+    "price": "0.4300",
+    "pvp": "0.4900",
+    "is_inventoried": true,
+    "has_tax": true
+  },
+  {
+    "name": "MARCADOR BORRABLE AZUL MI NOTA",
+    "code": "7862116789964",
+    "category": "BODEGA 1",
+    "price": "0.4300",
+    "pvp": "0.4900",
+    "is_inventoried": true,
+    "has_tax": true
+  },
+  {
+    "name": "MARCADOR BORRABLE ROJO MI NOTA",
+    "code": "7862116789988",
+    "category": "BODEGA 1",
+    "price": "0.4300",
+    "pvp": "0.4900",
+    "is_inventoried": true,
+    "has_tax": true
+  },
+  {
+    "name": "MARCADOR PERMANENTE AZUL MI NOTA",
+    "code": "7862116789926",
+    "category": "BODEGA 1",
+    "price": "0.4300",
+    "pvp": "0.4900",
+    "is_inventoried": true,
+    "has_tax": true
+  },
+  {
+    "name": "MARCADOR PERMANENTE ROJO MI NOTA",
+    "code": "7862116789940",
+    "category": "BODEGA 1",
+    "price": "0.4300",
+    "pvp": "0.4900",
+    "is_inventoried": true,
+    "has_tax": true
+  },
+  {
+    "name": "BARRAS DE SILICON DELGADA",
+    "code": "173579",
+    "category": "LOCAL",
+    "price": "0.1300",
+    "pvp": "0.1500",
+    "is_inventoried": true,
+    "has_tax": true
+  },
+  {
+    "name": "REGLA JEFF 20 CM",
+    "code": "4712856532067",
+    "category": "LOCAL",
+    "price": "0.2200",
+    "pvp": "0.2500",
+    "is_inventoried": true,
+    "has_tax": true
+  },
+  {
+    "name": "SACAPUNTAS METAL 1 SERVICIO",
+    "code": "3154145063004",
+    "category": "LOCAL",
+    "price": "0.2200",
+    "pvp": "0.2500",
+    "is_inventoried": true,
+    "has_tax": true
+  },
+  {
+    "name": "TIJERA ESCOLAR ESTILO",
+    "code": "7861098323395",
+    "category": "BODEGA 1",
+    "price": "0.4300",
+    "pvp": "0.4900",
+    "is_inventoried": true,
+    "has_tax": true
+  },
+  {
+    "name": "MASKING DESK 36 X 40",
+    "code": "7862108198309",
+    "category": "BODEGA 2 AL FONDO",
+    "price": "1.3000",
+    "pvp": "1.5000",
+    "is_inventoried": true,
+    "has_tax": true
+  },
+  {
+    "name": "ULAS DM PEQUE\u00d1AS",
+    "code": "173623",
+    "category": "LOCAL",
+    "price": "1.3000",
+    "pvp": "1.5000",
+    "is_inventoried": true,
+    "has_tax": true
+  },
+  {
+    "name": "CUERDA DE SALTAR MEDIANA",
+    "code": "7861143604288",
+    "category": "LOCAL",
+    "price": "1.1700",
+    "pvp": "1.3500",
+    "is_inventoried": true,
+    "has_tax": true
+  },
+  {
+    "name": "PINCEL 12",
+    "code": "7862117674023",
+    "category": "BODEGA 4",
+    "price": "0.6500",
+    "pvp": "0.7500",
+    "is_inventoried": true,
+    "has_tax": true
+  },
+  {
+    "name": "TAPTANA",
+    "code": "173656",
+    "category": "LOCAL",
+    "price": "4.3000",
+    "pvp": "4.9500",
+    "is_inventoried": true,
+    "has_tax": true
+  },
+  {
+    "name": "PAPEL HIGIENICO X 2",
+    "code": "7861175503887",
+    "category": "LOCAL",
+    "price": "0.4300",
+    "pvp": "0.4900",
+    "is_inventoried": true,
+    "has_tax": true
+  },
+  {
+    "name": "TOALLA ESCOLAR",
+    "code": "786000012",
+    "category": "BODEGA 4",
+    "price": "0.6500",
+    "pvp": "0.7500",
+    "is_inventoried": true,
+    "has_tax": true
+  },
+  {
+    "name": "CANDANDO MINI",
+    "code": "6322255306305",
+    "category": "LOCAL",
+    "price": "0.7400",
+    "pvp": "0.8500",
+    "is_inventoried": true,
+    "has_tax": true
+  },
+  {
+    "name": "FORROS PEQUE\u00d1O",
+    "code": "786059801",
+    "category": "BODEGA 3 AL FONDO",
+    "price": "0.1300",
+    "pvp": "0.1500",
+    "is_inventoried": true,
+    "has_tax": true
+  },
+  {
+    "name": "FORROS PLASTICO UNIV COSIDO",
+    "code": "173587",
+    "category": "LOCAL",
+    "price": "0.1700",
+    "pvp": "0.2000",
+    "is_inventoried": true,
+    "has_tax": true
+  },
+  {
+    "name": "CUADERNO COSIDO CUADROS ESTILO",
+    "code": "7862108144948",
+    "category": "LOCAL",
+    "price": "1.0400",
+    "pvp": "1.2000",
+    "is_inventoried": true,
+    "has_tax": true
+  },
+  {
+    "name": "CUADERNO COSIDO 4 LINEAS ESTILO",
+    "code": "7861098306886",
+    "category": "LOCAL",
+    "price": "1.0400",
+    "pvp": "1.2000",
+    "is_inventoried": true,
+    "has_tax": true
+  },
+  {
+    "name": "CUADERNO GRAPADO 30H CUADROS",
+    "code": "7861084211330",
+    "category": "LOCAL",
+    "price": "0.4300",
+    "pvp": "0.4900",
+    "is_inventoried": true,
+    "has_tax": true
+  },
+  {
+    "name": "NACHO",
+    "code": "9789942851505",
+    "category": "LOCAL",
+    "price": "2.7500",
+    "pvp": "3.1600",
+    "is_inventoried": true,
+    "has_tax": true
+  },
+  {
+    "name": "TEMPERA LINEA AZUL X 6",
+    "code": "7862108203966",
+    "category": "BODEGA 2 AL FONDO",
+    "price": "1.0900",
+    "pvp": "1.2500",
+    "is_inventoried": true,
+    "has_tax": true
+  },
+  {
+    "name": "PLASTILINA CARIOCA LARGA X 12",
+    "code": "7861129531072",
+    "category": "LOCAL",
+    "price": "1.0900",
+    "pvp": "1.2500",
+    "is_inventoried": true,
+    "has_tax": true
+  },
+  {
+    "name": "PAPEL CONTAC TRANSPARENTE BESTER",
+    "code": "7861123902458",
+    "category": "LOCAL",
+    "price": "1.9600",
+    "pvp": "2.2500",
+    "is_inventoried": true,
+    "has_tax": true
+  }
+]

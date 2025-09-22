@@ -1,0 +1,390 @@
+[
+  {
+    "name": "Tipos de Módulos",
+    "url": "/security/module/type/",
+    "icon": "fas fa-door-open",
+    "description": "Permite administrar los tipos de módulos del sistema",
+    "moduletype_id": 1,
+    "permissions": [
+      "view_module_type",
+      "add_module_type",
+      "change_module_type",
+      "delete_module_type"
+    ]
+  },
+  {
+    "name": "Módulos",
+    "url": "/security/module/",
+    "icon": "fas fa-th-large",
+    "description": "Permite administrar los módulos del sistema",
+    "moduletype_id": 1,
+    "permissions": [
+      "view_module",
+      "add_module",
+      "change_module",
+      "delete_module"
+    ]
+  },
+  {
+    "name": "Grupos",
+    "url": "/security/group/",
+    "icon": "fas fa-users",
+    "description": "Permite administrar los grupos de usuarios del sistema",
+    "moduletype_id": 1,
+    "permissions": [
+      "view_group",
+      "add_group",
+      "change_group",
+      "delete_group"
+    ]
+  },
+  {
+    "name": "Conf. Dashboard",
+    "url": "/security/dashboard/update/",
+    "icon": "fas fa-tools",
+    "description": "Permite configurar los datos de la plantilla",
+    "moduletype_id": 1,
+    "permissions": [
+      "view_dashboard"
+    ]
+  },
+  {
+    "name": "Accesos",
+    "url": "/security/user/access/",
+    "icon": "fas fa-user-secret",
+    "description": "Permite administrar los accesos de los usuarios",
+    "moduletype_id": 1,
+    "permissions": [
+      "view_user_access",
+      "add_user_access",
+      "delete_user_access"
+    ]
+  },
+  {
+    "name": "Usuarios",
+    "url": "/user/",
+    "icon": "fas fa-user",
+    "description": "Permite administrar a los administradores del sistema",
+    "moduletype_id": 1,
+    "permissions": [
+      "view_user",
+      "add_user",
+      "change_user",
+      "delete_user"
+    ]
+  },
+  {
+    "name": "Cambiar password",
+    "url": "/user/update/password/",
+    "icon": "fas fa-key",
+    "description": "Permite cambiar tu password de tu cuenta",
+    "moduletype_id": null,
+    "permissions": []
+  },
+  {
+    "name": "Editar perfil",
+    "url": "/user/update/profile/",
+    "icon": "fas fa-user",
+    "description": "Permite cambiar la información de tu cuenta",
+    "moduletype_id": null,
+    "permissions": []
+  },
+  {
+    "name": "Proveedores",
+    "url": "/pos/provider/",
+    "icon": "fas fa-truck",
+    "description": "Permite administrar a los proveedores de las compras",
+    "moduletype_id": 2,
+    "permissions": [
+      "view_provider",
+      "add_provider",
+      "change_provider",
+      "delete_provider"
+    ]
+  },
+  {
+    "name": "Categorías",
+    "url": "/pos/category/",
+    "icon": "fas fa-truck-loading",
+    "description": "Permite administrar las categorías de los productos",
+    "moduletype_id": 2,
+    "permissions": [
+      "view_category",
+      "add_category",
+      "change_category",
+      "delete_category"
+    ]
+  },
+  {
+    "name": "Productos",
+    "url": "/pos/product/",
+    "icon": "fas fa-box",
+    "description": "Permite administrar los productos del sistema",
+    "moduletype_id": 2,
+    "permissions": [
+      "view_product",
+      "add_product",
+      "change_product",
+      "delete_product"
+    ]
+  },
+  {
+    "name": "Compras",
+    "url": "/pos/purchase/",
+    "icon": "fas fa-dolly-flatbed",
+    "description": "Permite administrar las compras de los productos",
+    "moduletype_id": 2,
+    "permissions": [
+      "view_purchase",
+      "add_purchase",
+      "delete_purchase"
+    ]
+  },
+  {
+    "name": "Ajuste de Stock",
+    "url": "/pos/product/stock/adjustment/",
+    "icon": "fas fa-sliders-h",
+    "description": "Permite administrar los ajustes de stock de productos",
+    "moduletype_id": 2,
+    "permissions": [
+      "adjust_product_stock"
+    ]
+  },
+{
+    "name": "Tipos de Gastos",
+    "url": "/pos/expense/type/",
+    "icon": "fas fa-comments-dollar",
+    "description": "Permite administrar los tipos de gastos",
+    "moduletype_id": 3,
+    "permissions": [
+      "view_expense_type",
+      "add_expense_type",
+      "change_expense_type",
+      "delete_expense_type"
+    ]
+  },
+  {
+    "name": "Gastos",
+    "url": "/pos/expense/",
+    "icon": "fas fa-file-invoice-dollar",
+    "description": "Permite administrar los gastos de la compañia",
+    "moduletype_id": 3,
+    "permissions": [
+      "view_expense",
+      "add_expense",
+      "change_expense",
+      "delete_expense"
+    ]
+  },
+  {
+    "name": "Cuentas por cobrar",
+    "url": "/pos/account/receivable/",
+    "icon": "fas fa-funnel-dollar",
+    "description": "Permite administrar las cuentas por cobrar de los clientes",
+    "moduletype_id": 3,
+    "permissions": [
+      "view_account_receivable",
+      "add_account_receivable",
+      "delete_account_receivable"
+    ]
+  },
+  {
+    "name": "Cuentas por pagar",
+    "url": "/pos/account/payable/",
+    "icon": "fas fa-money-check-alt",
+    "description": "Permite administrar las cuentas por pagar de los proveedores",
+    "moduletype_id": 3,
+    "permissions": [
+      "view_account_payable",
+      "add_account_payable",
+      "delete_account_payable"
+    ]
+  },
+  {
+    "name": "Clientes",
+    "url": "/pos/customer/",
+    "icon": "fas fa-user-friends",
+    "description": "Permite administrar los clientes del sistema",
+    "moduletype_id": 4,
+    "permissions": [
+      "view_customer",
+      "add_customer",
+      "change_customer",
+      "delete_customer"
+    ]
+  },
+  {
+    "name": "Comprobantes",
+    "url": "/pos/receipt/",
+    "icon": "fas fa-file-export",
+    "description": "Permite administrar los tipos de comprobantes para la facturación",
+    "moduletype_id": 4,
+    "permissions": [
+      "view_receipt",
+      "add_receipt",
+      "change_receipt",
+      "delete_receipt"
+    ]
+  },
+  {
+    "name": "Errores de Comprob.",
+    "url": "/pos/receipt/error/",
+    "icon": "fas fa-file-archive",
+    "description": "Permite administrar los errores de los comprobantes de las facturas",
+    "moduletype_id": 4,
+    "permissions": [
+      "view_receipt_error",
+      "delete_receipt_error"
+    ]
+  },
+  {
+    "name": "Facturas",
+    "url": "/pos/invoice/admin/",
+    "icon": "fas fa-shopping-cart",
+    "description": "Permite administrar las ventas de los productos",
+    "moduletype_id": 4,
+    "permissions": [
+      "view_invoice_admin",
+      "add_invoice_admin",
+      "change_invoice_admin",
+      "delete_invoice_admin",
+      "print_invoice"
+    ]
+  },
+  {
+    "name": "Proformas",
+    "url": "/pos/quotation/",
+    "icon": "fa-solid fa-file-lines",
+    "description": "Permite administrar las cotizaciones de los clientes",
+    "moduletype_id": 4,
+    "permissions": [
+      "view_quotation",
+      "add_quotation",
+      "change_quotation",
+      "delete_quotation",
+      "print_quotation"
+    ]
+  },
+  {
+    "name": "Notas de Credito",
+    "url": "/pos/credit/note/admin/",
+    "icon": "fa-solid fa-boxes-packing",
+    "description": "Permite administrar las notas de créditos de las ventas",
+    "moduletype_id": 4,
+    "permissions": [
+      "view_credit_note_admin",
+      "add_credit_note_admin",
+      "delete_credit_note_admin",
+      "print_credit_note"
+    ]
+  },
+  {
+    "name": "Facturas",
+    "url": "/pos/invoice/customer/",
+    "icon": "fas fa-shopping-cart",
+    "description": "Permite administrar las ventas de los productos",
+    "moduletype_id": null,
+    "permissions": [
+      "view_invoice_customer",
+      "print_invoice"
+    ]
+  },
+  {
+    "name": "Notas de Credito",
+    "url": "/pos/credit/note/customer/",
+    "icon": "fa-solid fa-boxes-packing",
+    "description": "Permite administrar las notas de créditos de las ventas",
+    "moduletype_id": null,
+    "permissions": [
+      "view_credit_note_customer",
+      "print_credit_note"
+    ]
+  },
+  {
+    "name": "Promociones",
+    "url": "/pos/promotion/",
+    "icon": "far fa-calendar-check",
+    "description": "Permite administrar las promociones de los productos",
+    "moduletype_id": 4,
+    "permissions": [
+      "view_promotion",
+      "add_promotion",
+      "change_promotion",
+      "delete_promotion"
+    ]
+  },
+  {
+    "name": "Facturas",
+    "url": "/report/invoice/",
+    "icon": "fas fa-chart-bar",
+    "description": "Permite ver los reportes de las ventas",
+    "moduletype_id": 5,
+    "permissions": []
+  },
+  {
+    "name": "Compras",
+    "url": "/report/purchase/",
+    "icon": "fas fa-chart-bar",
+    "description": "Permite ver los reportes de las compras",
+    "moduletype_id": 5,
+    "permissions": []
+  },
+  {
+    "name": "Gastos",
+    "url": "/report/expense/",
+    "icon": "fas fa-chart-bar",
+    "description": "Permite ver los reportes de los gastos",
+    "moduletype_id": 5,
+    "permissions": []
+  },
+  {
+    "name": "Cuentas por Pagar",
+    "url": "/report/account/payable/",
+    "icon": "fas fa-chart-bar",
+    "description": "Permite ver los reportes de las cuentas por pagar",
+    "moduletype_id": 5,
+    "permissions": []
+  },
+  {
+    "name": "Cuentas por Cobrar",
+    "url": "/report/account/receivable/",
+    "icon": "fas fa-chart-bar",
+    "description": "Permite ver los reportes de las cuentas por cobrar",
+    "moduletype_id": 5,
+    "permissions": []
+  },
+  {
+    "name": "Resultados",
+    "url": "/report/result/",
+    "icon": "fas fa-chart-bar",
+    "description": "Permite ver los reportes de pérdidas y ganancias",
+    "moduletype_id": 5,
+    "permissions": []
+  },
+  {
+    "name": "Ganancias",
+    "url": "/report/earning/",
+    "icon": "fas fa-chart-bar",
+    "description": "Permite ver los reportes de las ganancias",
+    "moduletype_id": 5,
+    "permissions": []
+  },
+  {
+    "name": "Editar perfil",
+    "url": "/pos/customer/update/profile/",
+    "icon": "fas fa-user",
+    "description": "Permite cambiar la información de tu cuenta",
+    "moduletype_id": null,
+    "permissions": []
+  },
+  {
+    "name": "Compañia",
+    "url": "/pos/company/update/",
+    "icon": "fas fa-building",
+    "description": "Permite gestionar la información de la compañia",
+    "moduletype_id": null,
+    "permissions": [
+      "change_company"
+    ]
+  }
+]

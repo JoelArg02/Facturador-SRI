@@ -1,0 +1,100 @@
+[
+  {
+    "name": "Corporación Favorita",
+    "ruc": "1790174562",
+    "mobile": "0987654321",
+    "address": "Av. de los Shyris 195, Quito",
+    "email": "contacto@favorita.com"
+  },
+  {
+    "name": "Distribuidora Nacional de Alimentos",
+    "ruc": "1790165789",
+    "mobile": "0998765432",
+    "address": "Calle 9 de Octubre 750, Guayaquil",
+    "email": "ventas@dnalimentos.com"
+  },
+  {
+    "name": "Supermercados Tía",
+    "ruc": "1790178294",
+    "mobile": "0986543210",
+    "address": "Av. Francisco de Orellana, Guayaquil",
+    "email": "proveedores@tia.com"
+  },
+  {
+    "name": "Café San Blas",
+    "ruc": "1790154321",
+    "mobile": "0984321098",
+    "address": "Calle Bolívar 125, Loja",
+    "email": "contacto@cafesanblas.com"
+  },
+  {
+    "name": "La Fabril",
+    "ruc": "1790164567",
+    "mobile": "0993210987",
+    "address": "Av. Juan Tanca Marengo, Guayaquil",
+    "email": "ventas@lafabril.com"
+  },
+  {
+    "name": "Industrias Lácteas San Juan",
+    "ruc": "1790171234",
+    "mobile": "0972109876",
+    "address": "Calle José Mascote 250, Quito",
+    "email": "contacto@sanjuanleche.com"
+  },
+  {
+    "name": "Petroamazonas",
+    "ruc": "1790198765",
+    "mobile": "0982109876",
+    "address": "Av. Amazonas 800, Quito",
+    "email": "info@petroamazonas.com"
+  },
+  {
+    "name": "Cervecería Nacional",
+    "ruc": "1790167898",
+    "mobile": "0971098765",
+    "address": "Calle Jacinto de la Peña, Guayaquil",
+    "email": "proveedores@cerveceria.com"
+  },
+  {
+    "name": "Alpina Ecuador",
+    "ruc": "1790189876",
+    "mobile": "0987654320",
+    "address": "Av. América 950, Quito",
+    "email": "contacto@alpina.com"
+  },
+  {
+    "name": "Ferroaluminio",
+    "ruc": "1790178765",
+    "mobile": "0998321098",
+    "address": "Calle Norte 400, Ambato",
+    "email": "contacto@ferroaluminio.com"
+  },
+  {
+    "name": "Arcos Dorados",
+    "ruc": "1790159876",
+    "mobile": "0972108765",
+    "address": "Av. de la Prensa 75, Quito",
+    "email": "ventas@arcosdorados.com"
+  },
+  {
+    "name": "Aceites Naranjo",
+    "ruc": "1790176543",
+    "mobile": "0987651209",
+    "address": "Calle 24 de Mayo 700, Guayaquil",
+    "email": "info@aceitesnaranjo.com"
+  },
+  {
+    "name": "La Universal",
+    "ruc": "1790172345",
+    "mobile": "0986541098",
+    "address": "Calle de la 6 de Diciembre, Guayaquil",
+    "email": "ventas@launiversal.com"
+  },
+  {
+    "name": "Maresa Ecuador",
+    "ruc": "1790198745",
+    "mobile": "0988765432",
+    "address": "Calle Pérez Guerrero 130, Quito",
+    "email": "informes@maresa.com"
+  }
+]

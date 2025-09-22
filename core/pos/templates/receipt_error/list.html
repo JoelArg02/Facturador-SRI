@@ -1,0 +1,49 @@
+{% extends 'list.html' %}
+{% load static %}
+{% block assets_list %}
+    <script src="{% static 'lib/select2-4.0.13/js/select2.min.js' %}"></script>
+    <script src="{% static 'lib/select2-4.0.13/js/i18n/es.js' %}"></script>
+    <link rel="stylesheet" href="{% static 'lib/select2-4.0.13/css/select2.min.css' %}">
+    <link rel="stylesheet" href="{% static 'lib/select2-4.0.13/css/select2-bootstrap4.min.css' %}">
+    <script src="{% static 'lib/bootstrap-daterangepicker-3.1/js/spanish.js' %}"></script>
+    <script src="{% static 'lib/bootstrap-daterangepicker-3.1/js/daterangepicker.js' %}"></script>
+    <link rel="stylesheet" href="{% static 'lib/bootstrap-daterangepicker-3.1/css/daterangepicker.css' %}"/>
+    <script src="{% static 'lib/json-viewer-1.5.0/js/jquery.json-viewer.js' %}"></script>
+    <link rel="stylesheet" href="{% static 'lib/json-viewer-1.5.0/css/jquery.json-viewer.css' %}"/>
+    <script src="{% static 'receipt_error/js/list.js' %}"></script>
+{% endblock %}
+
+{% block columns %}
+    <th>Fecha de registro</th>
+    <th>Número de factura</th>
+    <th>Tipo de comprobante</th>
+    <th>Etapa</th>
+    <th>Ambiente</th>
+    <th>Errores</th>
+    <th class="text-center">Opciones</th>
+{% endblock %}
+
+{% block content_list_before %}
+    <div class="row">
+        <div class="col-lg-6 col-md-12">
+            <div class="mb-3">
+                <label class="form-label fw-bold">{{ form.date_range.label }}:</label>
+                {{ form.date_range }}
+            </div>
+        </div>
+        <div class="col-lg-6 col-md-12">
+            <div class="mb-3">
+                <label class="form-label fw-bold">{{ form.receipt.label }}:</label>
+                {{ form.receipt }}
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascript_list %}
+
+{% endblock %}
+
+{% block box_footer %}
+
+{% endblock %}

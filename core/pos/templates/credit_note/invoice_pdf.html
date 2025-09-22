@@ -1,0 +1,254 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <style>
+        @page {
+            size: A4 portrait;
+            margin: 0 auto;
+            padding: 10px 25px 0 25px;
+        }
+
+        @page {
+            @top-center {
+                content: element(header);
+            }
+        }
+
+        body {
+            position: relative;
+            width: 100%;
+            min-height: 28.5cm;
+            margin: 0 auto;
+            background: #FFFFFF;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 14px;
+            padding: 0 !important;
+        }
+
+        .logo {
+            margin-top: 8px;
+            height: 100px;
+            margin-bottom: 0;
+        }
+
+        .barcode {
+            width: 100%;
+            height: 160px;
+        }
+
+        .center {
+            text-align: center;
+            margin-bottom: 0 !important;
+        }
+
+        .table-head {
+            width: 100%;
+            padding: 0;
+            margin: 0;
+            border-collapse: collapse;
+        }
+
+        .invoice-details {
+            width: 100%;
+            border-collapse: collapse;
+            border-spacing: 0;
+            margin-bottom: 5px;
+        }
+
+        .invoice-details thead {
+            display: table-row-group;
+        }
+
+        .invoice-details thead tr th {
+            padding: 5px;
+            background: #000000;
+            text-align: center;
+            border-bottom: 1px solid #FFFFFF;
+            color: white;
+            font-size: 12px !important;
+        }
+
+        .invoice-details tbody tr td {
+            padding: 5px;
+            color: black;
+            border: 1px solid black;
+            font-size: 12px !important;
+        }
+
+        .text-content {
+            padding: 10px 10px;
+            color: black;
+            background-color: #f6f6f6;
+            font-weight: normal;
+            line-height: 180%;
+            font-size: 12px;
+            margin-bottom: 0 !important;
+            margin-top: 0 !important;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .text-left {
+            text-align: left;
+        }
+
+        .text-totals {
+            text-align: right;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .text-uppercase {
+            text-transform: uppercase;
+        }
+
+        .font-weight-normal {
+            font-weight: normal !important;
+        }
+
+    </style>
+</head>
+<body>
+<main>
+    <table class="table-head">
+        <thead>
+        <tr>
+            <th style="width: 50%;">
+                <div class="center mb-0">
+                    <img alt="" src="{{ object.company.base64_image }}" class="img-fluid d-block mx-auto logo">
+                </div>
+                <br>
+                <p class="text-content">
+                    <b>Emisor:</b> {{ object.company.commercial_name }}<br>
+                    <b>Ruc:</b> {{ object.company.ruc }}<br>
+                    <b>Teléfono:</b> {{ object.company.mobile }}<br>
+                    <b>Matriz:</b> {{ object.company.main_address }}<br>
+                    <b>Correo:</b> {{ object.company.email }}<br>
+                    <b>Obligado a llevar contabilidad:</b> {{ object.company.obligated_accounting }}<br>
+                    <b>Contribuyente Especial No.:</b> {{ object.company.special_taxpayer }}<br>
+                    {% if object.company.is_retention_agent %}
+                        <b>Agente de Retención Resolución No.:</b> 1<br>
+                    {% endif %}
+                    {% if not object.company.is_popular_regime %}
+                        <b>Regimen Tributario:</b> {{ object.company.get_regimen_rimpe_display }}
+                    {% endif %}
+                </p>
+            </th>
+            <th style="width: 50%;">
+                <p class="text-content">
+                    <b style="font-size: 18px">{{ object.receipt.name }} {{ object.receipt_number_full }}</b><br>
+                    <b>Autorización:</b><br>{{ object.access_code }}<br>
+                    <b>Fecha de autorización:</b><br>{{ object.formatted_authorized_date }}<br>
+                    <b>Clave de acceso:</b><br>
+                    <img alt="" class="img-fluid barcode" src="{{ object.access_code_barcode }}">
+                </p>
+            </th>
+        </tr>
+        </thead>
+    </table>
+    <table class="table-head">
+        <thead>
+        <tr>
+            <th style="width: 50%;">
+                <p class="text-content">
+                    <b>Razón Social:</b> {{ object.invoice.customer.user.names }}<br>
+                    <b>RUC/CI:</b> {{ object.invoice.customer.dni }}<br>
+                    <b>Teléfono:</b> {{ object.invoice.customer.mobile }}<br>
+                    <b>Dirección:</b> {{ object.invoice.customer.address }}<br>
+                    <b>Fecha de emisión (Comprobante a modificar):</b> {{ object.invoice.formatted_date_joined }}
+                </p>
+            </th>
+            <th style="width: 50%;">
+                <p class="text-content">
+                    <b>Fecha de emisión:</b> {{ object.formatted_date_joined }}<br>
+                    <b>Email:</b> {{ object.invoice.customer.user.email }}<br>
+                    <b>Comprobante que se modifica:</b> {{ object.invoice.receipt.name }} {{ object.invoice.receipt_number_full }}<br>
+                    <b>Razón de modificación:</b> {{ object.motive }}
+                </p>
+            </th>
+        </tr>
+        </thead>
+    </table>
+    <br>
+    <table border="0" cellspacing="0" cellpadding="0" class="invoice-details">
+        <thead>
+        <tr>
+            <th>CANTIDAD</th>
+            <th>CÓDIGO</th>
+            <th>PRODUCTO</th>
+            <th>P.UNITARIO</th>
+            <th>DESCUENTO</th>
+            <th>SUBTOTAL</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for detail in object.creditnotedetail_set.all %}
+            <tr>
+                <td class="text-center">{{ detail.quantity }}</td>
+                <td class="text-center">{{ detail.product.code }}</td>
+                <td>{{ detail.product.name }}</td>
+                <td class="text-center">{{ detail.price|floatformat:2 }}</td>
+                <td class="text-center">{{ detail.total_discount|floatformat:2 }}</td>
+                <td class="text-center">{{ detail.total_amount|floatformat:2 }}</td>
+            </tr>
+        {% endfor %}
+        <tr>
+            <td colspan="5" class="text-totals">Subtotal sin impuestos</td>
+            <td class="text-center">{{ object.subtotal_without_taxes|floatformat:2 }}</td>
+        </tr>
+        <tr>
+            <td colspan="5" class="text-totals">Descuentos</td>
+            <td class="text-center">{{ object.total_discount|floatformat:2 }}</td>
+        </tr>
+        <tr>
+            <td colspan="5" class="text-totals">Subtotal {{ object.tax_rate }}%</td>
+            <td class="text-center">{{ object.subtotal_with_tax|floatformat:2 }}</td>
+        </tr>
+        <tr>
+            <td colspan="5" class="text-totals">Subtotal 0%</td>
+            <td class="text-center">{{ object.subtotal_without_tax|floatformat:2 }}</td>
+        </tr>
+        <tr>
+            <td colspan="5" class="text-totals">IVA {{ object.tax_rate }}%</td>
+            <td class="text-center">{{ object.total_tax|floatformat:2 }}</td>
+        </tr>
+        <tr>
+            <td colspan="5" class="text-totals">Total</td>
+            <td class="text-center">{{ object.total_amount|floatformat:2 }}</td>
+        </tr>
+        </tbody>
+    </table>
+    <table class="table-head">
+        <thead>
+        <tr>
+            <th style="width: 50%;">
+                {% if object.additional_info %}
+                    <br>
+                    <table border="0" cellspacing="0" cellpadding="0" class="invoice-details">
+                        <thead>
+                        <tr>
+                            <th colspan="2" class="text-center text-uppercase">información adicional</th>
+                        </tr>
+                        </thead>
+                        <tbody class="text-uppercase font-weight-normal">
+                        {% for additional_info in object.additional_info %}
+                            <tr>
+                                <td class="text-left"><b>{{ additional_info.name }}</b></td>
+                                <td class="text-center">{{ additional_info.value }}</td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                {% endif %}
+            </th>
+        </tr>
+        </thead>
+    </table>
+</main>
+</body>
+</html>

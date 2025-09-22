@@ -1,0 +1,47 @@
+[
+  {
+    "name": "AGUA"
+  },
+  {
+    "name": "ELECTRICIDAD"
+  },
+  {
+    "name": "GAS"
+  },
+  {
+    "name": "ALQUILER"
+  },
+  {
+    "name": "TELÉFONO"
+  },
+  {
+    "name": "INTERNET"
+  },
+  {
+    "name": "SALARIOS"
+  },
+  {
+    "name": "COMBUSTIBLE"
+  },
+  {
+    "name": "MANTENIMIENTO"
+  },
+  {
+    "name": "SUMINISTROS"
+  },
+  {
+    "name": "TRANSPORTE"
+  },
+  {
+    "name": "SEGURIDAD"
+  },
+  {
+    "name": "SEGUROS"
+  },
+  {
+    "name": "PUBLICIDAD"
+  },
+  {
+    "name": "OFICINA"
+  }
+]

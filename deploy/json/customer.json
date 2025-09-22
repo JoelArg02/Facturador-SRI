@@ -1,0 +1,672 @@
+[
+  {
+    "names": "CONSUMIDOR FINAL",
+    "dni": "9999999999999",
+    "email": "consumidorfinal@hotmail.com",
+    "mobile": "0999999999",
+    "address": "ECUADOR",
+    "birthdate": "2003-05-13",
+    "identification_type": "07",
+    "send_email_invoice": false
+  },
+  {
+    "names": "AGUSTIN GARCIA CADENA ABONOS",
+    "dni": "1754696373",
+    "email": "agroinsumostulcan@hotmail.com",
+    "mobile": "0991652268",
+    "address": "PARQUE ARTESANAL ULTIMA MANZANA",
+    "birthdate": "2003-05-13",
+    "identification_type": "05",
+    "send_email_invoice": true
+  },
+  {
+    "names": "ALEX ANTONIO TERAN RIOS",
+    "dni": "0401325345",
+    "email": "alexeh19@hotmail.com",
+    "mobile": "0969941191",
+    "address": "GERÓNIMO CARRION Y COLON",
+    "birthdate": "2001-10-01",
+    "identification_type": "05",
+    "send_email_invoice": true
+  },
+  {
+    "names": "ALVARO EDUARDO JURADO CHUQUIZAN",
+    "dni": "0400958609",
+    "email": "alvarojch10@gmail.com",
+    "mobile": "0960073020",
+    "address": "AV. ANDRES BELLO Y CARLOS ONA",
+    "birthdate": "2005-01-10",
+    "identification_type": "05",
+    "send_email_invoice": true
+  },
+  {
+    "names": "ANDREA DEL CARMEN POTOSI CEPEDA",
+    "dni": "0401977327",
+    "email": "andrea.carmen@gmail.com",
+    "mobile": "0987610731",
+    "address": "CONJUNTO EL ROSAL",
+    "birthdate": "1999-10-01",
+    "identification_type": "05",
+    "send_email_invoice": true
+  },
+  {
+    "names": "ANITA SOCORRO ROSERO TACAN",
+    "dni": "0401294400",
+    "email": "alexis.rosero17@outlook.com",
+    "mobile": "0992019695",
+    "address": "OLMEDO Y LAS GRADAS",
+    "birthdate": "2001-12-15",
+    "identification_type": "05",
+    "send_email_invoice": true
+  },
+  {
+    "names": "ARGOTI OVIEDO PAOLA XIMENA",
+    "dni": "0401256409",
+    "email": "paola.argoti94@gmail.com",
+    "mobile": "0983626601",
+    "address": "OLMEDO Y CARABOBO",
+    "birthdate": "1996-10-02",
+    "identification_type": "05",
+    "send_email_invoice": true
+  },
+  {
+    "names": "AYALA MARTINEZ FRANKLIN DAVID",
+    "dni": "0402038418",
+    "email": "fdayalam@utn.edu.ec",
+    "mobile": "0981776307",
+    "address": "POLICIA",
+    "birthdate": "1998-02-15",
+    "identification_type": "05",
+    "send_email_invoice": true
+  },
+  {
+    "names": "BALSECA VILLEGAS MARCO VINICIO",
+    "dni": "1713379970",
+    "email": "vicobal_04@yahoo.com",
+    "mobile": "0991728843",
+    "address": "GRAL PLAZA Y JOSE MARIA URBINA",
+    "birthdate": "2005-02-01",
+    "identification_type": "05",
+    "send_email_invoice": true
+  },
+  {
+    "names": "RODRIGUEZ CARRERA BETTY MABELA",
+    "dni": "1713841763",
+    "email": "casaminaoro@hotmail.com",
+    "mobile": "0980513332",
+    "address": "PANAMÁ Y OLMEDO",
+    "birthdate": "2004-09-06",
+    "identification_type": "04",
+    "send_email_invoice": true
+  },
+  {
+    "names": "BRAYAN ALEXANDER ROMO AGUIRRE PEKIN",
+    "dni": "0401478417",
+    "email": "alexanrromo6@gmail.com",
+    "mobile": "0960752910",
+    "address": "ANTISANA PULIDA Y MAGDALENA",
+    "birthdate": "1999-09-01",
+    "identification_type": "05",
+    "send_email_invoice": true
+  },
+  {
+    "names": "BRAYAN DAVID GUERRON TAPIA",
+    "dni": "0402082986",
+    "email": "davisguerron@gmail.com",
+    "mobile": "0967164429",
+    "address": "CALLE MANUEL YEPEZ CASA COLOR BLANCO",
+    "birthdate": "1995-03-13",
+    "identification_type": "05",
+    "send_email_invoice": true
+  },
+  {
+    "names": "CAMACAS MORILLO YADIRA ELIZABETH",
+    "dni": "0401488952",
+    "email": "yady_49@hotmail.com",
+    "mobile": "0939911099",
+    "address": "TULCÁN /AV. VENTIMILLA Y ALEJANDRO R.MERA",
+    "birthdate": "1995-10-02",
+    "identification_type": "05",
+    "send_email_invoice": true
+  },
+  {
+    "names": "CARLOS ROLANDO ARGOTI ARGOTI",
+    "dni": "0400875613",
+    "email": "maji.argo@gmail.com",
+    "mobile": "0980601552",
+    "address": "TUNGURAHUA Y 10 DE AGOSTO",
+    "birthdate": "1999-10-12",
+    "identification_type": "05",
+    "send_email_invoice": true
+  },
+  {
+    "names": "CHICANGO TREJO JENIFFER ELIZABEHT",
+    "dni": "0401624176",
+    "email": "03diefer@hotmail.com",
+    "mobile": "0991133675",
+    "address": "CDLA. PADRE CARLOS DE LA VEGA - MANUEL MACHADO Y JORGE MANRIQUE",
+    "birthdate": "1998-09-03",
+    "identification_type": "05",
+    "send_email_invoice": true
+  },
+  {
+    "names": "CRISTIAN JAVIER GUERRERO POZO",
+    "dni": "0401497185",
+    "email": "magandre2006@hotmail.com",
+    "mobile": "0991571113",
+    "address": "EL ROSARIO REGISTRO CIVIL",
+    "birthdate": "2000-03-10",
+    "identification_type": "05",
+    "send_email_invoice": true
+  },
+  {
+    "names": "FRAGA REYES ANDREA ELIZABETH",
+    "dni": "0401641378",
+    "email": "cristianmorrios@gmail.com",
+    "mobile": "0994541825",
+    "address": "ANDRES BELLO",
+    "birthdate": "1996-03-02",
+    "identification_type": "05",
+    "send_email_invoice": true
+  },
+  {
+    "names": "VILLACRECES ACOSTA CRISTIAN STIVEN",
+    "dni": "0402075162",
+    "email": "villacreces.acosta.estiven@gmail.com",
+    "mobile": "0985880436",
+    "address": "MALDONADO Y CARABOBO ",
+    "birthdate": "1998-11-11",
+    "identification_type": "04",
+    "send_email_invoice": true
+  },
+  {
+    "names": "DAYANA CAROLINA NARVAEZ CRUZ",
+    "dni": "0402037238",
+    "email": "dayanarvaez1997@hotmail.com",
+    "mobile": "0969531603",
+    "address": "COLON Y ORIENTE",
+    "birthdate": "1997-01-10",
+    "identification_type": "05",
+    "send_email_invoice": true
+  },
+  {
+    "names": "DELIA ELIZABETH JIMENEZ TIRIRA",
+    "dni": "0401054077",
+    "email": "delissjim72@hotmail.com",
+    "mobile": "0958871303",
+    "address": "CALLE ARGENTINA TRAS DEL COLEGIO BOLIVAR",
+    "birthdate": "1999-08-08",
+    "identification_type": "05",
+    "send_email_invoice": true
+  },
+  {
+    "names": "DIEGO ANDRES BENAVIDES POZO",
+    "dni": "0401744891",
+    "email": "diego.timon@gmail.com",
+    "mobile": "0980847862",
+    "address": "CIUDADELA DEL MAESTRO",
+    "birthdate": "2003-04-02",
+    "identification_type": "05",
+    "send_email_invoice": true
+  },
+  {
+    "names": "DORIS JANNETH CARVAJAL ECHE",
+    "dni": "0401220504",
+    "email": "janneth5005@hotmail.com",
+    "mobile": "0999873814",
+    "address": "LUIS ROSERO Y AV. JULIO ROBLES",
+    "birthdate": "2001-12-09",
+    "identification_type": "05",
+    "send_email_invoice": true
+  },
+  {
+    "names": "DORIS ROSERO",
+    "dni": "0401332333",
+    "email": "doris.rosero@gmail.com",
+    "mobile": "0994662479",
+    "address": "ESTADIO OLIMPICO",
+    "birthdate": "1994-11-13",
+    "identification_type": "05",
+    "send_email_invoice": true
+  },
+  {
+    "names": "EDDIE HUMBERTO CASTILLO MORAN",
+    "dni": "1711828176",
+    "email": "eddiecastillomoran@hotmail.com",
+    "mobile": "0998507414",
+    "address": "TERMINAL",
+    "birthdate": "2006-03-13",
+    "identification_type": "05",
+    "send_email_invoice": true
+  },
+  {
+    "names": "EDGAR LIBARDO MONTENEGRO",
+    "dni": "0400774519",
+    "email": "pintucolor_livardo@hotmail.com",
+    "mobile": "0999380448",
+    "address": "JOSE DE ANTEPARRA Y JULIO ANDRADE",
+    "birthdate": "2000-08-01",
+    "identification_type": "05",
+    "send_email_invoice": true
+  },
+  {
+    "names": "EDGAR OSWALDO NARVAEZ SILVA",
+    "dni": "0400277000",
+    "email": "xavo.narvaez@gmail.com",
+    "mobile": "0999921341",
+    "address": "CUENCA Y CHILE",
+    "birthdate": "1998-08-13",
+    "identification_type": "05",
+    "send_email_invoice": true
+  },
+  {
+    "names": "EDISON JAVIER ACOSTA PAUCAR",
+    "dni": "0401307046",
+    "email": "ejavicho@yahoo.es",
+    "mobile": "0961342183",
+    "address": "ANTONIO MERINO Y JESUS DEL GRAN PODER",
+    "birthdate": "1994-01-06",
+    "identification_type": "05",
+    "send_email_invoice": true
+  },
+  {
+    "names": "EDISON VLADIMIR HURTADO CUATIN ",
+    "dni": "0401175385",
+    "email": "edihc18@hotmail.com",
+    "mobile": "0994211418",
+    "address": "CHIMBORAZO ENTRE SUCRE Y OLMEDO",
+    "birthdate": "1994-06-10",
+    "identification_type": "05",
+    "send_email_invoice": true
+  },
+  {
+    "names": "EUGENIA ELIZABETH RODRIGUEZ TULCANAZA",
+    "dni": "0401383930",
+    "email": "german.s-cnt@hotmail.com",
+    "mobile": "0960931508",
+    "address": "URUGUAY Y BRASIL",
+    "birthdate": "2001-04-15",
+    "identification_type": "05",
+    "send_email_invoice": true
+  },
+  {
+    "names": "FLOR BORJA TULCAN",
+    "dni": "0401788443",
+    "email": "victoriroseandre@gmail.com",
+    "mobile": "0968969662",
+    "address": "GUAYAQUIL Y COTOPAXI",
+    "birthdate": "1999-06-02",
+    "identification_type": "04",
+    "send_email_invoice": true
+  },
+  {
+    "names": "GINA LISETH DE LA TORRE BURGA",
+    "dni": "1793059163",
+    "email": "eddymaldonadol94@gmail.com",
+    "mobile": "0999937559",
+    "address": "LAS GRADAS Y COMANDANTE BORJA",
+    "birthdate": "1997-03-08",
+    "identification_type": "04",
+    "send_email_invoice": true
+  },
+  {
+    "names": "GLORIA ELENA NARVAEZ HUERTAS",
+    "dni": "0400381364",
+    "email": "tivoaspiazu@gmail.com",
+    "mobile": "0981465905",
+    "address": "AV. CORAL Y VENEZUELA",
+    "birthdate": "1999-01-01",
+    "identification_type": "05",
+    "send_email_invoice": true
+  },
+  {
+    "names": "GLORIA ELIZABETH RAMIREZ VELASCO",
+    "dni": "0401250246",
+    "email": "rgloria1@hotmail.com",
+    "mobile": "0981565008",
+    "address": "MEDARDO ANGEL SILVA Y JUAN LEON MERA",
+    "birthdate": "1995-12-04",
+    "identification_type": "05",
+    "send_email_invoice": true
+  },
+  {
+    "names": "GORDON IGLESIAS LEONARDO EDUARDO",
+    "dni": "0401579651",
+    "email": "leogordonig@hotmail.com",
+    "mobile": "0983564939",
+    "address": "GUAYAQUIL Y MANABI NORTVISION",
+    "birthdate": "1995-03-14",
+    "identification_type": "05",
+    "send_email_invoice": true
+  },
+  {
+    "names": "HENRRY TARQUINO NARVAEZ CORAL",
+    "dni": "0401013271",
+    "email": "henrrynar@hotmail.com",
+    "mobile": "0995056489",
+    "address": "AV. CENTENARIO Y VEINTIMILLA",
+    "birthdate": "1999-01-13",
+    "identification_type": "05",
+    "send_email_invoice": true
+  },
+  {
+    "names": "HOTEL INTERNACIONAL MINA DE ORO",
+    "dni": "1716472806",
+    "email": "juri17_@hotmail.com",
+    "mobile": "0958983142",
+    "address": "AV VEINTIMILLA Y GENERAL SANTANDER",
+    "birthdate": "2000-03-06",
+    "identification_type": "05",
+    "send_email_invoice": true
+  },
+  {
+    "names": "JAIME VIRAMA MALLAMA",
+    "dni": "16285698",
+    "email": "jaimevirama28@gmail.com",
+    "mobile": "0999567926",
+    "address": "VIVIENDA POPULAR",
+    "birthdate": "1994-10-03",
+    "identification_type": "04",
+    "send_email_invoice": true
+  },
+  {
+    "names": "JAIME VLADIMIR HURTADO RIVERA",
+    "dni": "0401192216",
+    "email": "vladimichr@gmail.com",
+    "mobile": "0962036592",
+    "address": "BARRIO EL PORTAL",
+    "birthdate": "1997-06-09",
+    "identification_type": "05",
+    "send_email_invoice": true
+  },
+  {
+    "names": "MEGATEL",
+    "dni": "0491531509",
+    "email": "jairo.erazo@megatel.com.ec",
+    "mobile": "0998226977",
+    "address": "JUAN JOSE FLORES Y 10 DE AGOSTO",
+    "birthdate": "1994-11-05",
+    "identification_type": "04",
+    "send_email_invoice": true
+  },
+  {
+    "names": "JENIFER ALEXANDRA MALLAMA MONTENEGRO",
+    "dni": "0401269410",
+    "email": "alexaje1993@gmail.com",
+    "mobile": "0987843003",
+    "address": "AYACUCHO Y OLMEDO",
+    "birthdate": "2004-09-10",
+    "identification_type": "05",
+    "send_email_invoice": true
+  },
+  {
+    "names": "JESICA ANDREA NARVAEZ ECHE",
+    "dni": "0401539986",
+    "email": "jessy.narvaez@hotmail.com",
+    "mobile": "0992557470",
+    "address": "CIUDADELA DEL MAESTRO",
+    "birthdate": "2005-08-08",
+    "identification_type": "05",
+    "send_email_invoice": true
+  },
+  {
+    "names": "JESSICA GIOCONDA RODRIGUEZ CARRERA",
+    "dni": "1715357362",
+    "email": "jessy_grc@hotmail.com",
+    "mobile": "0998080733",
+    "address": "ANDRES BELLO E IRLANADA",
+    "birthdate": "2000-08-06",
+    "identification_type": "05",
+    "send_email_invoice": true
+  },
+  {
+    "names": "JHONATAN ERNESTO VEGA VALLEJO",
+    "dni": "0401221031",
+    "email": "jhontv90@hotmail.com",
+    "mobile": "0959955413",
+    "address": "BARRIO UNION Y PROGRESO SUR - CALLE JULIO ROBLES Y CHILES",
+    "birthdate": "2005-02-04",
+    "identification_type": "05",
+    "send_email_invoice": true
+  },
+  {
+    "names": "JOHN DAVIS DIAZ ALAVA",
+    "dni": "0401051198",
+    "email": "jdda04010@hotmail.com",
+    "mobile": "0996676875",
+    "address": "COTOPAXI Y SAMORA CHINCHIPE",
+    "birthdate": "2002-11-02",
+    "identification_type": "05",
+    "send_email_invoice": true
+  },
+  {
+    "names": "JOHNY MAURICIO HIGUERA ROSERO",
+    "dni": "0401175393",
+    "email": "jhonni_andy@hotmail.com",
+    "mobile": "0984225222",
+    "address": "CDLA. SARA ESPINDOLA",
+    "birthdate": "2004-04-06",
+    "identification_type": "05",
+    "send_email_invoice": true
+  },
+  {
+    "names": "JOHNY STALIN CUASQUER ACURIO",
+    "dni": "0401118575",
+    "email": "jhonny.cuasquer@yahoo.es",
+    "mobile": "0986945777",
+    "address": "LAS GRADAS Y COMANDANTE BORJA",
+    "birthdate": "1998-08-04",
+    "identification_type": "05",
+    "send_email_invoice": true
+  },
+  {
+    "names": "JONATAN PAUL LEON PAUCAR",
+    "dni": "0401256987",
+    "email": "jhonathan.paucar@gmail.com",
+    "mobile": "0985880432",
+    "address": "RAFAEL ARELLANO",
+    "birthdate": "2000-12-06",
+    "identification_type": "05",
+    "send_email_invoice": true
+  },
+  {
+    "names": "JONATAN STALIN CHUGA ESPARZA",
+    "dni": "0401773189",
+    "email": "mariaespar125@gmail.com",
+    "mobile": "0991488612",
+    "address": "CORAL Y LOS ALAMOS",
+    "birthdate": "2004-01-06",
+    "identification_type": "05",
+    "send_email_invoice": true
+  },
+  {
+    "names": "JONATHAN ANDRES PEREZ AGUIRRE",
+    "dni": "0401751912",
+    "email": "andresperez78999@gmail.com",
+    "mobile": "0990952736",
+    "address": "AV. SAN FRANCISCO Y AV. ARGENTINA",
+    "birthdate": "2001-04-15",
+    "identification_type": "05",
+    "send_email_invoice": true
+  },
+  {
+    "names": "JORGE ANIBAL ROMAN DELGADO",
+    "dni": "0401388897",
+    "email": "romanjr_28@hotmail.com",
+    "mobile": "0997081677",
+    "address": "RAFAEL ARELLANO Y JUNIN - CONDOMINIOS PONCE ENRIQUEZ",
+    "birthdate": "2000-08-15",
+    "identification_type": "05",
+    "send_email_invoice": true
+  },
+  {
+    "names": "JOSE LUIS PATIÑO ZARATE",
+    "dni": "604323915",
+    "email": "02joseluis02@gmail.com",
+    "mobile": "0998190894",
+    "address": "MALDONADO Y TARQUI ABONOS",
+    "birthdate": "1997-01-03",
+    "identification_type": "04",
+    "send_email_invoice": true
+  },
+  {
+    "names": "KAREN FERNANDA RODRIGUEZ LOPEZ",
+    "dni": "0400688735",
+    "email": "1dkarerodriguez@gmail.com",
+    "mobile": "0989898592",
+    "address": "NUEVE DE OCTUBRE",
+    "birthdate": "1995-10-05",
+    "identification_type": "05",
+    "send_email_invoice": true
+  },
+  {
+    "names": "LENIN ALEXANDER RAMIREZ PALANGO",
+    "dni": "0402109656",
+    "email": "Alexsfdk636@gmail.com",
+    "mobile": "0995073098",
+    "address": "BOLIVAR Y AYACUCHO",
+    "birthdate": "1998-05-03",
+    "identification_type": "05",
+    "send_email_invoice": true
+  },
+  {
+    "names": "LENIN ALEXANDER TATES IMBAQUINGO",
+    "dni": "0401533468",
+    "email": "lenin229315@gmail.com",
+    "mobile": "0983040375",
+    "address": "ABEDULES Y CIPRES TRAS EL GARAJE DEL MIESS",
+    "birthdate": "1999-09-01",
+    "identification_type": "05",
+    "send_email_invoice": true
+  },
+  {
+    "names": "LILIANA ELIZABETH QUIROZ ATIZ",
+    "dni": "0401596648",
+    "email": "liliana.quiroz@gmail.com",
+    "mobile": "0980536168",
+    "address": "BARRIO CARCHI, ANTES DE LLEGAR A LA PARADA",
+    "birthdate": "2000-07-01",
+    "identification_type": "05",
+    "send_email_invoice": true
+  },
+  {
+    "names": "LISETH PATRICIA ERAZO CADENA",
+    "dni": "0401049911",
+    "email": "lisetherazo@hotmail.com",
+    "mobile": "0995395582",
+    "address": "CALLE MALDONADO Y LAS GRADAS",
+    "birthdate": "1998-06-02",
+    "identification_type": "04",
+    "send_email_invoice": true
+  },
+  {
+    "names": "LORENA ELIZABETH VILLARREAL QUISTIAL",
+    "dni": "0401361423",
+    "email": "lorequistial37@gmail.com",
+    "mobile": "0981513274",
+    "address": "MEXICO Y CAYAMBE",
+    "birthdate": "1999-07-10",
+    "identification_type": "05",
+    "send_email_invoice": true
+  },
+  {
+    "names": "LUIS ALEJANDRO TORRES GUERRERO",
+    "dni": "0401093620",
+    "email": "torresalejo456@hotmail.com",
+    "mobile": "0987759971",
+    "address": "VIA EXPRESO OCCIDENTAL PORTAL",
+    "birthdate": "2004-03-15",
+    "identification_type": "05",
+    "send_email_invoice": true
+  },
+  {
+    "names": "MADELAINE DANIELA REVELO CASTILLO",
+    "dni": "0402078992",
+    "email": "madereve22@gmail.com",
+    "mobile": "0983708531",
+    "address": "19 DE NOVIEMBRE, ANDRES BELLO",
+    "birthdate": "1996-04-15",
+    "identification_type": "05",
+    "send_email_invoice": true
+  },
+  {
+    "names": "MAFLA VILCHEZ CARELIS CHIQUINQUIRA",
+    "dni": "0401639844",
+    "email": "carelis_chiqui@hotmail.com",
+    "mobile": "0967103777",
+    "address": "BARRIO SAN MIGUEL  NORTE CALLES PABLO NERUDA Y GARCIA LOORCA",
+    "birthdate": "1996-03-06",
+    "identification_type": "05",
+    "send_email_invoice": true
+  },
+  {
+    "names": "MAGALY XIMENA POJOTA REINA",
+    "dni": "0401539721",
+    "email": "xpojota04@gmail.com ",
+    "mobile": "0991995076",
+    "address": "AV. VENTIMILLA Y CAMILO PONCE JUNTO AL ECU",
+    "birthdate": "1997-03-03",
+    "identification_type": "05",
+    "send_email_invoice": true
+  },
+  {
+    "names": "MANUEL MESIAS ROSERO BUSTOS",
+    "dni": "0400871505",
+    "email": "manuel.mesias@gmail.com",
+    "mobile": "0958820591",
+    "address": "AV BRASIL Y SAN FRANCISCO",
+    "birthdate": "2002-01-14",
+    "identification_type": "05",
+    "send_email_invoice": true
+  },
+  {
+    "names": "MANUEL REMACHE QUISHPI",
+    "dni": "0401434360",
+    "email": "remache.quispe@gmail.com",
+    "mobile": "0997397130",
+    "address": "CDLA KENNEDY CALLE JOSE MARIA URBINA Y CARABOBO",
+    "birthdate": "1999-11-10",
+    "identification_type": "05",
+    "send_email_invoice": true
+  },
+  {
+    "names": "MARCO VINICIO CHUGA ESCOBAR",
+    "dni": "0400969135",
+    "email": "mvinichuga1985@hotmail.com",
+    "mobile": "0963521864",
+    "address": "CDLA. PADRE CARLOS CASA TIA SILVIA",
+    "birthdate": "2005-11-13",
+    "identification_type": "05",
+    "send_email_invoice": true
+  },
+  {
+    "names": "MARIA CRISTINA PALACIOS CRUZ",
+    "dni": "0401446737",
+    "email": "crisspy888@hotmail.com",
+    "mobile": "0996963286",
+    "address": "COLON Y 9 DE OCTUBRE",
+    "birthdate": "2002-09-09",
+    "identification_type": "05",
+    "send_email_invoice": true
+  },
+  {
+    "names": "MARIA ESTHER CHALACA RODRIGUEZ",
+    "dni": "0400591244",
+    "email": "eulerj.14@hotmail.com",
+    "mobile": "0997401347",
+    "address": "COLON Y 9 DE OCTUBRE",
+    "birthdate": "2001-04-04",
+    "identification_type": "05",
+    "send_email_invoice": true
+  },
+  {
+    "names": "MARLENE ROSALVA INVACUAN PASTAS",
+    "dni": "0401922174",
+    "email": "juanako1981@gmail.com",
+    "mobile": "0968680130",
+    "address": "CALLE BOLIVAR DEL COMERCIAL ANITA AL FRENTE PELUQUERIA",
+    "birthdate": "2001-06-15",
+    "identification_type": "05",
+    "send_email_invoice": true
+  }
+]

@@ -1,0 +1,79 @@
+{% extends 'skin.html' %}
+{% block breadcrumb %}
+{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8 mt-3">
+                <div class="card card-widget widget-user">
+                    <div class="widget-user-header bg-gradient-blue" style="height: auto;">
+                        <h3 class="widget-user-username">
+                            {{ company.company_name }}<br>
+                            {{ company.commercial_name }}<br>
+                            Ruc: {{ company.ruc }}
+                        </h3>
+                        <br>
+                        <h5 class="widget-user-desc" style="font-weight: normal;">
+                            <b>Bienvenido {{ request.user.names }}</b><br>
+                            Tu último acceso fue {{ request.user.last_login }}
+                        </h5>
+                    </div>
+                    <img class="img-fluid d-block mx-auto p-3" style="width: 100px; height: 100px;"
+                         src="{{ company.get_image }}" alt="User Avatar">
+                    <div class="card-footer">
+                        <div class="row">
+                            <div class="col-sm-6 border-right">
+                                <div class="description-block">
+                                    <i class="fas fa-phone-volume fa-3x p-3"></i>
+                                    <h5 class="description-header font-weight-bold mb-2">
+                                        Teléfono
+                                    </h5>
+                                    <span class="description-text">
+                                       {{ company.mobile }} / {{ company.phone }}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="col-sm-6">
+                                <div class="description-block">
+                                    <i class="fas fa-envelope fa-3x p-3"></i>
+                                    <h5 class="description-header font-weight-bold mb-2">
+                                        Email
+                                    </h5>
+                                    <span class="description-text">
+                                        {{ company.email }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <hr>
+                        <div class="row">
+                            <div class="col-sm-6 border-right">
+                                <div class="description-block">
+                                    <i class="fas fa-location-arrow fa-3x p-3"></i>
+                                    <h5 class="description-header font-weight-bold mb-2">
+                                        Dirección
+                                    </h5>
+                                    <span class="description-text">
+                                        {{ company.main_address }}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="col-sm-6">
+                                <div class="description-block">
+                                    <i class="fab fa-internet-explorer fa-3x p-3"></i>
+                                    <h5 class="description-header font-weight-bold mb-2">
+                                        Pagina Web
+                                    </h5>
+                                    <span class="description-text">
+                                        {{ company.website }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

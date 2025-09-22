@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <style>
+        @page {
+            size: A4 portrait;
+            margin: 0 auto;
+            padding: 10px 25px 0 25px;
+        }
+
+        @page {
+            @top-center {
+                content: element(header);
+            }
+        }
+
+        body {
+            position: relative;
+            width: 100%;
+            min-height: 28.5cm;
+            margin: 0 auto;
+            background: #FFFFFF;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 14px;
+            padding: 0 !important;
+        }
+
+        .logo {
+            float: left;
+            margin-top: 8px;
+            height: 100px;
+        }
+
+        .text-content {
+            font-weight: normal !important;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .invoice-details {
+            width: 100%;
+            border-collapse: collapse;
+            border-spacing: 0;
+            margin-bottom: 5px;
+        }
+
+        .invoice-details thead {
+            display: table-row-group;
+        }
+
+        .invoice-details thead tr th {
+            padding: 5px;
+            background: #000000;
+            text-align: center;
+            border: 1px solid #000000;
+            color: white;
+        }
+
+        .invoice-details tbody tr td {
+            padding: 5px;
+            color: black;
+            border: 1px solid #000000;
+        }
+
+        .text-center {
+            text-align: center !important;
+        }
+
+        .text-right {
+            text-align: right !important;
+        }
+
+        .text-left {
+            text-align: left !important;
+        }
+    </style>
+</head>
+<body>
+<main>
+    <table style="width: 100%;">
+        <thead>
+        <tr>
+            <th style="width: 40%;">
+                <img alt="" src="{{ quotation.company.base64_image }}" class="img-fluid d-block mx-auto logo">
+            </th>
+            <th style="width: 60%;">
+                <p class="text-content text-right">
+                    <b style="font-size: 25px;">PROFORMA {{ quotation.formatted_number }}</b><br>
+                    {{ quotation.company.company_name }}<br>
+                    {{ quotation.company.main_address }}<br>
+                    Ruc: {{ quotation.company.ruc }}<br>
+                    Celular: +593 {{ quotation.company.mobile }}<br>
+                    Teléfono: {{ quotation.company.phone }}<br>
+                    Web: {{ quotation.company.website }}<br>
+                    {{ quotation.company.email }}
+                </p>
+            </th>
+        </tr>
+        </thead>
+    </table>
+    <table style="width: 100%;">
+        <thead>
+        <tr>
+            <th style="width: 50%;">
+                <p class="text-content text-left">
+                    <b>Cliente:</b> {{ quotation.customer.user.names }}<br>
+                    <b>Número de identificación:</b> {{ quotation.customer.dni }}<br>
+                    <b>Teléfono:</b> {{ quotation.customer.mobile }}<br>
+                    <b>Dirección:</b> {{ quotation.customer.address }}<br>
+                </p>
+            </th>
+            <th style="width: 50%;">
+                <p class="text-content text-right">
+                    <b>Empleado:</b> {{ quotation.employee.username }}<br>
+                    <b>Validez:</b> 15 días<br>
+                    <b>Fecha de registro:</b> {{ quotation.date_joined|date:'c' }}<br>
+                    <b>Total a pagar:</b> ${{ quotation.total_amount|floatformat:2 }}
+                </p>
+            </th>
+        </tr>
+        </thead>
+    </table>
+    <table border="0" cellspacing="0" cellpadding="0" class="invoice-details">
+        <thead>
+        <tr>
+            <th>CANTIDAD</th>
+            <th>PRODUCTO</th>
+            <th>P.UNITARIO</th>
+            <th>DESCUENTO</th>
+            <th>SUBTOTAL</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for detail in quotation.quotationdetail_set.all %}
+            <tr>
+                <td class="text-center">{{ detail.quantity }}</td>
+                <td>{{ detail.product.name }}</td>
+                <td class="text-center">{{ detail.price|floatformat:2 }}</td>
+                <td class="text-center">{{ detail.total_discount|floatformat:2 }}</td>
+                <td class="text-center">{{ detail.total_amount|floatformat:2 }}</td>
+            </tr>
+        {% endfor %}
+        <tr>
+            <td colspan="4" class="text-right"><b>Subtotal sin impuestos</b></td>
+            <td class="text-center">{{ quotation.subtotal_without_taxes|floatformat:2 }}</td>
+        </tr>
+        <tr>
+            <td colspan="4" class="text-right"><b>Descuentos</b></td>
+            <td class="text-center">{{ quotation.total_discount|floatformat:2 }}</td>
+        </tr>
+        <tr>
+            <td colspan="4" class="text-right"><b>Subtotal {{ quotation.tax_rate }}%</b></td>
+            <td class="text-center">{{ quotation.subtotal_with_tax|floatformat:2 }}</td>
+        </tr>
+        <tr>
+            <td colspan="4" class="text-right"><b>Subtotal 0%</b></td>
+            <td class="text-center">{{ quotation.subtotal_without_tax|floatformat:2 }}</td>
+        </tr>
+        <tr>
+            <td colspan="4" class="text-right"><b>IVA {{ quotation.tax_rate|floatformat:2 }}%</b></td>
+            <td class="text-center">{{ quotation.total_tax|floatformat:2 }}</td>
+        </tr>
+        <tr>
+            <td colspan="4" class="text-right"><b>Total a pagar</b></td>
+            <td class="text-center">{{ quotation.total_amount|floatformat:2 }}</td>
+        </tr>
+        </tbody>
+    </table>
+    <br>
+</main>
+</body>
+</html>

@@ -1,0 +1,22 @@
+[
+  {
+    "name": "Seguridad",
+    "icon": "fas fa-lock"
+  },
+  {
+    "name": "Bodega",
+    "icon": "fas fa-boxes"
+  },
+  {
+    "name": "Administrativo",
+    "icon": "fas fa-hand-holding-usd"
+  },
+  {
+    "name": "Facturación",
+    "icon": "fas fa-calculator"
+  },
+  {
+    "name": "Reportes",
+    "icon": "fas fa-chart-pie"
+  }
+]
