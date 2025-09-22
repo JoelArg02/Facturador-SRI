@@ -11,6 +11,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from io import BytesIO
 from xml.etree import ElementTree
+from email.utils import formataddr
 
 import barcode
 from barcode import writer
@@ -781,38 +782,144 @@ class ElecBillingBase(TransactionSummary):
     def get_client_from_model(self):
         return self.customer if isinstance(self, Invoice) else self.invoice.customer if isinstance(self, CreditNote) else None
 
+
+#envio facturas
     def send_invoice_files_to_customer(self):
         response = {'resp': True}
         try:
             customer = self.get_client_from_model()
+
             message = MIMEMultipart('alternative')
-            message['Subject'] = f'Notificación de {self.receipt.name} {self.receipt_number_full}'
-            message['From'] = self.company.email_host_user
+            message['Subject'] = f'Factura electrónica – {self.receipt_number_full}'
+            message['From'] = formataddr(("OptimusPos Facturación", settings.EMAIL_HOST_USER))
             message['To'] = customer.user.email
-            content = f'Estimado(a)\n\n{customer.user.names.upper()}\n\n'
-            content += f'{self.company.commercial_name} informa sobre documento electrónico emitido adjunto en formato XML Y PDF.\n\n'
-            content += f'DOCUMENTO: {self.receipt.name} {self.receipt_number_full}\n'
-            content += f"FECHA: {self.formatted_date_joined()}\n"
-            content += f'MONTO: {str(float(round(self.total_amount, 2)))}\n'
-            content += f'CÓDIGO DE ACCESO: {self.access_code}\n'
-            content += f'AUTORIZACIÓN: {self.access_code}'
-            part = MIMEText(content)
-            message.attach(part)
+
+            # --------- HTML Responsive ------------
+            html_content = f"""
+            <!DOCTYPE html>
+            <html>
+            <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <style>
+                body {{
+                margin:0;
+                padding:0;
+                background:#f6f8fa;
+                font-family:'Segoe UI',Roboto,Arial,sans-serif;
+                color:#333;
+                }}
+                .container {{
+                max-width:600px;
+                margin:20px auto;
+                background:#ffffff;
+                border-radius:12px;
+                box-shadow:0 4px 12px rgba(0,0,0,0.1);
+                overflow:hidden;
+                }}
+                .header {{
+                background:linear-gradient(135deg,#4e73df,#2e59d9);
+                color:#fff;
+                text-align:center;
+                padding:30px 20px;
+                }}
+                .header h1 {{
+                margin:0;
+                font-size:28px;
+                letter-spacing:0.5px;
+                }}
+                .content {{
+                padding:25px 20px;
+                }}
+                .content h2 {{
+                margin-top:0;
+                color:#2e59d9;
+                }}
+                .info-table {{
+                width:100%;
+                border-collapse:collapse;
+                margin:20px 0;
+                }}
+                .info-table td {{
+                padding:10px;
+                border-top:1px solid #e1e4e8;
+                }}
+                .btn {{
+                display:inline-block;
+                margin-top:20px;
+                background:#2e59d9;
+                color:#fff !important;
+                text-decoration:none;
+                padding:12px 24px;
+                border-radius:6px;
+                font-weight:600;
+                }}
+                .footer {{
+                text-align:center;
+                padding:20px;
+                font-size:12px;
+                color:#888;
+                }}
+                @media screen and (max-width: 600px) {{
+                .header h1 {{ font-size:24px; }}
+                .content h2 {{ font-size:20px; }}
+                }}
+            </style>
+            </head>
+            <body>
+            <div class="container">
+                <div class="header">
+                <h1>OptimusPos Facturación</h1>
+                </div>
+                <div class="content">
+                <h2>Hola {customer.user.names.title()}</h2>
+                <p>
+                    Gracias por confiar en <strong>{self.company.commercial_name}</strong>. 
+                    Adjuntamos su documento electrónico en formato <strong>PDF</strong> y <strong>XML</strong>.
+                </p>
+                <table class="info-table">
+                    <tr><td><strong>Documento:</strong></td><td>{self.receipt.name} {self.receipt_number_full}</td></tr>
+                    <tr><td><strong>Fecha:</strong></td><td>{self.formatted_date_joined()}</td></tr>
+                    <tr><td><strong>Monto:</strong></td><td>${float(round(self.total_amount, 2))}</td></tr>
+                    <tr><td><strong>Código de acceso:</strong></td><td>{self.access_code}</td></tr>
+                    <tr><td><strong>Autorización:</strong></td><td>{self.access_code}</td></tr>
+                </table>
+                <p>
+                    Puede descargar los archivos directamente desde este correo o desde su cuenta en nuestro sistema.
+                </p>
+                
+                </div>
+                <div class="footer">
+                © {self.company.commercial_name} – Todos los derechos reservados
+                </div>
+            </div>
+            </body>
+            </html>
+            """
+            message.attach(MIMEText(html_content, 'html'))
+
+            # -------- Adjuntar archivos --------
             pdf_file = self.create_invoice_pdf()
-            part = MIMEApplication(pdf_file, _subtype='pdf')
-            part.add_header('Content-Disposition', 'attachment', filename=f'{self.access_code}.pdf')
-            message.attach(part)
-            with open(f'{settings.BASE_DIR}{self.get_authorized_xml()}', 'rb') as file:
-                part = MIMEApplication(file.read())
-                part.add_header('Content-Disposition', 'attachment', filename=f'{self.access_code}.xml')
-                message.attach(part)
-            server = smtplib.SMTP(self.company.email_host, self.company.email_port)
+            pdf_part = MIMEApplication(pdf_file, _subtype='pdf')
+            pdf_part.add_header('Content-Disposition', 'attachment',
+                                filename=f'{self.access_code}.pdf')
+            message.attach(pdf_part)
+
+            with open(f'{settings.BASE_DIR}{self.get_authorized_xml()}', 'rb') as f:
+                xml_part = MIMEApplication(f.read())
+                xml_part.add_header('Content-Disposition', 'attachment',
+                                    filename=f'{self.access_code}.xml')
+                message.attach(xml_part)
+
+            # -------- Envío --------
+            server = smtplib.SMTP(settings.EMAIL_HOST, settings.EMAIL_PORT)
             server.starttls()
-            server.login(self.company.email_host_user, self.company.email_host_password)
-            server.sendmail(self.company.email_host_user, message['To'], message.as_string())
+            server.login(settings.EMAIL_HOST_USER, settings.EMAIL_HOST_PASSWORD)
+            server.sendmail(settings.EMAIL_HOST_USER, [customer.user.email], message.as_string())
             server.quit()
+
         except Exception as e:
-            response = {'resp': False, 'error': str(str(e))}
+            response = {'resp': False, 'error': str(e)}
         return response
 
     def receipt_number_is_null(self):
@@ -1324,26 +1431,47 @@ class Quotation(TransactionSummary):
         return not self.quotationdetail_set.filter(product__is_inventoried=True, product__stock__lt=F('quantity')).exists()
 
     def send_quotation_by_email(self):
-        company = Company.objects.first()
-        message = MIMEMultipart('alternative')
-        message['Subject'] = f'Proforma {self.formatted_number} - {self.customer.get_full_name()}'
-        message['From'] = settings.EMAIL_HOST
-        message['To'] = self.customer.user.email
-        content = f'Estimado(a)\n\n{self.customer.user.names.upper()}\n\n'
-        content += f'La cotización solicitada ha sido enviada a su correo electrónico para su revisión.\n\n'
-        part = MIMEText(content)
-        message.attach(part)
-        context = {'quotation': self}
-        pdf_creator = PDFCreator(template_name='quotation/invoice_pdf.html')
-        pdf_file = pdf_creator.create(context=context)
-        part = MIMEApplication(pdf_file, _subtype='pdf')
-        part.add_header('Content-Disposition', 'attachment', filename=f'{self.formatted_number}.pdf')
-        message.attach(part)
-        server = smtplib.SMTP(company.email_host, company.email_port)
-        server.starttls()
-        server.login(company.email_host_user, company.email_host_password)
-        server.sendmail(company.email_host_user, message['To'], message.as_string())
-        server.quit()
+        try:
+            print(f"🔍 Iniciando envío de proforma por email...")
+            print(f"   - Servidor SMTP: {settings.EMAIL_HOST}:{settings.EMAIL_PORT}")
+            print(f"   - Usuario SMTP: {settings.EMAIL_HOST_USER}")
+            
+            company = Company.objects.first()
+            message = MIMEMultipart('alternative')
+            message['Subject'] = f'Proforma {self.formatted_number} - {self.customer.get_full_name()}'
+            message['From'] = settings.EMAIL_HOST_USER  # Usar variable de entorno
+            message['To'] = self.customer.user.email
+            
+            print(f"   - Destinatario: {self.customer.user.email}")
+            
+            content = f'Estimado(a)\n\n{self.customer.user.names.upper()}\n\n'
+            content += f'La cotización solicitada ha sido enviada a su correo electrónico para su revisión.\n\n'
+            part = MIMEText(content)
+            message.attach(part)
+            
+            print(f"   - Generando PDF...")
+            context = {'quotation': self}
+            pdf_creator = PDFCreator(template_name='quotation/invoice_pdf.html')
+            pdf_file = pdf_creator.create(context=context)
+            part = MIMEApplication(pdf_file, _subtype='pdf')
+            part.add_header('Content-Disposition', 'attachment', filename=f'{self.formatted_number}.pdf')
+            message.attach(part)
+            
+            print(f"   - Conectando al servidor SMTP...")
+            server = smtplib.SMTP(settings.EMAIL_HOST, settings.EMAIL_PORT)  # Usar variables de entorno
+            server.starttls()
+            server.login(settings.EMAIL_HOST_USER, settings.EMAIL_HOST_PASSWORD)  # Usar variables de entorno
+            server.sendmail(settings.EMAIL_HOST_USER, message['To'], message.as_string())
+            server.quit()
+            
+            print(f"✅ Email enviado exitosamente a: {message['To']}")
+            
+        except Exception as e:
+            print(f"❌ ERROR enviando email de proforma: {str(e)}")
+            print(f"   - Configuración SMTP: {settings.EMAIL_HOST}:{settings.EMAIL_PORT}")
+            print(f"   - Usuario: {settings.EMAIL_HOST_USER}")
+            print(f"   - Destinatario: {self.customer.user.email}")
+            raise e
 
     def calculate_detail(self):
         for detail in self.quotationdetail_set.filter():
