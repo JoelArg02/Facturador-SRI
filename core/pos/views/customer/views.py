@@ -1,4 +1,9 @@
 import json
+import secrets
+import string
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 
 from django.contrib.auth.models import Group
 from django.db import transaction
@@ -52,6 +57,54 @@ class CustomerCreateView(GroupPermissionMixin, CreateView):
             form = CustomerUserForm(self.request.POST, self.request.FILES)
         return form
 
+    def generate_password(self, length=10):
+        alphabet = string.ascii_letters + string.digits
+        return ''.join(secrets.choice(alphabet) for _ in range(length))
+
+
+    def send_credentials_email(self, user, raw_password):
+        if not user.email:
+            print("⚠️ Usuario sin email, no se enviará nada.")
+            return
+        try:
+            print("📧 Preparando mensaje de credenciales...")
+
+            message = MIMEMultipart('alternative')
+            message['Subject'] = 'Credenciales de acceso'
+            message['From'] = settings.EMAIL_HOST_USER
+            message['To'] = user.email
+
+            content = (
+                f"Hola {user.names},\n\n"
+                f"Se ha creado su cuenta para acceder al portal de facturación.\n\n"
+                f"Usuario: {user.username}\n"
+                f"Contraseña: {raw_password}\n"
+                f"URL: {getattr(settings, 'SITE_URL', '')}\n\n"
+                f"Por favor cambie su contraseña después de iniciar sesión."
+            )
+            part = MIMEText(content)
+            message.attach(part)
+            print("✅ Mensaje preparado.")
+
+            # Conexión directa por SSL en puerto 465
+            print("➡️ Conectando con SMTP SSL en el puerto 465 ...")
+            server = smtplib.SMTP_SSL(settings.EMAIL_HOST, 465)
+
+            print(f"🔑 Iniciando sesión SMTP con usuario {settings.EMAIL_HOST_USER} ...")
+            server.login(settings.EMAIL_HOST_USER, settings.EMAIL_HOST_PASSWORD)
+            print("✅ Login correcto.")
+
+            print(f"📤 Enviando email a {user.email} ...")
+            server.sendmail(settings.EMAIL_HOST_USER, [user.email], message.as_string())
+            print("✅ Email enviado correctamente.")
+
+            server.quit()
+            print("🔌 Conexión SMTP cerrada.")
+
+        except Exception as e:
+            print(f"❌ Error enviando credenciales al cliente: {e}")
+
+
     def post(self, request, *args, **kwargs):
         data = {}
         action = request.POST['action']
@@ -63,13 +116,26 @@ class CustomerCreateView(GroupPermissionMixin, CreateView):
                     if form1.is_valid() and form2.is_valid():
                         user = form1.save(commit=False)
                         user.username = form2.cleaned_data['dni']
-                        user.set_password(user.username)
+                        raw_password = self.generate_password()
+                        user.set_password(raw_password)
+                        user.is_superuser = False
+                        user.is_staff = False
                         user.save()
-                        user.groups.add(Group.objects.get(pk=settings.GROUPS['customer']))
+                        # Asignar grupo cliente de forma segura
+                        try:
+                            group_id = settings.GROUPS.get('customer')
+                            if group_id:
+                                cust_group = Group.objects.filter(pk=group_id).first()
+                                if cust_group:
+                                    user.groups.add(cust_group)
+                        except Exception as e:
+                            print(f"No se pudo asignar el grupo cliente: {e}")
                         form_customer = form2.save(commit=False)
                         form_customer.user = user
                         form_customer.save()
                         data = form_customer.as_dict()
+                        # Enviar email con credenciales
+                        self.send_credentials_email(user, raw_password)
                     else:
                         if not form1.is_valid():
                             data['error'] = form1.errors
@@ -125,6 +191,9 @@ class CustomerUpdateView(GroupPermissionMixin, UpdateView):
                     form2 = self.get_form()
                     if form1.is_valid() and form2.is_valid():
                         user = form1.save(commit=False)
+                        # Asegurar que no se eleve privilegios por edición
+                        user.is_superuser = False
+                        user.is_staff = False
                         user.save()
                         form_customer = form2.save(commit=False)
                         form_customer.user = user
