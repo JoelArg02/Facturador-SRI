@@ -82,8 +82,8 @@
                             <td>${o.expired ? '<span class="badge badge-danger">Sí</span>' : '<span class="badge badge-success">No</span>'}</td>
                             <td>${o.days_left ?? ''}</td>
                             <td class="text-center">
-                                <a href="/subscription/update/${o.id}/" class="btn btn-warning btn-xs"><i class="fas fa-edit"></i></a>
-                                <button class="btn btn-danger btn-xs btn-delete" data-id="${o.id}"><i class="fas fa-trash"></i></button>
+                                <button class="btn btn-warning btn-xs btn-update" data-id="${o.id}" title="Actualizar suscripción"><i class="fas fa-edit"></i></button>
+                                <button class="btn btn-danger btn-xs btn-delete" data-id="${o.id}" title="Eliminar suscripción"><i class="fas fa-trash"></i></button>
                             </td>
                         </tr>`);
                     });
@@ -109,6 +109,270 @@
                 }
             });
         });
+        
+        // Manejar clic en botón de actualización
+        $('table').on('click', '.btn-update', function(){
+            const id = $(this).data('id');
+            openUpdateModal(id);
+        });
     });
+    
+    function openUpdateModal(subscriptionId) {
+        console.log('Abriendo modal para suscripción:', subscriptionId);
+        
+        // Obtener datos de la suscripción
+        $.ajax({
+            url: `/subscription/update/${subscriptionId}/`,
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            dataType: 'json',
+            success: function(resp) {
+                console.log('Respuesta del servidor:', resp);
+                
+                if(resp.error) {
+                    alert(resp.error);
+                    return;
+                }
+                
+                // Llenar el modal con los datos
+                const modal = $('#updateSubscriptionModal');
+                const subscription = resp.subscription;
+                const plans = resp.available_plans;
+                
+                console.log('Subscription data:', subscription);
+                console.log('Available plans:', plans);
+                
+                // Verificar que tenemos los datos necesarios
+                if (!subscription) {
+                    console.error('No se recibieron datos de suscripción');
+                    alert('Error: No se pudieron cargar los datos de la suscripción');
+                    return;
+                }
+                
+                if (!subscription.plan) {
+                    console.error('No se recibieron datos del plan en la suscripción');
+                    alert('Error: No se pudieron cargar los datos del plan');
+                    return;
+                }
+                
+                // Información de la suscripción actual
+                const planName = subscription.plan.name || 'Plan desconocido';
+                const isActive = subscription.is_active;
+                const daysLeft = subscription.days_left || 'N/A';
+                
+                modal.find('.current-subscription-info').html(`
+                    <strong>Suscripción actual:</strong><br>
+                    <span class="badge badge-info">${planName}</span><br>
+                    <small class="text-muted">
+                        Estado: ${isActive ? '<span class="text-success">Activa</span>' : '<span class="text-danger">Inactiva</span>'}<br>
+                        Días restantes: ${daysLeft}
+                    </small>
+                `);
+                
+                // Llenar selector de planes
+                const planSelect = modal.find('#new_plan_id');
+                planSelect.empty().append('<option value="">Seleccionar nuevo plan...</option>');
+                
+                if (plans && Array.isArray(plans)) {
+                    plans.forEach(plan => {
+                        if(plan.id && plan.id !== subscription.plan.id) {
+                            const planPrice = plan.price || '0';
+                            const planPeriod = plan.period_days || '0';
+                            planSelect.append(`<option value="${plan.id}">${plan.name} - $${planPrice}/${planPeriod} días</option>`);
+                        }
+                    });
+                } else {
+                    console.error('No se recibieron planes disponibles o no es un array:', plans);
+                }
+                
+                // Configurar botones de acción
+                modal.find('.btn-change-plan').data('id', subscriptionId);
+                modal.find('.btn-suspend').data('id', subscriptionId);
+                modal.find('.btn-reactivate').data('id', subscriptionId);
+                
+                // Mostrar/ocultar botones según estado
+                if(isActive) {
+                    modal.find('.btn-suspend').show();
+                    modal.find('.btn-reactivate').hide();
+                } else {
+                    modal.find('.btn-suspend').hide();
+                    modal.find('.btn-reactivate').show();
+                }
+                
+                console.log('Modal encontrado:', modal.length);
+                
+                if (modal.length === 0) {
+                    console.error('Modal no encontrado en el DOM');
+                    alert('Error: Modal no encontrado');
+                    return;
+                }
+                
+                console.log('Intentando mostrar modal...');
+                
+                // Verificar si Bootstrap está disponible
+                if (typeof $.fn.modal === 'undefined') {
+                    console.error('Bootstrap modal no está disponible');
+                    alert('Error: Bootstrap no está cargado correctamente');
+                    return;
+                }
+                
+                // Mostrar modal
+                modal.modal('show');
+                
+                console.log('Modal debería estar visible ahora');
+            },
+            error: function(xhr, status, error) {
+                console.error('Error en AJAX:', {xhr: xhr, status: status, error: error});
+                console.error('Response text:', xhr.responseText);
+                alert('Error al cargar datos de la suscripción: ' + error);
+            }
+        });
+    }
+    
+    function updateSubscription(subscriptionId, action, data = {}) {
+        const postData = {
+            action: action,
+            csrfmiddlewaretoken: '{{ csrf_token }}'
+        };
+        
+        // Agregar datos específicos según la acción
+        Object.assign(postData, data);
+        
+        $.ajax({
+            url: `/subscription/update/${subscriptionId}/`,
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            data: postData,
+            dataType: 'json',
+            success: function(resp) {
+                if(resp.error) {
+                    alert(resp.error);
+                } else {
+                    alert(resp.success);
+                    $('#updateSubscriptionModal').modal('hide');
+                    loadSubs(); // Recargar la tabla
+                }
+            },
+            error: function() {
+                alert('Error al actualizar la suscripción');
+            }
+        });
+    }
 </script>
 {% endblock %}
+
+<!-- Modal de actualización de suscripción -->
+<div class="modal fade" id="updateSubscriptionModal" tabindex="-1" role="dialog" aria-labelledby="updateSubscriptionModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="updateSubscriptionModalLabel">
+                    <i class="fas fa-edit"></i> Actualizar Suscripción
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="card-title mb-0">Información Actual</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="current-subscription-info">
+                                    <!-- Se llena dinámicamente -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="card-title mb-0">Cambiar Plan</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="form-group">
+                                    <label for="new_plan_id">Nuevo Plan:</label>
+                                    <select class="form-control" id="new_plan_id">
+                                        <option value="">Seleccionar nuevo plan...</option>
+                                    </select>
+                                </div>
+                                <button type="button" class="btn btn-primary btn-change-plan btn-block">
+                                    <i class="fas fa-exchange-alt"></i> Cambiar Plan
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="card-title mb-0">Acciones de Suscripción</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="btn-group btn-group-toggle w-100" data-toggle="buttons">
+                                    <button type="button" class="btn btn-warning btn-suspend">
+                                        <i class="fas fa-pause"></i> Suspender Suscripción
+                                    </button>
+                                    <button type="button" class="btn btn-success btn-reactivate" style="display: none;">
+                                        <i class="fas fa-play"></i> Reactivar Suscripción
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                    <i class="fas fa-times"></i> Cancelar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+$(document).ready(function() {
+    // Manejar cambio de plan
+    $('#updateSubscriptionModal').on('click', '.btn-change-plan', function() {
+        const subscriptionId = $(this).data('id');
+        const newPlanId = $('#new_plan_id').val();
+        
+        if(!newPlanId) {
+            alert('Por favor selecciona un nuevo plan');
+            return;
+        }
+        
+        if(confirm('¿Estás seguro de cambiar el plan de esta suscripción?')) {
+            updateSubscription(subscriptionId, 'change_plan', {new_plan_id: newPlanId});
+        }
+    });
+    
+    // Manejar suspensión
+    $('#updateSubscriptionModal').on('click', '.btn-suspend', function() {
+        const subscriptionId = $(this).data('id');
+        
+        if(confirm('¿Estás seguro de suspender esta suscripción?')) {
+            updateSubscription(subscriptionId, 'suspend');
+        }
+    });
+    
+    // Manejar reactivación
+    $('#updateSubscriptionModal').on('click', '.btn-reactivate', function() {
+        const subscriptionId = $(this).data('id');
+        
+        if(confirm('¿Estás seguro de reactivar esta suscripción?')) {
+            updateSubscription(subscriptionId, 'reactivate');
+        }
+    });
+});
+</script>

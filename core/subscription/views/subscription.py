@@ -1,10 +1,12 @@
 import json
 import smtplib
+from datetime import date, timedelta
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
 from django.http import HttpResponse, HttpResponseForbidden, HttpResponseRedirect
 from django.urls import reverse_lazy
+from django.utils import timezone
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView, TemplateView, View
 from django.contrib.auth import logout
 from django.conf import settings
@@ -14,6 +16,34 @@ from core.subscription.models import Subscription, Plan
 from core.subscription.repositories.plan_repository import PlanRepository
 from core.security.mixins import GroupPermissionMixin
 from core.subscription.services import count_for
+
+
+def send_subscription_email(user, subscription):
+    """Función auxiliar para envío de emails (implementar según necesidades)"""
+    # TODO: Implementar envío de email
+    pass
+
+
+def get_usage(company, plan):
+    """Función auxiliar para obtener uso actual del plan"""
+    if not company:
+        return {}
+    
+    # Obtener conteos usando el servicio existente
+    usage = {
+        'invoices': count_for(company, 'invoice'),
+        'clients': count_for(company, 'client'),
+        'products': count_for(company, 'product'),
+        'employees': count_for(company, 'employee'),
+    }
+    
+    # Agregar límites del plan si están definidos
+    if hasattr(plan, 'max_invoices'):
+        usage['max_invoices'] = plan.max_invoices
+    if hasattr(plan, 'max_clients'):
+        usage['max_clients'] = plan.max_clients
+    
+    return usage
 
 
 def get_all_subscriptions():
@@ -368,13 +398,94 @@ class SubscriptionUpdateView(GroupPermissionMixin, UpdateView):
             return HttpResponseForbidden('Solo el super administrador puede editar suscripciones.')
         return super().dispatch(request, *args, **kwargs)
 
+    def get(self, request, *args, **kwargs):
+        # Si es petición AJAX para modal, devolver datos de la suscripción
+        # Detectar AJAX por cabecera o Accept header
+        is_ajax = (
+            request.headers.get('X-Requested-With') == 'XMLHttpRequest' or 
+            'application/json' in request.headers.get('Accept', '') or
+            request.GET.get('format') == 'json'
+        )
+        if is_ajax:
+            subscription = self.get_object()
+            available_plans = PlanRepository.get_plans_for_update(subscription.plan_id)
+            
+            data = {
+                'subscription': {
+                    'id': subscription.id,
+                    'user_name': subscription.user.get_full_name() or subscription.user.username,
+                    'plan': {
+                        'id': subscription.plan.id,
+                        'name': subscription.plan.name,
+                        'price': float(subscription.plan.price)
+                    },
+                    'is_active': subscription.is_active,
+                    'start_date': subscription.start_date.isoformat(),
+                    'end_date': subscription.end_date.isoformat() if subscription.end_date else None,
+                    'expired': subscription.expired,
+                    'days_left': subscription.days_left
+                },
+                'available_plans': [
+                    {
+                        'id': plan.id,
+                        'name': plan.name,
+                        'price': float(plan.price),
+                        'max_invoices': plan.max_invoices,
+                        'max_customers': plan.max_customers,
+                        'max_products': plan.max_products,
+                        'period_days': plan.period_days
+                    }
+                    for plan in available_plans
+                ]
+            }
+            return HttpResponse(json.dumps(data, default=str), content_type='application/json')
+        
+        return super().get(request, *args, **kwargs)
+
     def post(self, request, *args, **kwargs):
         data = {}
         action = request.POST.get('action')
         try:
             if not request.user.is_superuser:
                 return HttpResponseForbidden(json.dumps({'error': 'Acceso restringido a super administradores.'}), content_type='application/json')
-            if action == 'edit':
+            
+            subscription = self.get_object()
+            
+            if action == 'change_plan':
+                new_plan_id = request.POST.get('new_plan_id')
+                new_plan = PlanRepository.get_plan_by_id(new_plan_id)
+                
+                if not new_plan:
+                    data['error'] = 'Plan no encontrado o inactivo'
+                else:
+                    old_plan_name = subscription.plan.name
+                    subscription.plan = new_plan
+                    # Recalcular fecha de fin basada en el nuevo plan
+                    if subscription.start_date:
+                        subscription.end_date = subscription.start_date + timedelta(days=new_plan.period_days)
+                    subscription.save()
+                    
+                    data['success'] = f'Plan cambiado de {old_plan_name} a {new_plan.name}'
+                    data['subscription'] = self._serialize_subscription(subscription)
+                    
+            elif action == 'suspend':
+                subscription.is_active = False
+                subscription.canceled_at = timezone.now()
+                subscription.save()
+                
+                data['success'] = 'Suscripción suspendida correctamente'
+                data['subscription'] = self._serialize_subscription(subscription)
+                
+            elif action == 'reactivate':
+                subscription.is_active = True
+                subscription.canceled_at = None
+                subscription.save()
+                
+                data['success'] = 'Suscripción reactivada correctamente'
+                data['subscription'] = self._serialize_subscription(subscription)
+                
+            elif action == 'edit':
+                # Comportamiento original para edición completa
                 old_instance = self.get_object()
                 was_active = old_instance.is_active
                 form = self.get_form()
@@ -384,36 +495,8 @@ class SubscriptionUpdateView(GroupPermissionMixin, UpdateView):
                     if obj.is_active and not was_active:
                         send_subscription_email(obj.user, obj)
                     
-                    # Serializar objeto para respuesta
-                    company = obj.company
-                    admin_name = obj.user.get_full_name() or obj.user.username
-                    admin_groups = ', '.join([g.name for g in obj.user.groups.all()[:2]])
-                    serialized_obj = {
-                        'id': obj.id,
-                        'owner': {
-                            'id': obj.user_id,
-                            'name': admin_name,
-                            'username': obj.user.username,
-                            'email': getattr(obj.user, 'email', ''),
-                            'groups': admin_groups,
-                        },
-                        'company': {
-                            'id': getattr(company, 'id', None),
-                            'name': getattr(company, 'commercial_name', 'Sin asignar'),
-                            'ruc': getattr(company, 'ruc', ''),
-                        },
-                        'plan': {
-                            'id': obj.plan_id,
-                            'name': obj.plan.name,
-                        },
-                        'usage': get_usage(company, obj.plan),
-                        'start_date': obj.start_date.isoformat(),
-                        'end_date': obj.end_date.isoformat() if obj.end_date else None,
-                        'is_active': obj.is_active,
-                        'expired': obj.expired,
-                        'days_left': obj.days_left,
-                    }
-                    data = {'id': obj.id, 'object': serialized_obj}
+                    data['success'] = 'Suscripción actualizada correctamente'
+                    data['subscription'] = self._serialize_subscription(obj)
                 else:
                     data['error'] = form.errors
             else:
@@ -421,6 +504,37 @@ class SubscriptionUpdateView(GroupPermissionMixin, UpdateView):
         except Exception as e:
             data['error'] = str(e)
         return HttpResponse(json.dumps(data, default=str), content_type='application/json')
+    
+    def _serialize_subscription(self, subscription):
+        """Helper para serializar una suscripción"""
+        company = subscription.company
+        admin_name = subscription.user.get_full_name() or subscription.user.username
+        admin_groups = ', '.join([g.name for g in subscription.user.groups.all()[:2]])
+        return {
+            'id': subscription.id,
+            'owner': {
+                'id': subscription.user_id,
+                'name': admin_name,
+                'username': subscription.user.username,
+                'email': getattr(subscription.user, 'email', ''),
+                'groups': admin_groups,
+            },
+            'company': {
+                'id': getattr(company, 'id', None),
+                'name': getattr(company, 'commercial_name', 'Sin asignar'),
+                'ruc': getattr(company, 'ruc', ''),
+            },
+            'plan': {
+                'id': subscription.plan_id,
+                'name': subscription.plan.name,
+            },
+            'usage': get_usage(company, subscription.plan),
+            'start_date': subscription.start_date.isoformat(),
+            'end_date': subscription.end_date.isoformat() if subscription.end_date else None,
+            'is_active': subscription.is_active,
+            'expired': subscription.expired,
+            'days_left': subscription.days_left,
+        }
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
