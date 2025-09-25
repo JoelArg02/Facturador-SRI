@@ -484,6 +484,30 @@ class SubscriptionUpdateView(GroupPermissionMixin, UpdateView):
                 data['success'] = 'Suscripción reactivada correctamente'
                 data['subscription'] = self._serialize_subscription(subscription)
                 
+            elif action == 'extend':
+                extend_date = request.POST.get('extend_date')
+                if not extend_date:
+                    data['error'] = 'Fecha de extensión requerida'
+                else:
+                    try:
+                        # Convertir la fecha string a objeto date
+                        from datetime import datetime
+                        new_end_date = datetime.strptime(extend_date, '%Y-%m-%d').date()
+                        
+                        # Validar que la nueva fecha sea posterior a la actual
+                        if subscription.end_date and new_end_date <= subscription.end_date:
+                            data['error'] = 'La nueva fecha debe ser posterior a la fecha actual de fin'
+                        else:
+                            old_end_date = subscription.end_date
+                            subscription.end_date = new_end_date
+                            subscription.save()
+                            
+                            old_date_str = old_end_date.strftime('%Y-%m-%d') if old_end_date else 'Sin fecha'
+                            data['success'] = f'Suscripción extendida de {old_date_str} a {extend_date}'
+                            data['subscription'] = self._serialize_subscription(subscription)
+                    except ValueError:
+                        data['error'] = 'Formato de fecha inválido'
+                
             elif action == 'edit':
                 # Comportamiento original para edición completa
                 old_instance = self.get_object()

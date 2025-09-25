@@ -132,6 +132,16 @@
                 $modal.find('.btn-change-plan').data('id', subscriptionId);
                 $modal.find('.btn-suspend').data('id', subscriptionId);
                 $modal.find('.btn-reactivate').data('id', subscriptionId);
+                $modal.find('.btn-extend').data('id', subscriptionId);
+
+                // Configurar fecha mínima (hoy)
+                const today = new Date().toISOString().split('T')[0];
+                $modal.find('#extend_date').attr('min', today);
+                
+                // Si hay fecha de fin, usarla como valor por defecto
+                if(subscription.end_date) {
+                    $modal.find('#extend_date').val(subscription.end_date);
+                }
 
                 if(isActive) {
                     $modal.find('.btn-suspend').show();
@@ -222,6 +232,15 @@
                 updateSubscription(subscriptionId, 'reactivate');
             }
         });
+
+        $('#updateSubscriptionModal').on('click', '.btn-extend', function() {
+            const subscriptionId = $(this).data('id');
+            const extendDate = $('#extend_date').val();
+            if(!extendDate) { alert('Por favor selecciona una fecha'); return; }
+            if(confirm(`¿Estás seguro de extender la suscripción hasta ${extendDate}?`)) {
+                updateSubscription(subscriptionId, 'extend', { extend_date: extendDate });
+            }
+        });
     });
 </script>
 
@@ -265,7 +284,21 @@
                     </div>
                 </div>
                 <div class="row mt-3">
-                    <div class="col-12">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="card-title mb-0">Extender Suscripción</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="form-group">
+                                    <label for="extend_date">Nueva Fecha de Fin:</label>
+                                    <input type="date" class="form-control" id="extend_date" min="">
+                                </div>
+                                <button type="button" class="btn btn-info btn-extend btn-block">Extender Suscripción</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
                         <div class="card">
                             <div class="card-header">
                                 <h6 class="card-title mb-0">Acciones de Suscripción</h6>
