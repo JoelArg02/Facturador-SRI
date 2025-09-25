@@ -69,8 +69,8 @@ class CompanyOnboardingView(GroupPermissionMixin, FormView):
     permission_required = None  # Se maneja solo por autenticación y lógica de owner
 
     def dispatch(self, request, *args, **kwargs):
-        # Si ya existe una compañía, redirigimos (evitar duplicados)
-        if Company.objects.exists():
+        # Si el usuario ya tiene una compañía asignada, redirigimos (evitar duplicados)
+        if hasattr(request.user, 'company') and request.user.company is not None:
             return redirect(self.success_url)
         return super().dispatch(request, *args, **kwargs)
 
@@ -78,6 +78,12 @@ class CompanyOnboardingView(GroupPermissionMixin, FormView):
         company = form.save(commit=False)
         company.owner = self.request.user
         company.save()
+        
+        # Asignar la compañía al usuario actual si no tiene una asignada
+        if not hasattr(self.request.user, 'company') or self.request.user.company is None:
+            self.request.user.company = company
+            self.request.user.save()
+        
         return redirect(self.success_url)
 
     def get_context_data(self, **kwargs):

@@ -1,48 +1,580 @@
 {% extends 'base.html' %}
 {% load static %}
 {% block body %}
-<div style="max-width:820px;margin:30px auto;padding:25px;background:#ffffff;box-shadow:0 2px 8px rgba(0,0,0,.08);border-radius:12px;font-size:14px;">
-  <h2 style="margin-top:0;font-weight:600;font-size:22px;color:#2c3e50;letter-spacing:.5px;text-align:center;">Configuración Inicial de la Compañía</h2>
-  <p style="text-align:center;margin:0 0 18px;color:#555;">Completa los datos básicos para comenzar a usar el sistema. Podrás editar o ampliar esta información luego.</p>
-  <form method="post" enctype="multipart/form-data" style="margin:0;">
-    {% csrf_token %}
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));grid-gap:14px;align-items:start;">
-      {% for field in form %}
-        <div style="display:flex;flex-direction:column;">
-          <label for="id_{{ field.name }}" style="font-weight:600;margin-bottom:4px;color:#34495e;font-size:12px;text-transform:uppercase;letter-spacing:.5px;">{{ field.label }}</label>
-          {{ field }}
-          {% if field.help_text %}
-            <small style="color:#888;font-size:11px;margin-top:2px;">{{ field.help_text }}</small>
-          {% endif %}
-          {% for error in field.errors %}
-            <div style="color:#e74c3c;font-size:11px;margin-top:2px;">{{ error }}</div>
-          {% endfor %}
-        </div>
-      {% endfor %}
+<div class="onboarding-container">
+  <div class="onboarding-header">
+    <h1>Configuración Inicial</h1>
+    <p>Configura tu empresa en 5 pasos simples. La información se puede editar más tarde.</p>
+  </div>
+
+  <!-- Progress Steps -->
+  <div class="progress-steps">
+    <div class="step active" data-step="1">
+      <div class="step-icon">1</div>
+      <span>Información Básica</span>
     </div>
-    {% if form.non_field_errors %}
-      <div style="background:#ffe6e6;color:#c0392b;padding:10px 14px;border-radius:6px;margin-top:16px;font-size:12px;">
-        {% for error in form.non_field_errors %}{{ error }}<br>{% endfor %}
+    <div class="step" data-step="2">
+      <div class="step-icon">2</div>
+      <span>Ubicación</span>
+    </div>
+    <div class="step" data-step="3">
+      <div class="step-icon">3</div>
+      <span>Tributario</span>
+    </div>
+    <div class="step" data-step="4">
+      <div class="step-icon">4</div>
+      <span>Contacto</span>
+    </div>
+    <div class="step" data-step="5">
+      <div class="step-icon">5</div>
+      <span>Firma Digital</span>
+    </div>
+  </div>
+
+  <form method="post" enctype="multipart/form-data" class="onboarding-form">
+    {% csrf_token %}
+    
+    <!-- Step 1: Información Básica -->
+    <div class="form-step active" data-step="1">
+      <h2><i class="fas fa-building"></i> Información Básica</h2>
+      <div class="fields-grid">
+        <div class="field-group">
+          <label for="id_ruc">{{ form.ruc.label }} <span class="required">*</span></label>
+          {{ form.ruc }}
+          {% if form.ruc.help_text %}<small>{{ form.ruc.help_text }}</small>{% endif %}
+          {% for error in form.ruc.errors %}<div class="error">{{ error }}</div>{% endfor %}
+        </div>
+        <div class="field-group">
+          <label for="id_company_name">{{ form.company_name.label }} <span class="required">*</span></label>
+          {{ form.company_name }}
+          {% if form.company_name.help_text %}<small>{{ form.company_name.help_text }}</small>{% endif %}
+          {% for error in form.company_name.errors %}<div class="error">{{ error }}</div>{% endfor %}
+        </div>
+        <div class="field-group">
+          <label for="id_commercial_name">{{ form.commercial_name.label }} <span class="required">*</span></label>
+          {{ form.commercial_name }}
+          {% if form.commercial_name.help_text %}<small>{{ form.commercial_name.help_text }}</small>{% endif %}
+          {% for error in form.commercial_name.errors %}<div class="error">{{ error }}</div>{% endfor %}
+        </div>
+        <div class="field-group">
+          <label for="id_image">{{ form.image.label }}</label>
+          {{ form.image }}
+          <small>Sube el logo de tu empresa (opcional)</small>
+          {% for error in form.image.errors %}<div class="error">{{ error }}</div>{% endfor %}
+        </div>
       </div>
+    </div>
+
+    <!-- Step 2: Ubicación -->
+    <div class="form-step" data-step="2">
+      <h2><i class="fas fa-map-marker-alt"></i> Ubicación y Códigos</h2>
+      <div class="fields-grid">
+        <div class="field-group full-width">
+          <label for="id_main_address">{{ form.main_address.label }} <span class="required">*</span></label>
+          {{ form.main_address }}
+          {% if form.main_address.help_text %}<small>{{ form.main_address.help_text }}</small>{% endif %}
+          {% for error in form.main_address.errors %}<div class="error">{{ error }}</div>{% endfor %}
+        </div>
+        <div class="field-group">
+          <label for="id_establishment_code">{{ form.establishment_code.label }} <span class="required">*</span></label>
+          {{ form.establishment_code }}
+          <small>Código de establecimiento (por defecto: 001)</small>
+          {% for error in form.establishment_code.errors %}<div class="error">{{ error }}</div>{% endfor %}
+        </div>
+        <div class="field-group">
+          <label for="id_issuing_point_code">{{ form.issuing_point_code.label }} <span class="required">*</span></label>
+          {{ form.issuing_point_code }}
+          <small>Código de punto de emisión (por defecto: 001)</small>
+          {% for error in form.issuing_point_code.errors %}<div class="error">{{ error }}</div>{% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 3: Información Tributaria -->
+    <div class="form-step" data-step="3">
+      <h2><i class="fas fa-calculator"></i> Configuración Tributaria</h2>
+      <div class="fields-grid">
+        <div class="field-group">
+          <label for="id_obligated_accounting">{{ form.obligated_accounting.label }}</label>
+          {{ form.obligated_accounting }}
+          {% for error in form.obligated_accounting.errors %}<div class="error">{{ error }}</div>{% endfor %}
+        </div>
+        <div class="field-group">
+          <label for="id_retention_agent">{{ form.retention_agent.label }}</label>
+          {{ form.retention_agent }}
+          {% for error in form.retention_agent.errors %}<div class="error">{{ error }}</div>{% endfor %}
+        </div>
+        <div class="field-group">
+          <label for="id_regimen_rimpe">{{ form.regimen_rimpe.label }}</label>
+          {{ form.regimen_rimpe }}
+          {% for error in form.regimen_rimpe.errors %}<div class="error">{{ error }}</div>{% endfor %}
+        </div>
+        <div class="field-group">
+          <label for="id_tax_percentage">{{ form.tax_percentage.label }}</label>
+          {{ form.tax_percentage }}
+          <small>Porcentaje de IVA a aplicar</small>
+          {% for error in form.tax_percentage.errors %}<div class="error">{{ error }}</div>{% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 4: Información de Contacto -->
+    <div class="form-step" data-step="4">
+      <h2><i class="fas fa-phone"></i> Información de Contacto</h2>
+      <div class="fields-grid">
+        <div class="field-group">
+          <label for="id_mobile">{{ form.mobile.label }}</label>
+          {{ form.mobile }}
+          {% for error in form.mobile.errors %}<div class="error">{{ error }}</div>{% endfor %}
+        </div>
+        <div class="field-group">
+          <label for="id_phone">{{ form.phone.label }}</label>
+          {{ form.phone }}
+          {% for error in form.phone.errors %}<div class="error">{{ error }}</div>{% endfor %}
+        </div>
+        <div class="field-group">
+          <label for="id_email">{{ form.email.label }} <span class="required">*</span></label>
+          {{ form.email }}
+          {% for error in form.email.errors %}<div class="error">{{ error }}</div>{% endfor %}
+        </div>
+        <div class="field-group">
+          <label for="id_website">{{ form.website.label }}</label>
+          {{ form.website }}
+          {% for error in form.website.errors %}<div class="error">{{ error }}</div>{% endfor %}
+        </div>
+        <div class="field-group full-width">
+          <label for="id_description">{{ form.description.label }}</label>
+          {{ form.description }}
+          <small>Describe brevemente tu empresa (opcional)</small>
+          {% for error in form.description.errors %}<div class="error">{{ error }}</div>{% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 5: Firma Electrónica -->
+    <div class="form-step" data-step="5">
+      <h2><i class="fas fa-certificate"></i> Firma Electrónica</h2>
+      <div class="info-box">
+        <i class="fas fa-info-circle"></i>
+        <p>La firma electrónica es necesaria para la facturación electrónica. Si no la tienes ahora, puedes configurarla más tarde.</p>
+      </div>
+      <div class="fields-grid">
+        <div class="field-group">
+          <label for="id_electronic_signature">{{ form.electronic_signature.label }}</label>
+          {{ form.electronic_signature }}
+          <small>Archivo .p12 de tu firma electrónica</small>
+          {% for error in form.electronic_signature.errors %}<div class="error">{{ error }}</div>{% endfor %}
+        </div>
+        <div class="field-group">
+          <label for="id_electronic_signature_key">{{ form.electronic_signature_key.label }}</label>
+          {{ form.electronic_signature_key }}
+          <small>Clave de tu firma electrónica</small>
+          {% for error in form.electronic_signature_key.errors %}<div class="error">{{ error }}</div>{% endfor %}
+        </div>
+      </div>
+    </div>
+
+    {% if form.non_field_errors %}
+    <div class="error-box">
+      {% for error in form.non_field_errors %}{{ error }}<br>{% endfor %}
+    </div>
     {% endif %}
-    <div style="margin-top:24px;display:flex;justify-content:center;gap:12px;">
-      <button type="submit" style="background:#1abc9c;border:none;padding:10px 26px;color:#fff;font-weight:600;border-radius:30px;cursor:pointer;letter-spacing:.5px;font-size:13px;box-shadow:0 3px 6px rgba(0,0,0,.15);transition:all .25s;">Guardar y Continuar</button>
+
+    <!-- Navigation Buttons -->
+    <div class="form-navigation">
+      <button type="button" class="btn btn-secondary" id="prevBtn" style="display: none;">
+        <i class="fas fa-arrow-left"></i> Anterior
+      </button>
+      <button type="button" class="btn btn-primary" id="nextBtn">
+        Siguiente <i class="fas fa-arrow-right"></i>
+      </button>
+      <button type="submit" class="btn btn-success" id="submitBtn" style="display: none;">
+        <i class="fas fa-check"></i> Completar Configuración
+      </button>
     </div>
   </form>
-  <div style="margin-top:26px;font-size:11px;color:#777;line-height:1.4;text-align:center;">
-    <strong>Nota:</strong> Solo se permite registrar una compañía inicial por administrador. Más configuraciones avanzadas (como correo o certificados) se pueden ajustar posteriormente.
-  </div>
 </div>
+
+<style>
+.onboarding-container {
+  max-width: 900px;
+  margin: 20px auto;
+  padding: 0 20px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.onboarding-header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.onboarding-header h1 {
+  color: #2c3e50;
+  font-size: 32px;
+  font-weight: 700;
+  margin: 0 0 10px 0;
+}
+
+.onboarding-header p {
+  color: #7f8c8d;
+  font-size: 16px;
+  margin: 0;
+}
+
+.progress-steps {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 40px;
+  position: relative;
+}
+
+.progress-steps::before {
+  content: '';
+  position: absolute;
+  top: 25px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: #ecf0f1;
+  z-index: 1;
+}
+
+.step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  max-width: 150px;
+  position: relative;
+  z-index: 2;
+}
+
+.step-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: #ecf0f1;
+  color: #95a5a6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  margin-bottom: 10px;
+  transition: all 0.3s ease;
+}
+
+.step.active .step-icon,
+.step.completed .step-icon {
+  background: #3498db;
+  color: white;
+}
+
+.step.completed .step-icon {
+  background: #27ae60;
+}
+
+.step span {
+  font-size: 12px;
+  color: #7f8c8d;
+  text-align: center;
+  font-weight: 500;
+}
+
+.step.active span {
+  color: #3498db;
+  font-weight: 600;
+}
+
+.onboarding-form {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+  padding: 40px;
+  margin-bottom: 20px;
+}
+
+.form-step {
+  display: none;
+  animation: fadeInSlide 0.3s ease-in-out;
+}
+
+.form-step.active {
+  display: block;
+}
+
+@keyframes fadeInSlide {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.form-step h2 {
+  color: #2c3e50;
+  font-size: 24px;
+  font-weight: 600;
+  margin: 0 0 30px 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.form-step h2 i {
+  color: #3498db;
+}
+
+.fields-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.field-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.field-group.full-width {
+  grid-column: 1 / -1;
+}
+
+.field-group label {
+  font-weight: 600;
+  color: #2c3e50;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.required {
+  color: #e74c3c;
+}
+
+.field-group input,
+.field-group select,
+.field-group textarea {
+  border: 2px solid #ecf0f1;
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  background: #fafbfc;
+}
+
+.field-group input:focus,
+.field-group select:focus,
+.field-group textarea:focus {
+  outline: none;
+  border-color: #3498db;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+}
+
+.field-group small {
+  color: #7f8c8d;
+  font-size: 12px;
+  margin-top: 5px;
+}
+
+.error {
+  color: #e74c3c;
+  font-size: 12px;
+  margin-top: 5px;
+  font-weight: 500;
+}
+
+.info-box {
+  background: #e8f4f8;
+  border: 1px solid #bee5eb;
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 25px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.info-box i {
+  color: #17a2b8;
+  margin-top: 2px;
+}
+
+.info-box p {
+  margin: 0;
+  color: #0c5460;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.error-box {
+  background: #f8d7da;
+  color: #721c24;
+  padding: 15px;
+  border-radius: 8px;
+  margin: 20px 0;
+  border: 1px solid #f5c6cb;
+}
+
+.form-navigation {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 40px;
+  padding-top: 20px;
+  border-top: 1px solid #ecf0f1;
+}
+
+.btn {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+}
+
+.btn-primary {
+  background: #3498db;
+  color: white;
+}
+
+.btn-primary:hover {
+  background: #2980b9;
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  background: #95a5a6;
+  color: white;
+}
+
+.btn-secondary:hover {
+  background: #7f8c8d;
+}
+
+.btn-success {
+  background: #27ae60;
+  color: white;
+}
+
+.btn-success:hover {
+  background: #229954;
+  transform: translateY(-1px);
+}
+
+@media (max-width: 768px) {
+  .onboarding-container {
+    padding: 0 15px;
+  }
+  
+  .onboarding-form {
+    padding: 20px;
+  }
+  
+  .fields-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .progress-steps {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  
+  .step {
+    min-width: 80px;
+  }
+  
+  .step-icon {
+    width: 40px;
+    height: 40px;
+  }
+}
+</style>
+
 <script>
-  // Ajustes rápidos a inputs
-  (function(){
-    document.querySelectorAll('form input, form select, form textarea').forEach(function(el){
-      el.style.border = '1px solid #ccd1d9';
-      el.style.padding = '8px 10px';
-      el.style.borderRadius = '6px';
-      el.style.fontSize = '13px';
-      el.style.background = '#fdfdfd';
-    });
-  })();
+let currentStep = 1;
+const totalSteps = 5;
+
+function showStep(step) {
+  // Hide all steps
+  document.querySelectorAll('.form-step').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.step').forEach(s => s.classList.remove('active', 'completed'));
+  
+  // Show current step
+  document.querySelector(`.form-step[data-step="${step}"]`).classList.add('active');
+  
+  // Update progress
+  for (let i = 1; i <= totalSteps; i++) {
+    const stepEl = document.querySelector(`.step[data-step="${i}"]`);
+    if (i < step) {
+      stepEl.classList.add('completed');
+    } else if (i === step) {
+      stepEl.classList.add('active');
+    }
+  }
+  
+  // Update navigation buttons
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  const submitBtn = document.getElementById('submitBtn');
+  
+  prevBtn.style.display = step > 1 ? 'flex' : 'none';
+  nextBtn.style.display = step < totalSteps ? 'flex' : 'none';
+  submitBtn.style.display = step === totalSteps ? 'flex' : 'none';
+}
+
+function validateStep(step) {
+  const stepEl = document.querySelector(`.form-step[data-step="${step}"]`);
+  const requiredFields = stepEl.querySelectorAll('input[required], select[required]');
+  
+  for (let field of requiredFields) {
+    if (!field.value.trim()) {
+      field.focus();
+      return false;
+    }
+  }
+  return true;
+}
+
+document.getElementById('nextBtn').addEventListener('click', () => {
+  if (validateStep(currentStep)) {
+    if (currentStep < totalSteps) {
+      currentStep++;
+      showStep(currentStep);
+    }
+  }
+});
+
+document.getElementById('prevBtn').addEventListener('click', () => {
+  if (currentStep > 1) {
+    currentStep--;
+    showStep(currentStep);
+  }
+});
+
+// Initialize
+showStep(currentStep);
+
+// Add required attributes to essential fields
+document.addEventListener('DOMContentLoaded', function() {
+  const requiredFields = [
+    'id_ruc', 'id_company_name', 'id_commercial_name', 'id_main_address',
+    'id_establishment_code', 'id_issuing_point_code', 'id_email'
+  ];
+  
+  requiredFields.forEach(fieldId => {
+    const field = document.getElementById(fieldId);
+    if (field) {
+      field.setAttribute('required', 'required');
+    }
+  });
+});
 </script>
 {% endblock %}

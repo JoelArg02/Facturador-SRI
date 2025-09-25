@@ -36,44 +36,73 @@ class CompanyOnboardingForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         # Placeholders específicos solicitados
         placeholders = {
-            'ruc': 'Ingrese un número de RUC',
-            'company_name': 'Ingrese la razón social',
-            'commercial_name': 'Ingrese el nombre comercial',
-            'main_address': 'Ingrese la dirección del Establecimiento Matriz',
-            'establishment_address': 'Ingrese la dirección del Establecimiento Emisor',
-            'establishment_code': 'Ingrese el código del Establecimiento Emisor',
-            'issuing_point_code': 'Ingrese el código del Punto de Emisión',
-            'special_taxpayer': 'Ingrese el número de Resolución del Contribuyente Especial',
-            'mobile': 'Ingrese el teléfono celular',
-            'phone': 'Ingrese el teléfono convencional',
-            'email': 'Ingrese la dirección de correo electrónico',
-            'website': 'Ingrese la dirección de la página web',
-            'description': 'Ingrese una breve descripción',
-            'tax': '0.00',
-            'electronic_signature_key': 'Clave de firma electrónica',
+            'ruc': 'Ej: 1234567890001',
+            'company_name': 'Nombre legal de la empresa',
+            'commercial_name': 'Nombre comercial o marca',
+            'main_address': 'Dirección principal de la matriz',
+            'establishment_code': '001',
+            'issuing_point_code': '001', 
+            'mobile': 'Ej: 0987654321',
+            'phone': 'Ej: 022345678',
+            'email': 'contacto@empresa.com',
+            'website': 'https://www.empresa.com',
+            'description': 'Breve descripción de la empresa',
+            'electronic_signature_key': 'Clave de la firma electrónica',
         }
         update_form_fields_attributes(self)
         for name, field in self.fields.items():
             ph = placeholders.get(name)
             if ph:
                 field.widget.attrs['placeholder'] = ph
+                
         # Ajustes específicos
         if 'description' in self.fields:
-            self.fields['description'].widget.attrs['rows'] = 2
-        if 'tax' in self.fields:
-            self.fields['tax'].widget.attrs['step'] = '0.01'
+            self.fields['description'].widget.attrs['rows'] = 3
+            
+        # Configurar valores por defecto para campos simplificados
+        if 'environment_type' in self.fields:
+            # Siempre producción
+            self.fields['environment_type'].initial = 2
+            self.fields['environment_type'].widget.attrs['readonly'] = True
+            
+        if 'tax_percentage' in self.fields:
+            # IVA 15% por defecto
+            self.fields['tax_percentage'].initial = 15
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        # Asegurar que environment_type siempre sea producción
+        instance.environment_type = 2
+        # Sincronizar tax con tax_percentage si está disponible
+        if hasattr(instance, 'tax_percentage') and instance.tax_percentage:
+            instance.tax = instance.tax_percentage
+        if commit:
+            instance.save()
+        return instance
 
     class Meta:
         model = Company
         fields = [
-            'ruc', 'company_name', 'commercial_name', 'main_address', 'establishment_address',
-            'establishment_code', 'issuing_point_code', 'special_taxpayer', 'obligated_accounting',
-            'image', 'environment_type', 'emission_type', 'retention_agent', 'regimen_rimpe', 'mobile',
-            'phone', 'email', 'website', 'description', 'tax', 'tax_percentage', 'electronic_signature',
-            'electronic_signature_key'
+            # Información básica (Paso 1)
+            'ruc', 'company_name', 'commercial_name', 'image',
+            # Dirección y códigos (Paso 2) 
+            'main_address', 'establishment_code', 'issuing_point_code',
+            # Configuración tributaria (Paso 3)
+            'obligated_accounting', 'retention_agent', 'regimen_rimpe', 'tax_percentage',
+            # Contacto (Paso 4)
+            'mobile', 'phone', 'email', 'website', 'description',
+            # Firma electrónica (Paso 5)
+            'electronic_signature', 'electronic_signature_key'
         ]
         widgets = {
-            'description': forms.Textarea(),
+            'description': forms.Textarea(attrs={'rows': 3}),
+            'ruc': forms.TextInput(attrs={'maxlength': 13, 'pattern': '[0-9]{10,13}'}),
+            'establishment_code': forms.TextInput(attrs={'maxlength': 3, 'pattern': '[0-9]{3}', 'value': '001'}),
+            'issuing_point_code': forms.TextInput(attrs={'maxlength': 3, 'pattern': '[0-9]{3}', 'value': '001'}),
+            'mobile': forms.TextInput(attrs={'maxlength': 10, 'pattern': '[0-9]{10}'}),
+            'phone': forms.TextInput(attrs={'maxlength': 9, 'pattern': '[0-9]{7,9}'}),
+            'email': forms.EmailInput(),
+            'website': forms.URLInput(),
         }
 
 
