@@ -9,14 +9,23 @@ class ActiveCompanyMiddleware(MiddlewareMixin):
     def process_request(self, request):
         user = getattr(request, 'user', None)
         if user and user.is_authenticated:
-            # Redirección obligatoria si no hay compañías creadas todavía y el usuario no es superuser
+            # No interferir si estamos en la pantalla de suscripción requerida para evitar loops
+            try:
+                subscription_required_url = reverse('subscription_required')
+            except Exception:
+                subscription_required_url = None
+
+            # Prioridad: si el usuario no tiene plan (el otro middleware hará la redirección) no forzamos onboarding aquí
+            if subscription_required_url and request.path == subscription_required_url:
+                return None
+
+            # Flujo original de onboarding solo si no hay compañías y el usuario no es superuser
             if not Company.objects.exists() and not user.is_superuser:
                 onboarding_url = reverse('company_onboarding')
-                # Evitar bucle infinito: no redirigir si ya está en la vista de onboarding o es una petición a static/media
-                if request.path != onboarding_url and not request.path.startswith('/static') and not request.path.startswith('/media'):
+                if request.path not in (onboarding_url,) and not request.path.startswith('/static') and not request.path.startswith('/media'):
+                    # Si aún no pasa por subscription_required (ej: primer login), dejamos que subscription middleware actúe primero
                     return redirect(onboarding_url)
             if not hasattr(request, 'company'):
-                # Super admin (is_superuser) no fuerza una compañía concreta; puede seleccionar luego.
                 if user.is_superuser:
                     request.company = None
                 else:

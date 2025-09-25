@@ -18,6 +18,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     date_joined = models.DateTimeField(default=timezone.now)
     is_password_change = models.BooleanField(default=False)
     password_reset_token = models.TextField(null=True, blank=True)
+    company = models.ForeignKey('pos.Company', null=True, blank=True, related_name='users', on_delete=models.SET_NULL, verbose_name='Compañía asignada')
 
     objects = UserManager()
 
@@ -34,6 +35,9 @@ class User(AbstractBaseUser, PermissionsMixin):
         """Devuelve la compañía asociada (o None si super admin)."""
         if self.is_super_admin:
             return None
+        # Preferimos el campo directo company; si no existe usar la relación OneToOne owner si está definida
+        if self.company_id:
+            return self.company
         return getattr(self, 'company', None)
 
     @property
@@ -100,6 +104,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         item['last_login'] = self.last_login.strftime('%Y-%m-%d') if self.last_login else None
         item['image'] = self.get_image()
         item['date_joined'] = self.date_joined.strftime('%Y-%m-%d')
+        item['company'] = self.company_id
         return item
 
     # Compatibilidad con código existente que invoca user.toJSON()

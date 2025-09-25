@@ -36,7 +36,8 @@ class Company(models.Model):
     email_port = models.IntegerField(default=587, verbose_name='Puerto del servidor de correo')
     email_host_user = models.CharField(max_length=100, help_text='Ingrese el nombre de usuario del servidor de correo', verbose_name='Username del servidor de correo')
     email_host_password = models.CharField(max_length=30, help_text='Ingrese la contraseña del servidor de correo', verbose_name='Password del servidor de correo')
-    owner = models.OneToOneField('user.User', null=True, blank=True, related_name='company', on_delete=models.SET_NULL, verbose_name='Propietario')
+    # Nota: related_name cambiado de 'company' a 'owned_company' para no chocar con User.company (FK)
+    owner = models.OneToOneField('user.User', null=True, blank=True, related_name='owned_company', on_delete=models.SET_NULL, verbose_name='Propietario')
 
     def __str__(self):
         return self.commercial_name

@@ -7,7 +7,7 @@ from django.conf import settings
 from django.db import models
 from django.utils import timezone
 
-if TYPE_CHECKING:  # pragma: no cover - útil para anotaciones sin dependencias circulares
+if TYPE_CHECKING:
     from core.pos.models import Company
 
 

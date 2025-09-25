@@ -5,7 +5,7 @@ from email.mime.text import MIMEText
 
 from django.http import HttpResponse, HttpResponseForbidden
 from django.urls import reverse_lazy
-from django.views.generic import ListView, CreateView, UpdateView, DeleteView
+from django.views.generic import ListView, CreateView, UpdateView, DeleteView, TemplateView
 from django.conf import settings
 
 from core.subscription.forms import SubscriptionForm
@@ -170,7 +170,7 @@ Vigencia: {subscription.start_date} hasta {subscription.end_date}
         </tr>
         <tr>
             <td style="background:#edf2f7; color:#4a5568; padding:15px; text-align:center; font-size:12px;">
-                © 2025 Facturador SRI
+                © 2025 OptimusPos - Todos los derechos reservados.
             </td>
         </tr>
     </table>
@@ -412,6 +412,19 @@ class SubscriptionUpdateView(GroupPermissionMixin, UpdateView):
         ctx = super().get_context_data(**kwargs)
         ctx['title'] = 'Editar Suscripción'
         ctx['action'] = 'edit'
+        return ctx
+
+
+class SubscriptionRequiredView(TemplateView):
+    template_name = 'subscription/subscription/required.html'
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        user = self.request.user
+        ctx['title'] = 'Suscripción requerida'
+        ctx['user_has_company'] = bool(getattr(user, 'company_id', None))
+        ctx['plans_url'] = reverse_lazy('plan_list')
+        ctx['contact_email'] = 'soporte@example.com'
         return ctx
 
 

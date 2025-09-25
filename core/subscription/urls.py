@@ -3,7 +3,8 @@ from core.subscription.views.plan import (
     PlanListView, PlanCreateView, PlanUpdateView, PlanDeleteView
 )
 from core.subscription.views.subscription import (
-    SubscriptionListView, SubscriptionCreateView, SubscriptionUpdateView, SubscriptionDeleteView
+    SubscriptionListView, SubscriptionCreateView, SubscriptionUpdateView, SubscriptionDeleteView,
+    SubscriptionRequiredView,
 )
 
 urlpatterns = [
@@ -16,4 +17,5 @@ urlpatterns = [
     path('create/', SubscriptionCreateView.as_view(), name='subscription_create'),
     path('update/<int:pk>/', SubscriptionUpdateView.as_view(), name='subscription_update'),
     path('delete/<int:pk>/', SubscriptionDeleteView.as_view(), name='subscription_delete'),
+    path('required/', SubscriptionRequiredView.as_view(), name='subscription_required'),
 ]

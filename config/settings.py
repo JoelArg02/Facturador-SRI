@@ -57,6 +57,7 @@ MIDDLEWARE = [
     'crum.CurrentRequestUserMiddleware',
     'django_user_agents.middleware.UserAgentMiddleware',
     'core.security.middleware.ActiveCompanyMiddleware',
+    'core.security.middleware_subscription.SubscriptionRequiredMiddleware',
 ]
 
 ROOT_URLCONF = 'config.urls'

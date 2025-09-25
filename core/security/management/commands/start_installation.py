@@ -174,7 +174,6 @@ class Command(BaseCommand):
         else:
             self.stdout.write(self.style.WARNING('Archivo module.json no encontrado, se omite seed de módulos predefinidos.'))
 
-        # 8. Crear módulos Planes y Suscripciones (Administrativo) si no existen
         administrativo = ModuleType.objects.filter(name='Administrativo').first()
         plan_module, created_plan = Module.objects.get_or_create(
             name='Planes',
@@ -474,8 +473,12 @@ class Command(BaseCommand):
             )
             user.set_password('admin')
             user.save()
-            user.groups.add(administrativo)
-            self.stdout.write(self.style.SUCCESS('Usuario admin creado (super + admin)'))
+            try:
+                super_admin_group = Group.objects.get(name='Super Administrador')
+                user.groups.add(super_admin_group)
+            except Group.DoesNotExist:
+                self.stdout.write(self.style.WARNING('Grupo "Super Administrador" no existe todavía'))
+            self.stdout.write(self.style.SUCCESS('Usuario admin creado y asociado a grupos'))
         else:
             self.stdout.write('Usuario admin ya existe')
 
