@@ -80,38 +80,26 @@ class ProductCreateView(AutoAssignCompanyMixin, GroupPermissionMixin, CompanyQue
                     data['error'] = quota_check['message']
                 else:
                     form = self.get_form()
-                    if form.is_valid():
-                        product = form.save(commit=False)
-                        if product is None:
-                            data['error'] = 'Errores de validación'
-                        else:
-                            # Fallbacks para determinar company_id
-                            company_id = None
-                            # 1. request.company
-                            req_company = getattr(request, 'company', None)
-                            if req_company:
-                                company_id = getattr(req_company, 'id', None)
-                            # 2. user.company_id
-                            if not company_id:
-                                company_id = getattr(request.user, 'company_id', None)
-                            # 3. Buscar por owner
-                            if not company_id:
-                                try:
-                                    from core.pos.models import Company
-                                    owner_company = Company.objects.filter(owner=request.user).only('id').first()
-                                    if owner_company:
-                                        company_id = owner_company.id
-                                except Exception:
-                                    pass
-
-                            if not company_id:
-                                data['error'] = 'No se pudo determinar la compañía'
-                            else:
-                                product.company_id = company_id
-                                product.save()
-                                data = product.as_dict()
-                    else:
+                    if not form.is_valid():
                         data['error'] = form.errors
+                    else:
+                        # Encapsulamos en transacción para consistencia
+                        from django.db import transaction
+                        try:
+                            with transaction.atomic():
+                                # form.save ahora devuelve instancia o lanza ValueError si no es válido
+                                product = form.save(commit=False)
+
+                                # company debe venir del form (obligatorio) o del request
+                                company_obj = form.cleaned_data.get('company') or getattr(request, 'company', None)
+                                if not company_obj:
+                                    data['error'] = 'Debe seleccionar la compañía.'
+                                else:
+                                    product.company = company_obj
+                                    product.save()
+                                    data = product.as_dict()
+                        except Exception as ex:
+                            data['error'] = f'Error al guardar el producto: {ex}'
             elif action == 'validate_data':
                 field = request.POST['field']
                 filters = Q()
