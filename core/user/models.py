@@ -26,6 +26,17 @@ class User(AbstractBaseUser, PermissionsMixin):
     REQUIRED_FIELDS = ['email']
 
     @property
+    def is_super_admin(self):
+        return self.is_superuser
+
+    @property
+    def tenant_company(self):
+        """Devuelve la compañía asociada (o None si super admin)."""
+        if self.is_super_admin:
+            return None
+        return getattr(self, 'company', None)
+
+    @property
     def get_session_user_group(self):
         try:
             request = get_current_request()
@@ -90,6 +101,10 @@ class User(AbstractBaseUser, PermissionsMixin):
         item['image'] = self.get_image()
         item['date_joined'] = self.date_joined.strftime('%Y-%m-%d')
         return item
+
+    # Compatibilidad con código existente que invoca user.toJSON()
+    def toJSON(self):  # noqa: N802 (conservar nombre histórico)
+        return self.as_dict()
 
     def __str__(self):
         return self.names

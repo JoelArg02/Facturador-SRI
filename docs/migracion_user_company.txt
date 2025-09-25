@@ -1,0 +1,55 @@
+Migración relación User -> Company (OneToOne)
+=============================================
+
+Cambio aplicado:
+- Company.owner pasó de ForeignKey (related_name='companies') a OneToOneField (related_name='company').
+- Middleware actualizado para usar user.company y permitir super admin sin compañía fija.
+- Añadida propiedad User.is_super_admin y User.tenant_company.
+
+Pasos para generar migración:
+1) python manage.py makemigrations
+2) python manage.py migrate
+
+Si ya existen múltiples compañías asociadas a un mismo usuario:
+------------------------------------------------------------
+Django no podrá convertir automáticamente si hay más de una fila con el mismo owner_id.
+
+Procedimiento sugerido:
+1. Antes de makemigrations, ejecute un script para decidir qué compañía conservar por usuario.
+   Ejemplo (shell Django):
+
+   from core.pos.models import Company
+   from collections import defaultdict
+   owners = defaultdict(list)
+   for c in Company.objects.exclude(owner__isnull=True):
+       owners[c.owner_id].append(c)
+   for owner_id, comps in owners.items():
+       if len(comps) > 1:
+           # Mantener la más reciente (o alguna regla) y liberar otras
+           keep = comps[0]
+           for extra in comps[1:]:
+               extra.owner = None
+               extra.save(update_fields=['owner'])
+
+2. Después ejecutar makemigrations y migrate.
+
+Asignar super admin:
+--------------------
+- Cree o edite un usuario y marque is_superuser=True, is_staff=True.
+- Podrá acceder a todas las vistas y no estará restringido por compañía activa.
+
+Creación flujo nuevo usuario/compañía:
+-------------------------------------
+1. Usuario se registra (rol admin) -> se crea Company con owner = user.
+2. Se crea Subscription inicial (Plan escogido).
+3. Accesos posteriores filtrarán datos por company salvo super admin.
+
+Chequeos post-migración:
+-----------------------
+- Verificar que request.company se fija correctamente para usuarios no super admin.
+- Verificar que un super admin puede listar todas las compañías (ej: en admin o vista personalizada).
+
+Notas:
+------
+- Actualizar cualquier código que use user.companies.* a user.company.
+- Si se requiere en el futuro multi-compañía por usuario, habría que revertir a ManyToMany o ForeignKey.

@@ -1,0 +1,318 @@
+# Resumen de Entidades del Sistema (Generado)
+# Fecha de generación: 2025-09-25
+# Nota: Los modelos abstractos se marcan como [ABSTRACT]. Relaciones FK/M2M indicadas con flecha -> ModeloDestino
+
+========================================
+APP: user
+========================================
+User
+  - names: CharField(max_length=150, null=True, blank=True)
+  - username: CharField(max_length=150, unique=True)
+  - image: ImageField(upload_to='users/%Y/%m/%d', null=True, blank=True)
+  - email: EmailField(null=True, blank=True)
+  - is_active: BooleanField(default=True)
+  - is_staff: BooleanField(default=False)
+  - date_joined: DateTimeField(default=timezone.now)
+  - is_password_change: BooleanField(default=False)
+  - password_reset_token: TextField(null=True, blank=True)
+  (Inherited fields from AbstractBaseUser / PermissionsMixin: password, last_login, groups, user_permissions, etc.)
+
+========================================
+APP: security
+========================================
+Dashboard
+  - name: CharField(max_length=50, unique=True)
+  - author: CharField(max_length=120)
+  - footer_url: CharField(max_length=200)
+  - image: ImageField(upload_to='dashboard/%Y/%m/%d', null=True, blank=True)
+  - icon: CharField(max_length=500)
+  - layout: IntegerField(choices=LAYOUT_OPTIONS, default=LAYOUT_OPTIONS[0][0])
+  - card: CharField(max_length=50, choices=CARD, default=CARD[0][0])
+  - navbar: CharField(max_length=50, choices=NAVBAR, default=NAVBAR[0][0])
+  - brand_logo: CharField(max_length=50, choices=BRAND_LOGO, default=BRAND_LOGO[0][0])
+  - sidebar: CharField(max_length=50, choices=SIDEBAR, default=SIDEBAR[0][0])
+
+ModuleType
+  - name: CharField(max_length=150, unique=True)
+  - icon: CharField(max_length=30, unique=True)
+
+Module
+  - url: CharField(max_length=250)
+  - name: CharField(max_length=100)
+  - module_type -> ModuleType (null=True, blank=True, on_delete=PROTECT)
+  - description: CharField(max_length=200, null=True, blank=True)
+  - icon: CharField(max_length=30, null=True, blank=True)
+  - image: ImageField(upload_to='module/%Y/%m/%d', null=True, blank=True)
+  - permissions: ManyToManyField(Permission, blank=True)
+
+GroupModule
+  - group -> auth.Group (on_delete=CASCADE)
+  - module -> Module (on_delete=CASCADE)
+
+UserAccess
+  - user -> User (on_delete=CASCADE)
+  - date_joined: DateField(default=datetime.now)
+  - hour: TimeField(default=timezone.now)
+  - remote_addr: CharField(max_length=100, null=True, blank=True)
+  - http_user_agent: CharField(max_length=150, null=True, blank=True)
+
+========================================
+APP: subscription
+========================================
+Plan
+  - name: CharField(max_length=100, unique=True)
+  - description: TextField(null=True, blank=True)
+  - max_invoices: PositiveIntegerField(default=100)
+  - max_customers: PositiveIntegerField(default=100)
+  - max_products: PositiveIntegerField(default=200)
+  - price: DecimalField(max_digits=9, decimal_places=2, default=0)
+  - period_days: PositiveIntegerField(default=30)
+  - active: BooleanField(default=True)
+  - created_at: DateTimeField(auto_now_add=True)
+  - updated_at: DateTimeField(auto_now=True)
+
+Subscription
+  - company -> Company (on_delete=CASCADE, related_name='subscriptions')
+  - plan -> Plan (on_delete=PROTECT)
+  - start_date: DateField(default=timezone.now)
+  - end_date: DateField(null=True, blank=True)
+  - is_active: BooleanField(default=True)
+  - canceled_at: DateTimeField(null=True, blank=True)
+  - created_at: DateTimeField(auto_now_add=True)
+  - updated_at: DateTimeField(auto_now=True)
+
+========================================
+APP: pos
+========================================
+Company
+  - ruc: CharField(max_length=13)
+  - company_name: CharField(max_length=50)
+  - commercial_name: CharField(max_length=50)
+  - main_address: CharField(max_length=200)
+  - establishment_address: CharField(max_length=200)
+  - establishment_code: CharField(max_length=3)
+  - issuing_point_code: CharField(max_length=3)
+  - special_taxpayer: CharField(max_length=13)
+  - obligated_accounting: CharField(max_length=2, choices=OBLIGATED_ACCOUNTING)
+  - image: ImageField(upload_to='company/%Y/%m/%d', null=True, blank=True)
+  - environment_type: PositiveIntegerField(choices=ENVIRONMENT_TYPE, default=1)
+  - emission_type: PositiveIntegerField(choices=EMISSION_TYPE, default=1)
+  - retention_agent: CharField(max_length=2, choices=RETENTION_AGENT)
+  - regimen_rimpe: CharField(max_length=50, choices=REGIMEN_RIMPE)
+  - mobile: CharField(max_length=10, null=True, blank=True)
+  - phone: CharField(max_length=9, null=True, blank=True)
+  - email: CharField(max_length=50)
+  - website: CharField(max_length=250)
+  - description: CharField(max_length=500, null=True, blank=True)
+  - tax: DecimalField(max_digits=9, decimal_places=2, default=0.00)
+  - tax_percentage: IntegerField(choices=TAX_PERCENTAGE)
+  - electronic_signature: FileField(upload_to='company/%Y/%m/%d', null=True, blank=True)
+  - electronic_signature_key: CharField(max_length=100)
+  - email_host: CharField(max_length=30, default='smtp.gmail.com')
+  - email_port: IntegerField(default=587)
+  - email_host_user: CharField(max_length=100)
+  - email_host_password: CharField(max_length=30)
+  - owner -> user.User (null=True, blank=True, related_name='companies', on_delete=SET_NULL)
+
+Provider
+  - company -> Company (null=True, blank=True, related_name='providers', on_delete=CASCADE)
+  - name: CharField(max_length=50, unique=True)
+  - ruc: CharField(max_length=13, unique=True)
+  - mobile: CharField(max_length=10, unique=True)
+  - address: CharField(max_length=500, null=True, blank=True)
+  - email: CharField(max_length=50, unique=True)
+
+Category
+  - company -> Company (null=True, blank=True, related_name='categories', on_delete=CASCADE)
+  - name: CharField(max_length=50, unique=True)
+
+Product
+  - company -> Company (null=True, blank=True, related_name='products', on_delete=CASCADE)
+  - name: CharField(max_length=150)
+  - code: CharField(max_length=50, unique=True)
+  - description: CharField(max_length=500, null=True, blank=True)
+  - category -> Category (on_delete=PROTECT)
+  - price: DecimalField(max_digits=9, decimal_places=4, default=0.00)
+  - pvp: DecimalField(max_digits=9, decimal_places=4, default=0.00)
+  - image: ImageField(upload_to='product/%Y/%m/%d', null=True, blank=True)
+  - barcode: ImageField(upload_to='barcode/%Y/%m/%d', null=True, blank=True)
+  - is_inventoried: BooleanField(default=True)
+  - stock: IntegerField(default=0)
+  - has_tax: BooleanField(default=True)
+
+Purchase
+  - company -> Company (null=True, blank=True, related_name='purchases', on_delete=CASCADE)
+  - number: CharField(max_length=8, unique=True)
+  - provider -> Provider (on_delete=PROTECT)
+  - payment_type: CharField(max_length=50, choices=PAYMENT_TYPE)
+  - date_joined: DateField(default=datetime.now)
+  - end_credit: DateField(default=datetime.now)
+  - subtotal: DecimalField(max_digits=9, decimal_places=2, default=0.00)
+  - tax: DecimalField(max_digits=9, decimal_places=2, default=0.00)
+  - total_tax: DecimalField(max_digits=9, decimal_places=2, default=0.00)
+  - total_amount: DecimalField(max_digits=9, decimal_places=2, default=0.00)
+
+PurchaseDetail
+  - company -> Company (null=True, blank=True, related_name='purchase_details', on_delete=CASCADE)
+  - purchase -> Purchase (on_delete=CASCADE)
+  - product -> Product (on_delete=PROTECT)
+  - quantity: IntegerField(default=0)
+  - price: DecimalField(max_digits=9, decimal_places=4, default=0.00)
+  - subtotal: DecimalField(max_digits=9, decimal_places=4, default=0.00)
+
+AccountPayable
+  - company -> Company (null=True, blank=True, related_name='accounts_payable', on_delete=CASCADE)
+  - purchase -> Purchase (on_delete=PROTECT)
+  - date_joined: DateField(default=datetime.now)
+  - end_date: DateField(default=datetime.now)
+  - debt: DecimalField(max_digits=9, decimal_places=2, default=0.00)
+  - balance: DecimalField(max_digits=9, decimal_places=2, default=0.00)
+  - active: BooleanField(default=True)
+
+AccountPayablePayment
+  - company -> Company (null=True, blank=True, related_name='accounts_payable_payments', on_delete=CASCADE)
+  - account_payable -> AccountPayable (on_delete=CASCADE)
+  - date_joined: DateField(default=datetime.now)
+  - description: CharField(max_length=500, null=True, blank=True)
+  - amount: DecimalField(max_digits=9, decimal_places=2, default=0.00)
+
+Customer
+  - company -> Company (null=True, blank=True, related_name='customers', on_delete=CASCADE)
+  - user -> User (OneToOneField, on_delete=CASCADE)
+  - dni: CharField(max_length=13, unique=True)
+  - mobile: CharField(max_length=10, null=True, blank=True)
+  - birthdate: DateField(default=datetime.now)
+  - address: CharField(max_length=500, null=True, blank=True)
+  - identification_type: CharField(max_length=30, choices=IDENTIFICATION_TYPE)
+  - send_email_invoice: BooleanField(default=True)
+
+Receipt
+  - company -> Company (null=True, blank=True, related_name='receipts', on_delete=CASCADE)
+  - voucher_type: CharField(max_length=10, choices=VOUCHER_TYPE)
+  - establishment_code: CharField(max_length=3)
+  - issuing_point_code: CharField(max_length=3)
+  - sequence: PositiveIntegerField(default=1)
+
+ExpenseType
+  - company -> Company (null=True, blank=True, related_name='expense_types', on_delete=CASCADE)
+  - name: CharField(max_length=50, unique=True)
+
+Expense
+  - company -> Company (null=True, blank=True, related_name='expenses', on_delete=CASCADE)
+  - expense_type -> ExpenseType (on_delete=PROTECT)
+  - description: CharField(max_length=500, null=True, blank=True)
+  - date_joined: DateField(default=datetime.now)
+  - amount: DecimalField(max_digits=9, decimal_places=2, default=0.00)
+
+Promotion
+  - company -> Company (null=True, blank=True, related_name='promotions', on_delete=CASCADE)
+  - start_date: DateField(default=datetime.now)
+  - end_date: DateField(default=datetime.now)
+  - active: BooleanField(default=True)
+
+PromotionDetail
+  - company -> Company (null=True, blank=True, related_name='promotion_details', on_delete=CASCADE)
+  - promotion -> Promotion (on_delete=CASCADE)
+  - product -> Product (on_delete=PROTECT)
+  - current_price: DecimalField(max_digits=9, decimal_places=4, default=0.00)
+  - discount: DecimalField(max_digits=9, decimal_places=4, default=0.00)
+  - total_discount: DecimalField(max_digits=9, decimal_places=4, default=0.00)
+  - final_price: DecimalField(max_digits=9, decimal_places=4, default=0.00)
+
+[ABSTRACT] TransactionSummary
+  - company -> Company (on_delete=CASCADE)
+  - date_joined: DateField(default=datetime.now)
+  - subtotal_without_tax: DecimalField(max_digits=9, decimal_places=2, default=0.00)
+  - subtotal_with_tax: DecimalField(max_digits=9, decimal_places=2, default=0.00)
+  - tax: DecimalField(max_digits=9, decimal_places=2, default=0.00)
+  - total_tax: DecimalField(max_digits=9, decimal_places=2, default=0.00)
+  - total_discount: DecimalField(max_digits=9, decimal_places=2, default=0.00)
+  - total_amount: DecimalField(max_digits=9, decimal_places=2, default=0.00)
+
+[ABSTRACT] ElecBillingBase (extends TransactionSummary)
+  - receipt -> Receipt (on_delete=PROTECT)
+  - time_joined: DateTimeField(default=datetime.now)
+  - receipt_number: CharField(max_length=9, null=True, blank=True)
+  - receipt_number_full: CharField(max_length=20, null=True, blank=True)
+  - environment_type: PositiveIntegerField(choices=ENVIRONMENT_TYPE, default=ENVIRONMENT_TYPE[0][0])
+  - access_code: CharField(max_length=49, null=True, blank=True)
+  - authorized_date: DateTimeField(null=True, blank=True)
+  - authorized_xml: FileField(upload_to='authorized_xml/%Y/%m/%d', null=True, blank=True)
+  - authorized_pdf: FileField(upload_to='pdf_authorized/%Y/%m/%d', null=True, blank=True)
+  - create_electronic_invoice: BooleanField(default=True)
+  - additional_info: JSONField(default=dict)
+  - status: CharField(max_length=50, choices=INVOICE_STATUS, default=INVOICE_STATUS[0][0])
+
+[ABSTRACT] ElecBillingDetailBase
+  - product -> Product (on_delete=PROTECT)
+  - quantity: IntegerField(default=0)
+  - price: DecimalField(max_digits=9, decimal_places=4, default=0.00)
+  - price_with_tax: DecimalField(max_digits=9, decimal_places=4, default=0.00)
+  - subtotal: DecimalField(max_digits=9, decimal_places=4, default=0.00)
+  - tax: DecimalField(max_digits=9, decimal_places=4, default=0.00)
+  - total_tax: DecimalField(max_digits=9, decimal_places=4, default=0.00)
+  - discount: DecimalField(max_digits=9, decimal_places=4, default=0.00)
+  - total_discount: DecimalField(max_digits=9, decimal_places=4, default=0.00)
+  - total_amount: DecimalField(max_digits=9, decimal_places=4, default=0.00)
+
+Invoice (extends ElecBillingBase)
+  - customer -> Customer (on_delete=PROTECT)
+  - employee -> User (null=True, blank=True, on_delete=PROTECT)
+  - payment_type: CharField(choices=PAYMENT_TYPE, max_length=50)
+  - payment_method: CharField(choices=INVOICE_PAYMENT_METHOD, max_length=50)
+  - time_limit: IntegerField(default=31)
+  - end_credit: DateField(default=datetime.now)
+  - cash: DecimalField(max_digits=9, decimal_places=2, default=0.00)
+  - change: DecimalField(max_digits=9, decimal_places=2, default=0.00)
+  - is_draft_invoice: BooleanField(default=False)
+
+InvoiceDetail (extends ElecBillingDetailBase)
+  - invoice -> Invoice (on_delete=CASCADE)
+
+AccountReceivable
+  - company -> Company (null=True, blank=True, related_name='accounts_receivable', on_delete=CASCADE)
+  - invoice -> Invoice (on_delete=PROTECT)
+  - date_joined: DateField(default=datetime.now)
+  - end_date: DateField(default=datetime.now)
+  - debt: DecimalField(max_digits=9, decimal_places=2, default=0.00)
+  - balance: DecimalField(max_digits=9, decimal_places=2, default=0.00)
+  - active: BooleanField(default=True)
+
+AccountReceivablePayment
+  - company -> Company (null=True, blank=True, related_name='accounts_receivable_payments', on_delete=CASCADE)
+  - account_receivable -> AccountReceivable (on_delete=CASCADE)
+  - date_joined: DateField(default=datetime.now)
+  - description: CharField(max_length=500, null=True, blank=True)
+  - amount: DecimalField(max_digits=9, decimal_places=2, default=0.00)
+
+CreditNote (extends ElecBillingBase)
+  - invoice -> Invoice (on_delete=PROTECT)
+  - motive: CharField(max_length=300, null=True, blank=True)
+
+CreditNoteDetail (extends ElecBillingDetailBase)
+  - credit_note -> CreditNote (on_delete=CASCADE)
+  - invoice_detail -> InvoiceDetail (on_delete=CASCADE)
+
+Quotation (extends TransactionSummary)
+  - customer -> Customer (on_delete=CASCADE)
+  - employee -> User (on_delete=CASCADE)
+  - active: BooleanField(default=True)
+
+QuotationDetail (extends ElecBillingDetailBase)
+  - quotation -> Quotation (on_delete=CASCADE)
+
+ReceiptError
+  - date_joined: DateField(default=datetime.now)
+  - time_joined: DateTimeField(default=datetime.now)
+  - environment_type: PositiveIntegerField(choices=ENVIRONMENT_TYPE, default=ENVIRONMENT_TYPE[0][0])
+  - receipt_number_full: CharField(max_length=50)
+  - receipt -> Receipt (on_delete=CASCADE)
+  - stage: CharField(max_length=20, choices=VOUCHER_STAGE, default=VOUCHER_STAGE[0][0])
+  - errors: JSONField(default=dict)
+
+========================================
+APP: otras (dashboard, login, report) actualmente sin modelos definidos.
+========================================
+
+# Fin del resumen.
+

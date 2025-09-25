@@ -56,7 +56,8 @@ class Company(models.Model):
     email_port = models.IntegerField(default=587, verbose_name='Puerto del servidor de correo')
     email_host_user = models.CharField(max_length=100, help_text='Ingrese el nombre de usuario del servidor de correo', verbose_name='Username del servidor de correo')
     email_host_password = models.CharField(max_length=30, help_text='Ingrese la contraseña del servidor de correo', verbose_name='Password del servidor de correo')
-    owner = models.ForeignKey('user.User', null=True, blank=True, related_name='companies', on_delete=models.SET_NULL, verbose_name='Propietario')
+    # owner anterior: ForeignKey -> ahora OneToOneField para que un usuario tenga solo una compañía
+    owner = models.OneToOneField('user.User', null=True, blank=True, related_name='company', on_delete=models.SET_NULL, verbose_name='Propietario')
 
     def __str__(self):
         return self.commercial_name
@@ -1040,7 +1041,7 @@ class Invoice(ElecBillingBase):
     def calculate_invoice(self):
         self.subtotal_without_tax = float(self.invoicedetail_set.filter(product__has_tax=False).aggregate(result=Coalesce(Sum('total_amount'), 0.00, output_field=FloatField()))['result'])
         self.subtotal_with_tax = float(self.invoicedetail_set.filter(product__has_tax=True).aggregate(result=Coalesce(Sum('total_amount'), 0.00, output_field=FloatField()))['result'])
-        self.total_tax = round(float(self.invoicedetail_set.filter(product__has_tax=True).aggregate(result=Coalesce(Sum('total_tax'), 0.00, output_field=FloatField()))['result']), 2)
+        self.total_tax = round(self.invoicedetail_set.filter(product__has_tax=True).aggregate(result=Coalesce(Sum('total_tax'), 0.00, output_field=FloatField()))['result'], 2)
         self.total_discount = float(self.invoicedetail_set.filter().aggregate(result=Coalesce(Sum('total_discount'), 0.00, output_field=FloatField()))['result'])
         self.total_amount = round(self.subtotal, 2) + float(self.total_tax)
         self.save()
@@ -1296,7 +1297,7 @@ class CreditNote(ElecBillingBase):
     def calculate_invoice(self):
         self.subtotal_without_tax = float(self.creditnotedetail_set.filter(product__has_tax=False).aggregate(result=Coalesce(Sum('total_amount'), 0.00, output_field=FloatField()))['result'])
         self.subtotal_with_tax = float(self.creditnotedetail_set.filter(product__has_tax=True).aggregate(result=Coalesce(Sum('total_amount'), 0.00, output_field=FloatField()))['result'])
-        self.total_tax = round(float(self.creditnotedetail_set.filter(product__has_tax=True).aggregate(result=Coalesce(Sum('total_tax'), 0.00, output_field=FloatField()))['result']), 2)
+        self.total_tax = round(self.creditnotedetail_set.filter(product__has_tax=True).aggregate(result=Coalesce(Sum('total_tax'), 0.00, output_field=FloatField()))['result'], 2)
         self.total_discount = float(self.creditnotedetail_set.filter().aggregate(result=Coalesce(Sum('total_discount'), 0.00, output_field=FloatField()))['result'])
         self.total_amount = round(self.subtotal, 2) + round(self.total_tax, 2)
         self.save()
@@ -1520,7 +1521,7 @@ class Quotation(TransactionSummary):
     def calculate_invoice(self):
         self.subtotal_without_tax = float(self.quotationdetail_set.filter(product__has_tax=False).aggregate(result=Coalesce(Sum('total_amount'), 0.00, output_field=FloatField()))['result'])
         self.subtotal_with_tax = float(self.quotationdetail_set.filter(product__has_tax=True).aggregate(result=Coalesce(Sum('total_amount'), 0.00, output_field=FloatField()))['result'])
-        self.total_tax = round(float(self.quotationdetail_set.filter(product__has_tax=True).aggregate(result=Coalesce(Sum('total_tax'), 0.00, output_field=FloatField()))['result']), 2)
+        self.total_tax = round(self.quotationdetail_set.filter(product__has_tax=True).aggregate(result=Coalesce(Sum('total_tax'), 0.00, output_field=FloatField()))['result'], 2)
         self.total_discount = float(self.quotationdetail_set.filter().aggregate(result=Coalesce(Sum('total_discount'), 0.00, output_field=FloatField()))['result'])
         self.total_amount = round(self.subtotal, 2) + float(self.total_tax)
         self.save()

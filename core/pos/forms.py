@@ -1,6 +1,23 @@
 from django import forms
 
 from .models import *
+from core.user.models import User  # Import explícito para evitar NameError en CustomerUserForm
+from .choices import (
+    VOUCHER_TYPE,
+    INVOICE_STATUS,
+    IDENTIFICATION_TYPE,
+    PAYMENT_TYPE,
+)
+
+# Reexport de constantes para compatibilidad con importaciones existentes en vistas
+__all__ = [
+    'CompanyForm', 'ProviderForm', 'CategoryForm', 'ProductForm', 'PurchaseForm',
+    'AccountPayablePaymentForm', 'CustomerForm', 'CustomerUserForm', 'ReceiptForm',
+    'ExpenseTypeForm', 'ExpenseForm', 'PromotionForm', 'InvoiceForm',
+    'AccountReceivablePaymentForm', 'QuotationForm', 'CreditNoteForm',
+    # Constantes
+    'VOUCHER_TYPE', 'INVOICE_STATUS', 'IDENTIFICATION_TYPE', 'PAYMENT_TYPE'
+]
 from ..security.form_handlers.base import BaseModelForm
 from ..security.form_handlers.helpers import update_form_fields_attributes
 
@@ -104,11 +121,27 @@ class CustomerForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         update_form_fields_attributes(self)
+        # Campos heredados de TransactionSummary que no deben mostrarse en la creación/edición de Cliente
+        hidden_summary_fields = [
+            'date_joined', 'subtotal_without_tax', 'subtotal_with_tax', 'tax',
+            'total_tax', 'total_discount', 'total_amount'
+        ]
+        for f in hidden_summary_fields:
+            if f in self.fields:
+                self.fields[f].widget = forms.HiddenInput()
+                # Opcional: limpiar required si aplica
+                self.fields[f].required = False
 
     class Meta:
         model = Customer
-        fields = '__all__'
-        exclude = ['user']
+        # Listar explícitamente solo los campos que interesan al usuario final
+        fields = [
+            'user', 'mobile', 'address', 'business_name', 'commercial_name',
+            'tradename', 'ruc', 'dni', 'is_business', 'is_credit_authorized', 'credit_limit'
+        ]
+        widgets = {
+            'credit_limit': forms.NumberInput(attrs={'step': '0.01'})
+        }
 
 
 class CustomerUserForm(forms.ModelForm):
