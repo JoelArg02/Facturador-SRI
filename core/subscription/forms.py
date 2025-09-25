@@ -9,7 +9,7 @@ def get_available_admin_users():
     User = get_user_model()
     from django.contrib.auth.models import Group
     
-    admin_groups = Group.objects.filter(name__in=['Administrador', 'Cliente Propietario'])
+    admin_groups = Group.objects.filter(name__in=['Administrador'])
     
     # Mostrar todos los usuarios administradores (con o sin suscripción)
     # En el futuro se puede filtrar por suscripciones activas si se desea

@@ -37,9 +37,9 @@
                     {% endfor %}
                 {% endif %}
                 {% for module in request.user.get_session_user_group.get_session_modules %}
-                    {# Ocultar 'Compañia' salvo para Super Administrador y Cliente Propietario #}
+                    {# Ocultar 'Compañia' salvo para Super Administrador y Administrador #}
                     {% if module.name == 'Compañia' %}
-                        {% if request.user.get_session_user_group.name == 'Super Administrador' or request.user.get_session_user_group.name == 'Cliente Propietario' %}
+                        {% if request.user.get_session_user_group.name == 'Super Administrador' or request.user.get_session_user_group.name == 'Administrador' %}
                             <li class="nav-item">
                                 <a href="{{ module.url }}" class="nav-link" data-name="single_module" data-id="{{ forloop.counter }}">
                                     <i class="nav-icon {{ module.icon }}"></i>

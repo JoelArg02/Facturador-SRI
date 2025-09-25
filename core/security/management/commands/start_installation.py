@@ -215,7 +215,6 @@ class Command(BaseCommand):
 
         super_admin_group, _ = Group.objects.get_or_create(name='Super Administrador')
         admin_group, _ = Group.objects.get_or_create(name='Administrador')
-        owner_group, _ = Group.objects.get_or_create(name='Cliente Propietario')
         warehouse_group, _ = Group.objects.get_or_create(name='Operador Bodega')
         sales_group, _ = Group.objects.get_or_create(name='Operador Venta')
         client_group, _ = Group.objects.get_or_create(name='Cliente')
@@ -245,12 +244,11 @@ class Command(BaseCommand):
             if m.name not in excluded_admin_names:
                 link_module(admin_group, m, include_perms=True)
 
-        # 9.3 Cliente Propietario: todos los módulos excepto aquellos netamente administrativos globales si existieran
-        excluded_owner_module_names = set([])  # placeholder para excluir futuros módulos globales (ej: Planes/Suscripciones si se desea limitar)
+        excluded_owner_module_names = set([])
         for m in all_modules:
             if m.name in excluded_owner_module_names:
                 continue
-            link_module(owner_group, m, include_perms=True)
+            link_module(admin_group, m, include_perms=True)
 
         # 9.4 Operador Bodega: módulos relacionados a inventario / productos / compras / proveedores
         warehouse_keywords = ['Producto', 'Product', 'Inventario', 'Inventory', 'Bodega', 'Compra', 'Purchase', 'Proveedor', 'Provider']
@@ -438,7 +436,6 @@ class Command(BaseCommand):
 
         super_admin_group, _ = Group.objects.get_or_create(name='Super Administrador')
         admin_group, _ = Group.objects.get_or_create(name='Administrador')
-        owner_group, _ = Group.objects.get_or_create(name='Cliente Propietario')
         warehouse_group, _ = Group.objects.get_or_create(name='Operador Bodega')
         sales_group, _ = Group.objects.get_or_create(name='Operador Venta')
         client_group, _ = Group.objects.get_or_create(name='Cliente')
@@ -467,7 +464,7 @@ class Command(BaseCommand):
         for m in all_modules:
             if m.name in excluded_owner_module_names:
                 continue
-            link_module(owner_group, m, include_perms=True)
+            link_module(admin_group, m, include_perms=True)
 
         warehouse_keywords = ['Producto', 'Product', 'Inventario', 'Inventory', 'Bodega', 'Compra', 'Purchase', 'Proveedor', 'Provider']
         for m in all_modules:
