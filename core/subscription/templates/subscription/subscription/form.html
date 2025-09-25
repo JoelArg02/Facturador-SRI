@@ -3,8 +3,9 @@
 {% block form_fields %}
 <div class="row">
     <div class="col-md-4">
-        <label>Compañía:</label>
-        {{ form.company }}
+        <label>Propietario:</label>
+        {{ form.user }}
+        {% if form.user.help_text %}<small class="form-text text-muted">{{ form.user.help_text }}</small>{% endif %}
     </div>
     <div class="col-md-3">
         <label>Plan:</label>

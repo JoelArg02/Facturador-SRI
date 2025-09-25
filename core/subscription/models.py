@@ -1,9 +1,14 @@
-from datetime import timedelta
+from __future__ import annotations
 
+from datetime import timedelta
+from typing import Optional, Union, TYPE_CHECKING
+
+from django.conf import settings
 from django.db import models
 from django.utils import timezone
 
-from core.pos.models import Company
+if TYPE_CHECKING:  # pragma: no cover - útil para anotaciones sin dependencias circulares
+    from core.pos.models import Company
 
 
 class Plan(models.Model):
@@ -31,7 +36,7 @@ class Plan(models.Model):
 
 
 class Subscription(models.Model):
-    company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='subscriptions', verbose_name='Compañía')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='subscriptions', verbose_name='Usuario')
     plan = models.ForeignKey(Plan, on_delete=models.PROTECT, verbose_name='Plan')
     start_date = models.DateField(default=timezone.now, verbose_name='Fecha de inicio')
     end_date = models.DateField(null=True, blank=True, verbose_name='Fecha de fin')
@@ -41,12 +46,26 @@ class Subscription(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f'{self.company.commercial_name} -> {self.plan.name}'
+        owner = getattr(self.user, 'get_full_name', lambda: None)()
+        owner_display = owner or getattr(self.user, 'username', 'Usuario')
+        company = self.company
+        if company:
+            return f'{company.commercial_name} ({owner_display}) -> {self.plan.name}'
+        return f'{owner_display} -> {self.plan.name}'
 
     def save(self, *args, **kwargs):
         if self.end_date is None and self.plan and self.start_date:
             self.end_date = self.start_date + timedelta(days=self.plan.period_days)
         super().save(*args, **kwargs)
+
+    @property
+    def company(self):
+        return getattr(self.user, 'company', None)
+
+    @property
+    def company_id(self):
+        company = self.company
+        return company.id if company else None
 
     @property
     def days_left(self):
@@ -67,7 +86,8 @@ class Subscription(models.Model):
         verbose_name = 'Suscripción'
         verbose_name_plural = 'Suscripciones'
         indexes = [
-            models.Index(fields=['is_active']),
+            models.Index(fields=['is_active'], name='subscription_is_active_idx'),
+            models.Index(fields=['user', 'is_active'], name='subscriptionuseris_active_idx'),
         ]
         default_permissions = ('add', 'change', 'delete', 'view')
         permissions = (
@@ -75,9 +95,37 @@ class Subscription(models.Model):
         )
 
 
-def get_active_subscription(company: Company):
-    """Return active (non-expired) subscription for a company."""
-    sub = company.subscriptions.filter(is_active=True).order_by('-start_date').first()
+def _resolve_user(subject: Union['Company', models.Model, None]) -> Optional[models.Model]:
+    """Resolve a subscription owner user from either a company or user instance."""
+    if subject is None:
+        return None
+
+    # Lazy import to avoid circular references
+    from django.contrib.auth import get_user_model
+
+    UserModel = get_user_model()
+    if isinstance(subject, UserModel):
+        return subject
+
+    owner = getattr(subject, 'owner', None)
+    if owner and isinstance(owner, UserModel):
+        return owner
+
+    # Fallback: if subject has a direct user attribute (e.g. already Subscription.user)
+    user = getattr(subject, 'user', None)
+    if user and isinstance(user, UserModel):
+        return user
+
+    return None
+
+
+def get_active_subscription(subject: Union['Company', models.Model, None]):
+    """Return active (non-expired) subscription for a company or user."""
+    user = _resolve_user(subject)
+    if user is None:
+        return None
+
+    sub = user.subscriptions.filter(is_active=True).order_by('-start_date').first()
     if sub:
         sub.deactivate_if_expired()
         if not sub.is_active:

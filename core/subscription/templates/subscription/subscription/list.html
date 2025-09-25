@@ -2,8 +2,12 @@
 {% load static %}
 {% block columns %}
 <tr>
+    <th>Propietario</th>
     <th>Compañía</th>
     <th>Plan</th>
+    <th>Facturas</th>
+    <th>Clientes</th>
+    <th>Productos</th>
     <th>Inicio</th>
     <th>Fin</th>
     <th>Activa</th>
@@ -13,26 +17,22 @@
 </tr>
 {% endblock %}
 {% block rows %}
-    {% for o in object_list %}
-    <tr>
-        <td>{{ o.company.commercial_name }}</td>
-        <td>{{ o.plan.name }}</td>
-        <td>{{ o.start_date|date:'Y-m-d' }}</td>
-        <td>{{ o.end_date|date:'Y-m-d' }}</td>
-        <td>{% if o.is_active %}<span class="badge badge-success">Sí</span>{% else %}<span class="badge badge-danger">No</span>{% endif %}</td>
-        <td>{% if o.expired %}<span class="badge badge-danger">Sí</span>{% else %}<span class="badge badge-success">No</span>{% endif %}</td>
-        <td>{{ o.days_left }}</td>
-        <td class="text-center">
-            <a href="{% url 'subscription_update' o.id %}" class="btn btn-warning btn-xs"><i class="fas fa-edit"></i></a>
-            <a href="{% url 'subscription_delete' o.id %}" class="btn btn-danger btn-xs"><i class="fas fa-trash"></i></a>
-        </td>
-    </tr>
-    {% empty %}
-    <tr><td colspan="8" class="text-center">Sin resultados</td></tr>
-    {% endfor %}
+    <tr><td colspan="12" class="text-center">Cargando información...</td></tr>
 {% endblock %}
 {% block javascript_list %}
 <script>
+    function renderUsage(metric){
+        if(metric.limit === null || metric.limit === 0){
+            return `<span class="badge badge-info">${metric.used} / ∞</span>`;
+        }
+        const percent = Math.min(metric.percent ?? 0, 100);
+        return `
+            <div class="mb-1"><strong>${metric.display}</strong></div>
+            <div class="progress" style="height:6px;">
+                <div class="progress-bar" role="progressbar" style="width:${percent}%" aria-valuenow="${percent}" aria-valuemin="0" aria-valuemax="100"></div>
+            </div>`;
+    }
+
     function loadSubs(){
         $.ajax({
             url: window.location.pathname,
@@ -45,10 +45,22 @@
                     tbody.append('<tr><td colspan="8" class="text-center">Sin resultados</td></tr>');
                 } else {
                     resp.forEach(o => {
+                        const invoiceUsage = renderUsage(o.usage.invoice);
+                        const customerUsage = renderUsage(o.usage.customer);
+                        const productUsage = renderUsage(o.usage.product);
+                        const companyName = o.company.name || '<span class="badge badge-warning">Sin compañía</span>';
+                        const companyInfo = o.company.id ? `${companyName}<br><small class="text-muted">RUC: ${o.company.ruc}</small>` : companyName;
                         tbody.append(`
                         <tr>
-                            <td>${o.company}</td>
-                            <td>${o.plan}</td>
+                            <td>
+                                ${o.owner.name}<br>
+                                <small class="text-muted">@${o.owner.username}</small>
+                            </td>
+                            <td>${companyInfo}</td>
+                            <td>${o.plan.name}</td>
+                            <td>${invoiceUsage}</td>
+                            <td>${customerUsage}</td>
+                            <td>${productUsage}</td>
                             <td>${o.start_date}</td>
                             <td>${o.end_date || ''}</td>
                             <td>${o.is_active ? '<span class="badge badge-success">Sí</span>' : '<span class="badge badge-danger">No</span>'}</td>

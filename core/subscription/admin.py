@@ -12,6 +12,11 @@ class PlanAdmin(admin.ModelAdmin):
 
 @admin.register(Subscription)
 class SubscriptionAdmin(admin.ModelAdmin):
-    list_display = ('company', 'plan', 'start_date', 'end_date', 'is_active')
+    list_display = ('user', 'company_name', 'plan', 'start_date', 'end_date', 'is_active')
     list_filter = ('is_active', 'plan')
-    search_fields = ('company__commercial_name', 'plan__name')
+    search_fields = ('user__username', 'user__names', 'plan__name', 'user__company__commercial_name')
+
+    @admin.display(description='Compañía', ordering='user__company__commercial_name')
+    def company_name(self, obj):
+        company = obj.company
+        return company.commercial_name if company else '—'

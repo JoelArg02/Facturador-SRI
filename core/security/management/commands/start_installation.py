@@ -5,14 +5,14 @@ from os.path import basename
 from pathlib import Path
 
 from django.conf import settings
+from django.contrib.auth.models import Permission
 from django.core.files import File
-from django.core.management import BaseCommand, call_command, CommandError
+from django.core.management import BaseCommand, CommandError, call_command
 from django.db import connection
 
+from core.pos.models import Company  # noqa
 from core.security.models import *  # noqa
 from core.subscription.models import Plan, Subscription  # noqa
-from core.pos.models import Company  # noqa
-from django.contrib.auth.models import Permission
 
 
 class Command(BaseCommand):
@@ -212,17 +212,9 @@ class Command(BaseCommand):
         else:
             self.stdout.write('Módulo Suscripciones ya existía')
 
-        # 9. Crear / asegurar grupos base y nuevos roles multi-tenant
-        # Roles:
-        # - Super Administrador (usa is_superuser, accede a todo)
-        # - Administrador (interno full access sin marcar is_superuser)
-        # - Cliente Propietario (dueño de la compañía: puede gestionar su empresa, usuarios de su tenant, catálogo y facturación)
-        # - Operador Bodega (gestiona inventario / productos / compras, no configura compañía ni usuarios)
-        # - Operador Venta (crea facturas y ve clientes, no cambia configuración ni usuarios)
-        # - Cliente (perfil final para que un cliente final revise sus facturas / portal reducido)
-        # - Consulta (solo lectura de reportes e inventario)
-        admin_group, _ = Group.objects.get_or_create(name='Administrador')
+
         super_admin_group, _ = Group.objects.get_or_create(name='Super Administrador')
+        admin_group, _ = Group.objects.get_or_create(name='Administrador')
         owner_group, _ = Group.objects.get_or_create(name='Cliente Propietario')
         warehouse_group, _ = Group.objects.get_or_create(name='Operador Bodega')
         sales_group, _ = Group.objects.get_or_create(name='Operador Venta')
@@ -300,7 +292,7 @@ class Command(BaseCommand):
             )
             user.set_password('admin')
             user.save()
-            user.groups.add(admin_group)
+            user.groups.add(super_admin_group)
             self.stdout.write(self.style.SUCCESS('Usuario admin creado'))
         else:
             self.stdout.write('Usuario admin ya existe')
@@ -343,12 +335,12 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS(f'Planes verificados/creados: {created_plans} nuevos'))
 
         # 12. Crear suscripción Starter por defecto si hay compañía y no tiene suscripción
-        company = Company.objects.first()
-        if company:
+        company = Company.objects.select_related('owner').first()
+        if company and company.owner:
             starter = Plan.objects.filter(name='Starter').first()
-            if starter and not company.subscriptions.exists():
-                Subscription.objects.create(company=company, plan=starter)
-                self.stdout.write(self.style.SUCCESS('Suscripción Starter creada para la compañía existente'))
+            if starter and not company.owner.subscriptions.exists():
+                Subscription.objects.create(user=company.owner, plan=starter)
+                self.stdout.write(self.style.SUCCESS('Suscripción Starter creada para el propietario de la compañía existente'))
 
         # 13. Backfill company en modelos que tengan el campo (si comando existe)
         try:
@@ -509,7 +501,7 @@ class Command(BaseCommand):
             )
             user.set_password('admin')
             user.save()
-            user.groups.add(super_admin_group)
+            user.groups.add(administrativo)
             self.stdout.write(self.style.SUCCESS('Usuario admin creado (super + admin)'))
         else:
             self.stdout.write('Usuario admin ya existe')
@@ -551,12 +543,12 @@ class Command(BaseCommand):
                 created_plans += 1
         self.stdout.write(self.style.SUCCESS(f'Planes verificados/creados: {created_plans} nuevos'))
 
-        company = Company.objects.first()
-        if company:
+        company = Company.objects.select_related('owner').first()
+        if company and company.owner:
             starter = Plan.objects.filter(name='Starter').first()
-            if starter and not company.subscriptions.exists():
-                Subscription.objects.create(company=company, plan=starter)
-                self.stdout.write(self.style.SUCCESS('Suscripción Starter creada para la compañía existente'))
+            if starter and not company.owner.subscriptions.exists():
+                Subscription.objects.create(user=company.owner, plan=starter)
+                self.stdout.write(self.style.SUCCESS('Suscripción Starter creada para el propietario de la compañía existente'))
 
         try:
             call_command('backfill_company_fk', verbosity=0)

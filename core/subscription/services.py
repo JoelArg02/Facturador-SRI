@@ -9,7 +9,7 @@ class QuotaExceeded(Exception):
 
 def count_for(company, model_label: str):
     """Generic counter for a model referenced by app_label.ModelName and filtered by company FK if exists."""
-    app_label, model_name = model_label.split('.')
+    app_label, model_name = model_label.rsplit('.', 1)
     Model = apps.get_model(app_label, model_name)
     if not hasattr(Model, 'company'):
         # Fallback: try infer via parent relation with company

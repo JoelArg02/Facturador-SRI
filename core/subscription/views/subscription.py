@@ -1,12 +1,13 @@
 import json
-from django.http import HttpResponse
+
+from django.http import HttpResponse, HttpResponseForbidden
 from django.urls import reverse_lazy
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView
-from django.utils import timezone
 
+from core.subscription.forms import SubscriptionForm
 from core.subscription.models import Subscription, Plan
 from core.security.mixins import GroupPermissionMixin
-from core.pos.models import Company
+from core.subscription.services import count_for
 
 
 class SubscriptionListView(GroupPermissionMixin, ListView):
@@ -14,17 +15,64 @@ class SubscriptionListView(GroupPermissionMixin, ListView):
     template_name = 'subscription/subscription/list.html'
     permission_required = 'view_subscription'
 
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_superuser:
+            return HttpResponseForbidden('Solo el super administrador puede acceder a las suscripciones globales.')
+        return super().dispatch(request, *args, **kwargs)
+
     def get_queryset(self):
-        qs = super().get_queryset().select_related('company', 'plan')
-        return qs
+        return (
+            super()
+            .get_queryset()
+            .select_related('user__company', 'plan')
+            .order_by('user__username')
+        )
+
+    def get_usage(self, company, plan: Plan):
+        metrics = {
+            'invoice': ('Facturas', plan.max_invoices, 'core.pos.Invoice'),
+            'customer': ('Clientes', plan.max_customers, 'core.pos.Customer'),
+            'product': ('Productos', plan.max_products, 'core.pos.Product'),
+        }
+        usage = {}
+        for key, (label, limit, model_label) in metrics.items():
+            used = count_for(company, model_label) if company else 0
+            if not limit:
+                display = f'{used} / ∞'
+                percent = None
+            else:
+                percent = round((used / limit) * 100, 2)
+                display = f'{used} / {limit}'
+            usage[key] = {
+                'label': label,
+                'used': used,
+                'limit': limit,
+                'percent': percent,
+                'display': display,
+            }
+        return usage
 
     def serialize(self, s: Subscription):
+        company = s.company
+        owner_name = s.user.get_full_name() or s.user.username
         return {
             'id': s.id,
-            'company': s.company.commercial_name,
-            'company_id': s.company_id,
-            'plan': s.plan.name,
-            'plan_id': s.plan_id,
+            'owner': {
+                'id': s.user_id,
+                'name': owner_name,
+                'username': s.user.username,
+                'email': getattr(s.user, 'email', ''),
+            },
+            'company': {
+                'id': getattr(company, 'id', None),
+                'name': getattr(company, 'commercial_name', 'Sin asignar'),
+                'ruc': getattr(company, 'ruc', ''),
+            },
+            'plan': {
+                'id': s.plan_id,
+                'name': s.plan.name,
+            },
+            'usage': self.get_usage(company, s.plan),
             'start_date': s.start_date.isoformat(),
             'end_date': s.end_date.isoformat() if s.end_date else None,
             'is_active': s.is_active,
@@ -36,6 +84,8 @@ class SubscriptionListView(GroupPermissionMixin, ListView):
         data = {}
         action = request.POST.get('action')
         try:
+            if not request.user.is_superuser:
+                return HttpResponseForbidden(json.dumps({'error': 'Acceso restringido a super administradores.'}), content_type='application/json')
             if action == 'search':
                 data = [self.serialize(s) for s in self.get_queryset()]
             elif action == 'delete':
@@ -58,15 +108,22 @@ class SubscriptionListView(GroupPermissionMixin, ListView):
 
 class SubscriptionCreateView(GroupPermissionMixin, CreateView):
     model = Subscription
-    fields = ['company', 'plan', 'start_date', 'end_date', 'is_active']
+    form_class = SubscriptionForm
     template_name = 'subscription/subscription/form.html'
     success_url = reverse_lazy('subscription_list')
     permission_required = 'add_subscription'
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_superuser:
+            return HttpResponseForbidden('Solo el super administrador puede crear suscripciones.')
+        return super().dispatch(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
         data = {}
         action = request.POST.get('action')
         try:
+            if not request.user.is_superuser:
+                return HttpResponseForbidden(json.dumps({'error': 'Acceso restringido a super administradores.'}), content_type='application/json')
             if action == 'add':
                 form = self.get_form()
                 if form.is_valid():
@@ -89,15 +146,22 @@ class SubscriptionCreateView(GroupPermissionMixin, CreateView):
 
 class SubscriptionUpdateView(GroupPermissionMixin, UpdateView):
     model = Subscription
-    fields = ['company', 'plan', 'start_date', 'end_date', 'is_active']
+    form_class = SubscriptionForm
     template_name = 'subscription/subscription/form.html'
     success_url = reverse_lazy('subscription_list')
     permission_required = 'change_subscription'
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_superuser:
+            return HttpResponseForbidden('Solo el super administrador puede editar suscripciones.')
+        return super().dispatch(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
         data = {}
         action = request.POST.get('action')
         try:
+            if not request.user.is_superuser:
+                return HttpResponseForbidden(json.dumps({'error': 'Acceso restringido a super administradores.'}), content_type='application/json')
             if action == 'edit':
                 form = self.get_form()
                 if form.is_valid():
@@ -124,9 +188,16 @@ class SubscriptionDeleteView(GroupPermissionMixin, DeleteView):
     success_url = reverse_lazy('subscription_list')
     permission_required = 'delete_subscription'
 
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_superuser:
+            return HttpResponseForbidden('Solo el super administrador puede eliminar suscripciones.')
+        return super().dispatch(request, *args, **kwargs)
+
     def post(self, request, *args, **kwargs):
         data = {}
         try:
+            if not request.user.is_superuser:
+                return HttpResponseForbidden(json.dumps({'error': 'Acceso restringido a super administradores.'}), content_type='application/json')
             self.get_object().delete()
         except Exception as e:
             data['error'] = str(e)
