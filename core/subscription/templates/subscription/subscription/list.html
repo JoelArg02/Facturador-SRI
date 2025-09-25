@@ -1,0 +1,87 @@
+{% extends 'list.html' %}
+{% load static %}
+{% block columns %}
+<tr>
+    <th>Compañía</th>
+    <th>Plan</th>
+    <th>Inicio</th>
+    <th>Fin</th>
+    <th>Activa</th>
+    <th>Expirada</th>
+    <th>Días restantes</th>
+    <th class="text-center">Opciones</th>
+</tr>
+{% endblock %}
+{% block rows %}
+    {% for o in object_list %}
+    <tr>
+        <td>{{ o.company.commercial_name }}</td>
+        <td>{{ o.plan.name }}</td>
+        <td>{{ o.start_date|date:'Y-m-d' }}</td>
+        <td>{{ o.end_date|date:'Y-m-d' }}</td>
+        <td>{% if o.is_active %}<span class="badge badge-success">Sí</span>{% else %}<span class="badge badge-danger">No</span>{% endif %}</td>
+        <td>{% if o.expired %}<span class="badge badge-danger">Sí</span>{% else %}<span class="badge badge-success">No</span>{% endif %}</td>
+        <td>{{ o.days_left }}</td>
+        <td class="text-center">
+            <a href="{% url 'subscription_update' o.id %}" class="btn btn-warning btn-xs"><i class="fas fa-edit"></i></a>
+            <a href="{% url 'subscription_delete' o.id %}" class="btn btn-danger btn-xs"><i class="fas fa-trash"></i></a>
+        </td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="8" class="text-center">Sin resultados</td></tr>
+    {% endfor %}
+{% endblock %}
+{% block javascript_list %}
+<script>
+    function loadSubs(){
+        $.ajax({
+            url: window.location.pathname,
+            method: 'POST',
+            data: {action: 'search', csrfmiddlewaretoken: '{{ csrf_token }}'},
+            success: function(resp){
+                const tbody = $('table tbody');
+                tbody.empty();
+                if(resp.length === 0){
+                    tbody.append('<tr><td colspan="8" class="text-center">Sin resultados</td></tr>');
+                } else {
+                    resp.forEach(o => {
+                        tbody.append(`
+                        <tr>
+                            <td>${o.company}</td>
+                            <td>${o.plan}</td>
+                            <td>${o.start_date}</td>
+                            <td>${o.end_date || ''}</td>
+                            <td>${o.is_active ? '<span class="badge badge-success">Sí</span>' : '<span class="badge badge-danger">No</span>'}</td>
+                            <td>${o.expired ? '<span class="badge badge-danger">Sí</span>' : '<span class="badge badge-success">No</span>'}</td>
+                            <td>${o.days_left ?? ''}</td>
+                            <td class="text-center">
+                                <a href="/subscription/update/${o.id}/" class="btn btn-warning btn-xs"><i class="fas fa-edit"></i></a>
+                                <button class="btn btn-danger btn-xs btn-delete" data-id="${o.id}"><i class="fas fa-trash"></i></button>
+                            </td>
+                        </tr>`);
+                    });
+                }
+            }
+        });
+    }
+    $(function(){
+        loadSubs();
+        $('table').on('click', '.btn-delete', function(){
+            if(!confirm('¿Eliminar suscripción?')) return;
+            const id = $(this).data('id');
+            $.ajax({
+                url: window.location.pathname,
+                method: 'POST',
+                data: {action: 'delete', id: id, csrfmiddlewaretoken: '{{ csrf_token }}'},
+                success: function(resp){
+                    if(resp.error){
+                        alert(resp.error);
+                    } else {
+                        loadSubs();
+                    }
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

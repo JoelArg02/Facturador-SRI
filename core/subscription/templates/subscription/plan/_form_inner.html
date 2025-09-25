@@ -1,0 +1,38 @@
+<form id="plan-modal-form">
+  {% csrf_token %}
+  <input type="hidden" name="action" value="{{ action }}">
+  <div class="form-row">
+    <div class="form-group col-md-4">
+      <label>Nombre</label>
+      {{ form.name }}
+    </div>
+    <div class="form-group col-md-8">
+      <label>Descripción</label>
+      {{ form.description }}
+    </div>
+    <div class="form-group col-md-3">
+      <label>Máx Facturas</label>
+      {{ form.max_invoices }}
+    </div>
+    <div class="form-group col-md-3">
+      <label>Máx Clientes</label>
+      {{ form.max_customers }}
+    </div>
+    <div class="form-group col-md-3">
+      <label>Máx Productos</label>
+      {{ form.max_products }}
+    </div>
+    <div class="form-group col-md-2">
+      <label>Precio</label>
+      {{ form.price }}
+    </div>
+    <div class="form-group col-md-1">
+      <label>Días</label>
+      {{ form.period_days }}
+    </div>
+    <div class="form-group col-md-2">
+      <label>Activo</label>
+      {{ form.active }}
+    </div>
+  </div>
+</form>

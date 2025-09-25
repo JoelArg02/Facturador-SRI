@@ -68,3 +68,25 @@ class GroupModuleMixin(BaseGroupMixin):
 
         messages.error(request, 'No tienes los permisos necesarios para acceder a esta sección')
         return HttpResponseRedirect(self.get_last_url())
+
+
+class CompanyQuerysetMixin:
+    """Filtra automáticamente queryset de modelos con campo company."""
+    company_field = 'company'
+
+    def get_company(self):
+        return getattr(self.request, 'company', None)
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        company = self.get_company()
+        model = qs.model
+        if company and hasattr(model, self.company_field):
+            return qs.filter(**{self.company_field: company})
+        return qs
+
+    def form_valid(self, form):
+        company = self.get_company()
+        if company and hasattr(form.instance, self.company_field) and getattr(form.instance, self.company_field) is None:
+            setattr(form.instance, self.company_field, company)
+        return super().form_valid(form)

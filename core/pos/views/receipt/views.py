@@ -5,10 +5,10 @@ from django.urls import reverse_lazy
 from django.views.generic import CreateView, UpdateView, DeleteView, ListView
 
 from core.pos.forms import Receipt, ReceiptForm
-from core.security.mixins import GroupPermissionMixin
+from core.security.mixins import GroupPermissionMixin, CompanyQuerysetMixin
 
 
-class ReceiptListView(GroupPermissionMixin, ListView):
+class ReceiptListView(GroupPermissionMixin, CompanyQuerysetMixin, ListView):
     model = Receipt
     template_name = 'receipt/list.html'
     permission_required = 'view_receipt'
@@ -19,7 +19,7 @@ class ReceiptListView(GroupPermissionMixin, ListView):
         try:
             if action == 'search':
                 data = []
-                for i in self.model.objects.filter():
+                for i in self.get_queryset():
                     data.append(i.as_dict())
             else:
                 data['error'] = 'No ha seleccionado ninguna opción'
@@ -34,7 +34,7 @@ class ReceiptListView(GroupPermissionMixin, ListView):
         return context
 
 
-class ReceiptCreateView(GroupPermissionMixin, CreateView):
+class ReceiptCreateView(GroupPermissionMixin, CompanyQuerysetMixin, CreateView):
     model = Receipt
     template_name = 'receipt/create.html'
     form_class = ReceiptForm
@@ -46,12 +46,22 @@ class ReceiptCreateView(GroupPermissionMixin, CreateView):
         action = request.POST['action']
         try:
             if action == 'add':
-                data = self.get_form().save()
+                form = self.get_form()
+                if form.is_valid():
+                    obj = form.save(commit=False)
+                    # Asignar compañía si aún no se estableció
+                    if hasattr(obj, 'company') and obj.company is None:
+                        obj.company = getattr(request, 'company', None)
+                    obj.save()
+                    data = obj.as_dict() if hasattr(obj, 'as_dict') else {'id': obj.pk}
+                else:
+                    data['error'] = form.errors
             elif action == 'validate_data':
                 voucher_type = request.POST['voucher_type']
                 establishment_code = request.POST['establishment_code']
                 issuing_point_code = request.POST['issuing_point_code']
-                data['valid'] = not self.model.objects.filter(voucher_type=voucher_type, establishment_code=establishment_code, issuing_point_code=issuing_point_code).exists() if len(voucher_type) and len(issuing_point_code) and len(establishment_code) else True
+                qs = self.get_queryset()
+                data['valid'] = not qs.filter(voucher_type=voucher_type, establishment_code=establishment_code, issuing_point_code=issuing_point_code).exists() if len(voucher_type) and len(issuing_point_code) and len(establishment_code) else True
             else:
                 data['error'] = 'No ha seleccionado ninguna opción'
         except Exception as e:
@@ -66,7 +76,7 @@ class ReceiptCreateView(GroupPermissionMixin, CreateView):
         return context
 
 
-class ReceiptUpdateView(GroupPermissionMixin, UpdateView):
+class ReceiptUpdateView(GroupPermissionMixin, CompanyQuerysetMixin, UpdateView):
     model = Receipt
     template_name = 'receipt/create.html'
     form_class = ReceiptForm
@@ -82,12 +92,21 @@ class ReceiptUpdateView(GroupPermissionMixin, UpdateView):
         action = request.POST['action']
         try:
             if action == 'edit':
-                data = self.get_form().save()
+                form = self.get_form()
+                if form.is_valid():
+                    obj = form.save(commit=False)
+                    if hasattr(obj, 'company') and obj.company is None:
+                        obj.company = getattr(request, 'company', None)
+                    obj.save()
+                    data = obj.as_dict() if hasattr(obj, 'as_dict') else {'id': obj.pk}
+                else:
+                    data['error'] = form.errors
             elif action == 'validate_data':
                 voucher_type = request.POST['voucher_type']
                 establishment_code = request.POST['establishment_code']
                 issuing_point_code = request.POST['issuing_point_code']
-                data['valid'] = not self.model.objects.filter(voucher_type=voucher_type, establishment_code=establishment_code, issuing_point_code=issuing_point_code).exclude(id=self.object.id).exists() if len(voucher_type) and len(issuing_point_code) and len(establishment_code) else True
+                qs = self.get_queryset()
+                data['valid'] = not qs.filter(voucher_type=voucher_type, establishment_code=establishment_code, issuing_point_code=issuing_point_code).exclude(id=self.object.id).exists() if len(voucher_type) and len(issuing_point_code) and len(establishment_code) else True
             else:
                 data['error'] = 'No ha seleccionado ninguna opción'
         except Exception as e:
@@ -102,7 +121,7 @@ class ReceiptUpdateView(GroupPermissionMixin, UpdateView):
         return context
 
 
-class ReceiptDeleteView(GroupPermissionMixin, DeleteView):
+class ReceiptDeleteView(GroupPermissionMixin, CompanyQuerysetMixin, DeleteView):
     model = Receipt
     template_name = 'delete.html'
     success_url = reverse_lazy('receipt_list')

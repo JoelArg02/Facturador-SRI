@@ -56,6 +56,7 @@ class Company(models.Model):
     email_port = models.IntegerField(default=587, verbose_name='Puerto del servidor de correo')
     email_host_user = models.CharField(max_length=100, help_text='Ingrese el nombre de usuario del servidor de correo', verbose_name='Username del servidor de correo')
     email_host_password = models.CharField(max_length=30, help_text='Ingrese la contraseña del servidor de correo', verbose_name='Password del servidor de correo')
+    owner = models.ForeignKey('user.User', null=True, blank=True, related_name='companies', on_delete=models.SET_NULL, verbose_name='Propietario')
 
     def __str__(self):
         return self.commercial_name
@@ -109,7 +110,22 @@ class Company(models.Model):
         item['image'] = self.get_image()
         item['electronic_signature'] = self.get_electronic_signature()
         item['tax'] = float(self.tax)
+        item['owner'] = self.owner_id
         return item
+
+    # Helpers multi-tenant iniciales
+    def active_subscription(self):
+        from core.subscription.models import get_active_subscription
+        return get_active_subscription(self)
+
+    def can_create(self, kind: str):
+        """Verifica cuotas del plan antes de crear recursos (kind: invoice|customer|product)."""
+        from core.subscription.services import ensure_quota, QuotaExceeded
+        try:
+            ensure_quota(self, kind)
+            return True, None
+        except QuotaExceeded as e:
+            return False, str(e)
 
     def save(self, force_insert=False, force_update=False, using=None,
              update_fields=None):
@@ -127,6 +143,7 @@ class Company(models.Model):
 
 
 class Provider(models.Model):
+    company = models.ForeignKey('pos.Company', null=True, blank=True, related_name='providers', on_delete=models.CASCADE, verbose_name='Compañía')
     name = models.CharField(max_length=50, unique=True, help_text='Ingrese un nombre', verbose_name='Nombre')
     ruc = models.CharField(max_length=13, unique=True, help_text='Ingrese un RUC', verbose_name='RUC')
     mobile = models.CharField(max_length=10, unique=True, help_text='Ingrese un número de teléfono celular', verbose_name='Teléfono celular')
@@ -150,6 +167,7 @@ class Provider(models.Model):
 
 
 class Category(models.Model):
+    company = models.ForeignKey('pos.Company', null=True, blank=True, related_name='categories', on_delete=models.CASCADE, verbose_name='Compañía')
     name = models.CharField(max_length=50, unique=True, help_text='Ingrese un nombre', verbose_name='Nombre')
 
     def __str__(self):
@@ -165,6 +183,7 @@ class Category(models.Model):
 
 
 class Product(models.Model):
+    company = models.ForeignKey('pos.Company', null=True, blank=True, related_name='products', on_delete=models.CASCADE, verbose_name='Compañía')
     name = models.CharField(max_length=150, help_text='Ingrese un nombre', verbose_name='Nombre')
     code = models.CharField(max_length=50, unique=True, help_text='Ingrese un código', verbose_name='Código')
     description = models.CharField(max_length=500, null=True, blank=True, help_text='Ingrese una descripción', verbose_name='Descripción')
@@ -251,6 +270,7 @@ class Product(models.Model):
 
 
 class Purchase(models.Model):
+    company = models.ForeignKey('pos.Company', null=True, blank=True, related_name='purchases', on_delete=models.CASCADE, verbose_name='Compañía')
     number = models.CharField(max_length=8, unique=True, help_text='Ingrese un número de factura', verbose_name='Número de factura')
     provider = models.ForeignKey(Provider, on_delete=models.PROTECT, verbose_name='Proveedor')
     payment_type = models.CharField(max_length=50, choices=PAYMENT_TYPE, default=PAYMENT_TYPE[0][0], verbose_name='Tipo de pago')
@@ -312,6 +332,7 @@ class Purchase(models.Model):
 
 
 class PurchaseDetail(models.Model):
+    company = models.ForeignKey('pos.Company', null=True, blank=True, related_name='purchase_details', on_delete=models.CASCADE, verbose_name='Compañía')
     purchase = models.ForeignKey(Purchase, on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.PROTECT)
     quantity = models.IntegerField(default=0)
@@ -335,6 +356,7 @@ class PurchaseDetail(models.Model):
 
 
 class AccountPayable(models.Model):
+    company = models.ForeignKey('pos.Company', null=True, blank=True, related_name='accounts_payable', on_delete=models.CASCADE, verbose_name='Compañía')
     purchase = models.ForeignKey(Purchase, on_delete=models.PROTECT)
     date_joined = models.DateField(default=datetime.now)
     end_date = models.DateField(default=datetime.now)
@@ -387,6 +409,7 @@ class AccountPayable(models.Model):
 
 
 class AccountPayablePayment(models.Model):
+    company = models.ForeignKey('pos.Company', null=True, blank=True, related_name='accounts_payable_payments', on_delete=models.CASCADE, verbose_name='Compañía')
     account_payable = models.ForeignKey(AccountPayable, on_delete=models.CASCADE, verbose_name='Cuenta por pagar')
     date_joined = models.DateField(default=datetime.now, verbose_name='Fecha de registro')
     description = models.CharField(max_length=500, null=True, blank=True, help_text='Ingrese una descripción', verbose_name='Detalles')
@@ -420,6 +443,7 @@ class AccountPayablePayment(models.Model):
 
 
 class Customer(models.Model):
+    company = models.ForeignKey('pos.Company', null=True, blank=True, related_name='customers', on_delete=models.CASCADE, verbose_name='Compañía')
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     dni = models.CharField(max_length=13, unique=True, help_text='Ingrese un número de cédula o RUC', verbose_name='Número de cédula o RUC')
     mobile = models.CharField(max_length=10, null=True, blank=True, help_text='Ingrese un teléfono', verbose_name='Teléfono')
@@ -451,6 +475,7 @@ class Customer(models.Model):
 
 
 class Receipt(models.Model):
+    company = models.ForeignKey('pos.Company', null=True, blank=True, related_name='receipts', on_delete=models.CASCADE, verbose_name='Compañía')
     voucher_type = models.CharField(max_length=10, choices=VOUCHER_TYPE, verbose_name='Tipo de Comprobante')
     establishment_code = models.CharField(max_length=3, help_text='Ingrese un código del establecimiento emisor', verbose_name='Código del Establecimiento Emisor')
     issuing_point_code = models.CharField(max_length=3, help_text='Ingrese un código del punto de emisión', verbose_name='Código del Punto de Emisión')
@@ -488,6 +513,7 @@ class Receipt(models.Model):
 
 
 class ExpenseType(models.Model):
+    company = models.ForeignKey('pos.Company', null=True, blank=True, related_name='expense_types', on_delete=models.CASCADE, verbose_name='Compañía')
     name = models.CharField(max_length=50, unique=True, help_text='Ingrese un nombre', verbose_name='Nombre')
 
     def __str__(self):
@@ -510,6 +536,7 @@ class ExpenseType(models.Model):
 
 
 class Expense(models.Model):
+    company = models.ForeignKey('pos.Company', null=True, blank=True, related_name='expenses', on_delete=models.CASCADE, verbose_name='Compañía')
     expense_type = models.ForeignKey(ExpenseType, on_delete=models.PROTECT, verbose_name='Tipo de Gasto')
     description = models.CharField(max_length=500, null=True, blank=True, help_text='Ingrese una descripción', verbose_name='Detalles')
     date_joined = models.DateField(default=datetime.now, verbose_name='Fecha de Registro')
@@ -537,6 +564,7 @@ class Expense(models.Model):
 
 
 class Promotion(models.Model):
+    company = models.ForeignKey('pos.Company', null=True, blank=True, related_name='promotions', on_delete=models.CASCADE, verbose_name='Compañía')
     start_date = models.DateField(default=datetime.now)
     end_date = models.DateField(default=datetime.now)
     active = models.BooleanField(default=True)
@@ -561,6 +589,7 @@ class Promotion(models.Model):
 
 
 class PromotionDetail(models.Model):
+    company = models.ForeignKey('pos.Company', null=True, blank=True, related_name='promotion_details', on_delete=models.CASCADE, verbose_name='Compañía')
     promotion = models.ForeignKey(Promotion, on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.PROTECT)
     current_price = models.DecimalField(max_digits=9, decimal_places=4, default=0.00)
@@ -1134,6 +1163,7 @@ class Invoice(ElecBillingBase):
 
 class InvoiceDetail(ElecBillingDetailBase):
     invoice = models.ForeignKey(Invoice, on_delete=models.CASCADE)
+    # company derivada de invoice.company (no duplicamos por ahora)
 
     def __str__(self):
         return self.product.name
@@ -1155,6 +1185,7 @@ class InvoiceDetail(ElecBillingDetailBase):
 
 
 class AccountReceivable(models.Model):
+    company = models.ForeignKey('pos.Company', null=True, blank=True, related_name='accounts_receivable', on_delete=models.CASCADE, verbose_name='Compañía')
     invoice = models.ForeignKey(Invoice, on_delete=models.PROTECT)
     date_joined = models.DateField(default=datetime.now)
     end_date = models.DateField(default=datetime.now)
@@ -1207,6 +1238,7 @@ class AccountReceivable(models.Model):
 
 
 class AccountReceivablePayment(models.Model):
+    company = models.ForeignKey('pos.Company', null=True, blank=True, related_name='accounts_receivable_payments', on_delete=models.CASCADE, verbose_name='Compañía')
     account_receivable = models.ForeignKey(AccountReceivable, on_delete=models.CASCADE, verbose_name='Cuenta por cobrar')
     date_joined = models.DateField(default=datetime.now, verbose_name='Fecha de registro')
     description = models.CharField(max_length=500, null=True, blank=True, help_text='Ingrese una descripción', verbose_name='Detalles')
@@ -1396,6 +1428,7 @@ class CreditNote(ElecBillingBase):
 class CreditNoteDetail(ElecBillingDetailBase):
     credit_note = models.ForeignKey(CreditNote, on_delete=models.CASCADE)
     invoice_detail = models.ForeignKey(InvoiceDetail, on_delete=models.CASCADE)
+    # company derivada de credit_note.company
 
     def __str__(self):
         return self.product.name
@@ -1555,6 +1588,7 @@ class Quotation(TransactionSummary):
 
 class QuotationDetail(ElecBillingDetailBase):
     quotation = models.ForeignKey(Quotation, on_delete=models.CASCADE)
+    # company derivada de quotation.company
 
     def __str__(self):
         return self.quotation.__str__()

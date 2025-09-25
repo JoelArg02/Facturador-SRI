@@ -7,10 +7,10 @@ from django.views.generic import ListView, DeleteView
 
 from core.pos.models import ReceiptError
 from core.report.forms import ReportForm
-from core.security.mixins import GroupPermissionMixin
+from core.security.mixins import GroupPermissionMixin, CompanyQuerysetMixin
 
 
-class ReceiptErrorListView(GroupPermissionMixin, ListView):
+class ReceiptErrorListView(GroupPermissionMixin, CompanyQuerysetMixin, ListView):
     model = ReceiptError
     template_name = 'receipt_error/list.html'
     permission_required = 'view_receipt_error'
@@ -29,7 +29,7 @@ class ReceiptErrorListView(GroupPermissionMixin, ListView):
                     filters &= Q(date_joined__range=[start_date, end_date])
                 if len(receipt):
                     filters &= Q(receipt_id=receipt)
-                for i in self.model.objects.filter(filters):
+                for i in self.get_queryset().filter(filters):
                     data.append(i.as_dict())
             else:
                 data['error'] = 'No ha seleccionado ninguna opción'
@@ -44,7 +44,7 @@ class ReceiptErrorListView(GroupPermissionMixin, ListView):
         return context
 
 
-class ReceiptErrorDeleteView(GroupPermissionMixin, DeleteView):
+class ReceiptErrorDeleteView(GroupPermissionMixin, CompanyQuerysetMixin, DeleteView):
     model = ReceiptError
     template_name = 'delete.html'
     success_url = reverse_lazy('receipt_error_list')

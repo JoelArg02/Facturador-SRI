@@ -11,10 +11,10 @@ from core.pos.models import Company
 from core.pos.utilities.pdf_creator import PDFCreator
 from core.pos.utilities.sri import SRI
 from core.report.forms import ReportForm
-from core.security.mixins import GroupPermissionMixin
+from core.security.mixins import GroupPermissionMixin, CompanyQuerysetMixin
 
 
-class CreditNoteListView(GroupPermissionMixin, ListView):
+class CreditNoteListView(GroupPermissionMixin, CompanyQuerysetMixin, ListView):
     model = CreditNote
     template_name = 'credit_note/list_admin.html'
     permission_required = 'view_credit_note_admin'
@@ -30,7 +30,7 @@ class CreditNoteListView(GroupPermissionMixin, ListView):
                 filters = Q()
                 if len(start_date) and len(end_date):
                     filters &= Q(date_joined__range=[start_date, end_date])
-                for i in self.model.objects.filter(filters):
+                for i in self.get_queryset().filter(filters):
                     item = i.as_dict()
                     item['print_pdf'] = str(reverse_lazy('credit_note_print', kwargs={'pk': i.id}))
                     data.append(item)
@@ -58,7 +58,7 @@ class CreditNoteListView(GroupPermissionMixin, ListView):
         return context
 
 
-class CreditNoteCreateView(GroupPermissionMixin, CreateView):
+class CreditNoteCreateView(GroupPermissionMixin, CompanyQuerysetMixin, CreateView):
     model = CreditNote
     template_name = 'credit_note/create_admin.html'
     form_class = CreditNoteForm
@@ -66,6 +66,10 @@ class CreditNoteCreateView(GroupPermissionMixin, CreateView):
     permission_required = 'add_credit_note_admin'
 
     def get_company(self):
+        # Utilizar la compañía activa del request si existe
+        company = getattr(self.request, 'company', None)
+        if company:
+            return company
         return Company.objects.first() or Company()
 
     def get_form_kwargs(self):
@@ -117,7 +121,11 @@ class CreditNoteCreateView(GroupPermissionMixin, CreateView):
             elif action == 'search_invoice':
                 data = []
                 term = request.POST['term']
-                for i in Invoice.objects.filter(status__in=[INVOICE_STATUS[1][0], INVOICE_STATUS[2][0]]).filter(Q(receipt_number_full__icontains=term) | Q(receipt_number__icontains=term) | Q(customer__user__names__icontains=term) | Q(customer__dni__icontains=term)).exclude(customer__identification_type=IDENTIFICATION_TYPE[-2][0]).order_by('receipt_number')[0:10]:
+                invoices = Invoice.objects.filter(status__in=[INVOICE_STATUS[1][0], INVOICE_STATUS[2][0]])
+                company = getattr(request, 'company', None)
+                if company:
+                    invoices = invoices.filter(company=company)
+                for i in invoices.filter(Q(receipt_number_full__icontains=term) | Q(receipt_number__icontains=term) | Q(customer__user__names__icontains=term) | Q(customer__dni__icontains=term)).exclude(customer__identification_type=IDENTIFICATION_TYPE[-2][0]).order_by('receipt_number')[0:10]:
                     item = i.as_dict()
                     detail = []
                     for d in i.invoicedetail_set.all():
@@ -142,7 +150,7 @@ class CreditNoteCreateView(GroupPermissionMixin, CreateView):
         return context
 
 
-class CreditNoteDeleteView(GroupPermissionMixin, DeleteView):
+class CreditNoteDeleteView(GroupPermissionMixin, CompanyQuerysetMixin, DeleteView):
     model = CreditNote
     template_name = 'delete.html'
     success_url = reverse_lazy('credit_note_admin_list')
@@ -163,14 +171,14 @@ class CreditNoteDeleteView(GroupPermissionMixin, DeleteView):
         return context
 
 
-class CreditNotePrintView(GroupPermissionMixin, ListView):
+class CreditNotePrintView(GroupPermissionMixin, CompanyQuerysetMixin, ListView):
     model = CreditNote
     template_name = 'credit_note/invoice_pdf.html'
     success_url = reverse_lazy('credit_note_admin_list')
     permission_required = 'print_credit_note'
 
     def get(self, request, *args, **kwargs):
-        credit_note = self.model.objects.filter(id=self.kwargs['pk']).first()
+        credit_note = self.get_queryset().filter(id=self.kwargs['pk']).first()
         if credit_note:
             context = {'object': credit_note}
             pdf_file = PDFCreator(template_name=self.template_name).create(context=context)
@@ -178,7 +186,7 @@ class CreditNotePrintView(GroupPermissionMixin, ListView):
         return HttpResponseRedirect(self.success_url)
 
 
-class CreditNoteCustomerListView(GroupPermissionMixin, ListView):
+class CreditNoteCustomerListView(GroupPermissionMixin, CompanyQuerysetMixin, ListView):
     model = CreditNote
     template_name = 'credit_note/list_customer.html'
     permission_required = 'view_credit_note_customer'
@@ -194,7 +202,7 @@ class CreditNoteCustomerListView(GroupPermissionMixin, ListView):
                 filters = Q(invoice__customer__user=request.user)
                 if len(start_date) and len(end_date):
                     filters &= Q(date_joined__range=[start_date, end_date])
-                for i in self.model.objects.filter(filters):
+                for i in self.get_queryset().filter(filters):
                     item = i.as_dict()
                     item['print_pdf'] = str(reverse_lazy('credit_note_print', kwargs={'pk': i.id}))
                     data.append(item)

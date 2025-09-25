@@ -1,0 +1,67 @@
+{% extends 'form.html' %}
+{% load static %}
+{% block form_fields %}
+    <div class="row">
+        <div class="col-md-4">
+            <label>Nombre:</label>
+            {{ form.name }}
+        </div>
+        <div class="col-md-8">
+            <label>Descripción:</label>
+            {{ form.description }}
+        </div>
+        <div class="col-md-3">
+            <label>Máx Facturas:</label>
+            {{ form.max_invoices }}
+        </div>
+        <div class="col-md-3">
+            <label>Máx Clientes:</label>
+            {{ form.max_customers }}
+        </div>
+        <div class="col-md-3">
+            <label>Máx Productos:</label>
+            {{ form.max_products }}
+        </div>
+        <div class="col-md-2">
+            <label>Precio:</label>
+            {{ form.price }}
+        </div>
+        <div class="col-md-1">
+            <label>Días:</label>
+            {{ form.period_days }}
+        </div>
+        <div class="col-md-2">
+            <label>Activo:</label>
+            {{ form.active }}
+        </div>
+    </div>
+{% endblock %}
+{% block javascript_form %}
+<script>
+    $(function(){
+        const form = $('form');
+        form.on('submit', function(e){
+            e.preventDefault();
+            const action = '{{ action }}';
+            const formData = form.serializeArray();
+            formData.push({name: 'action', value: action});
+            $.ajax({
+                url: window.location.pathname,
+                method: 'POST',
+                data: formData,
+                success: function(resp){
+                    if(resp.error){
+                        let msg = '';
+                        if(typeof resp.error === 'object'){
+                            Object.keys(resp.error).forEach(k => {msg += k + ': ' + resp.error[k].join(', ') + '\n';});
+                        }else{msg = resp.error;}
+                        alert(msg);
+                    }else{
+                        window.location.href = "{% url 'plan_list' %}";
+                    }
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

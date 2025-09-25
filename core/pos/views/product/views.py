@@ -13,10 +13,10 @@ from django.views.generic import CreateView, UpdateView, DeleteView, ListView
 from django.views.generic.base import View
 
 from core.pos.forms import ProductForm, Product, Category
-from core.security.mixins import GroupPermissionMixin
+from core.security.mixins import GroupPermissionMixin, CompanyQuerysetMixin
 
 
-class ProductListView(GroupPermissionMixin, ListView):
+class ProductListView(GroupPermissionMixin, CompanyQuerysetMixin, ListView):
     model = Product
     template_name = 'product/list.html'
     permission_required = 'view_product'
@@ -27,7 +27,7 @@ class ProductListView(GroupPermissionMixin, ListView):
         try:
             if action == 'search':
                 data = []
-                for i in self.model.objects.filter():
+                for i in self.get_queryset():
                     data.append(i.as_dict())
             elif action == 'upload_excel':
                 with transaction.atomic():
@@ -62,7 +62,7 @@ class ProductListView(GroupPermissionMixin, ListView):
         return context
 
 
-class ProductCreateView(GroupPermissionMixin, CreateView):
+class ProductCreateView(GroupPermissionMixin, CompanyQuerysetMixin, CreateView):
     model = Product
     template_name = 'product/create.html'
     form_class = ProductForm
@@ -95,7 +95,7 @@ class ProductCreateView(GroupPermissionMixin, CreateView):
         return context
 
 
-class ProductUpdateView(GroupPermissionMixin, UpdateView):
+class ProductUpdateView(GroupPermissionMixin, CompanyQuerysetMixin, UpdateView):
     model = Product
     template_name = 'product/create.html'
     form_class = ProductForm
@@ -132,7 +132,7 @@ class ProductUpdateView(GroupPermissionMixin, UpdateView):
         return context
 
 
-class ProductDeleteView(GroupPermissionMixin, DeleteView):
+class ProductDeleteView(GroupPermissionMixin, CompanyQuerysetMixin, DeleteView):
     model = Product
     template_name = 'delete.html'
     success_url = reverse_lazy('product_list')
@@ -153,7 +153,7 @@ class ProductDeleteView(GroupPermissionMixin, DeleteView):
         return context
 
 
-class ProductStockAdjustmentView(GroupPermissionMixin, ListView):
+class ProductStockAdjustmentView(GroupPermissionMixin, CompanyQuerysetMixin, ListView):
     model = Product
     template_name = 'product/stock_adjustment.html'
     permission_required = 'adjust_product_stock'
@@ -169,7 +169,8 @@ class ProductStockAdjustmentView(GroupPermissionMixin, ListView):
                 filters = Q(is_inventoried=True)
                 if len(term):
                     filters &= Q(Q(name__icontains=term) | Q(code__icontains=term))
-                queryset = self.model.objects.filter(filters).exclude(id__in=ids).order_by('name')
+                base_qs = self.get_queryset()
+                queryset = base_qs.filter(filters).exclude(id__in=ids).order_by('name')
                 if filters.children and len(term):
                     queryset = queryset[0:10]
                 for i in queryset:
@@ -215,7 +216,7 @@ class ProductExportExcelView(LoginRequiredMixin, View):
             for index, (name, width, _) in enumerate(columns_info):
                 worksheet.set_column(index, index, width)
                 worksheet.write(0, index, name, cell_format)
-            for row, product in enumerate(Product.objects.filter(), start=1):
+            for row, product in enumerate(self.get_queryset(), start=1):
                 for col, (_, _, value_func) in enumerate(columns_info):
                     worksheet.write(row, col, value_func(product), row_format)
             workbook.close()

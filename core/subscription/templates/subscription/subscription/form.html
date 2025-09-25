@@ -1,0 +1,55 @@
+{% extends 'form.html' %}
+{% load static %}
+{% block form_fields %}
+<div class="row">
+    <div class="col-md-4">
+        <label>Compañía:</label>
+        {{ form.company }}
+    </div>
+    <div class="col-md-3">
+        <label>Plan:</label>
+        {{ form.plan }}
+    </div>
+    <div class="col-md-2">
+        <label>Inicio:</label>
+        {{ form.start_date }}
+    </div>
+    <div class="col-md-2">
+        <label>Fin:</label>
+        {{ form.end_date }}
+    </div>
+    <div class="col-md-1">
+        <label>Activa:</label>
+        {{ form.is_active }}
+    </div>
+</div>
+{% endblock %}
+{% block javascript_form %}
+<script>
+    $(function(){
+        const form = $('form');
+        form.on('submit', function(e){
+            e.preventDefault();
+            const action = '{{ action }}';
+            const formData = form.serializeArray();
+            formData.push({name: 'action', value: action});
+            $.ajax({
+                url: window.location.pathname,
+                method: 'POST',
+                data: formData,
+                success: function(resp){
+                    if(resp.error){
+                        let msg = '';
+                        if(typeof resp.error === 'object'){
+                            Object.keys(resp.error).forEach(k => {msg += k + ': ' + resp.error[k].join(', ') + '\n';});
+                        } else {msg = resp.error;}
+                        alert(msg);
+                    } else {
+                        window.location.href = "{% url 'subscription_list' %}";
+                    }
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

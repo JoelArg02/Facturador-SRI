@@ -59,6 +59,7 @@ LOCAL_APPS = [
     'core.report',
     'core.security',
     'core.user',
+    'core.subscription',
 ]
 
 INSTALLED_APPS = DJANGO_APPS + LOCAL_APPS + THIRD_PARTY_APPS
@@ -73,6 +74,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'crum.CurrentRequestUserMiddleware',
     'django_user_agents.middleware.UserAgentMiddleware',
+    'core.security.middleware.ActiveCompanyMiddleware',
 ]
 
 ROOT_URLCONF = 'config.urls'

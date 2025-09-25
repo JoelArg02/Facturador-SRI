@@ -8,10 +8,10 @@ from django.views.generic import DeleteView, CreateView, ListView
 
 from core.pos.forms import AccountReceivable, AccountReceivablePaymentForm, AccountReceivablePayment
 from core.report.forms import ReportForm
-from core.security.mixins import GroupPermissionMixin
+from core.security.mixins import GroupPermissionMixin, CompanyQuerysetMixin
 
 
-class AccountReceivableListView(GroupPermissionMixin, ListView):
+class AccountReceivableListView(GroupPermissionMixin, CompanyQuerysetMixin, ListView):
     model = AccountReceivable
     template_name = 'account_receivable/list.html'
     permission_required = 'view_account_receivable'
@@ -27,11 +27,14 @@ class AccountReceivableListView(GroupPermissionMixin, ListView):
                 filters = Q()
                 if len(start_date) and len(end_date):
                     filters &= Q(date_joined__range=[start_date, end_date])
-                for i in self.model.objects.filter(filters):
+                for i in self.get_queryset().filter(filters):
                     data.append(i.as_dict())
             elif action == 'search_payments':
                 data = []
-                for index, i in enumerate(AccountReceivablePayment.objects.filter(account_receivable_id=request.POST['id']).order_by('id'), start=1):
+                base_qs = AccountReceivablePayment.objects.filter(account_receivable_id=request.POST['id'])
+                if hasattr(base_qs.model, 'account_receivable'):
+                    base_qs = base_qs.filter(account_receivable__company=getattr(request, 'company', None))
+                for index, i in enumerate(base_qs.order_by('id'), start=1):
                     item = i.as_dict()
                     item['index'] = index
                     data.append(item)
@@ -52,7 +55,7 @@ class AccountReceivableListView(GroupPermissionMixin, ListView):
         return context
 
 
-class AccountReceivableCreateView(GroupPermissionMixin, CreateView):
+class AccountReceivableCreateView(GroupPermissionMixin, CompanyQuerysetMixin, CreateView):
     model = AccountReceivablePayment
     template_name = 'account_receivable/create.html'
     form_class = AccountReceivablePaymentForm
@@ -66,7 +69,11 @@ class AccountReceivableCreateView(GroupPermissionMixin, CreateView):
             if action == 'search_account_receivable':
                 data = []
                 term = request.POST['term']
-                for i in AccountReceivable.objects.filter(Q(invoice__customer__user__names__icontains=term) | Q(invoice__customer__dni__icontains=term) | Q(invoice__receipt_number__icontains=term)).exclude(active=False)[0:10]:
+                qs = AccountReceivable.objects.filter(Q(invoice__customer__user__names__icontains=term) | Q(invoice__customer__dni__icontains=term) | Q(invoice__receipt_number__icontains=term)).exclude(active=False)
+                company = getattr(request, 'company', None)
+                if company:
+                    qs = qs.filter(company=company)
+                for i in qs[0:10]:
                     data.append(i.as_dict())
             elif action == 'add':
                 with transaction.atomic():
@@ -90,7 +97,7 @@ class AccountReceivableCreateView(GroupPermissionMixin, CreateView):
         return context
 
 
-class AccountReceivableDeleteView(GroupPermissionMixin, DeleteView):
+class AccountReceivableDeleteView(GroupPermissionMixin, CompanyQuerysetMixin, DeleteView):
     model = AccountReceivable
     template_name = 'delete.html'
     success_url = reverse_lazy('account_receivable_list')

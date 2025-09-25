@@ -8,10 +8,10 @@ from django.views.generic import DeleteView, CreateView, ListView
 
 from core.pos.forms import AccountPayable, AccountPayablePaymentForm, AccountPayablePayment
 from core.report.forms import ReportForm
-from core.security.mixins import GroupPermissionMixin
+from core.security.mixins import GroupPermissionMixin, CompanyQuerysetMixin
 
 
-class AccountPayableListView(GroupPermissionMixin, ListView):
+class AccountPayableListView(GroupPermissionMixin, CompanyQuerysetMixin, ListView):
     model = AccountPayable
     template_name = 'account_payable/list.html'
     permission_required = 'view_account_payable'
@@ -27,11 +27,15 @@ class AccountPayableListView(GroupPermissionMixin, ListView):
                 filters = Q()
                 if len(start_date) and len(end_date):
                     filters &= Q(date_joined__range=[start_date, end_date])
-                for i in self.model.objects.filter(filters):
+                for i in self.get_queryset().filter(filters):
                     data.append(i.as_dict())
             elif action == 'search_payments':
                 data = []
-                for index, i in enumerate(AccountPayablePayment.objects.filter(account_payable_id=request.POST['id']).order_by('id'), start=1):
+                base_qs = AccountPayablePayment.objects.filter(account_payable_id=request.POST['id'])
+                # Asegurar filtrado por company a través de la relación inversa
+                if hasattr(base_qs.model, 'account_payable'):
+                    base_qs = base_qs.filter(account_payable__company=getattr(request, 'company', None))
+                for index, i in enumerate(base_qs.order_by('id'), start=1):
                     item = i.as_dict()
                     item['index'] = index
                     data.append(item)
@@ -52,7 +56,7 @@ class AccountPayableListView(GroupPermissionMixin, ListView):
         return context
 
 
-class AccountPayableCreateView(GroupPermissionMixin, CreateView):
+class AccountPayableCreateView(GroupPermissionMixin, CompanyQuerysetMixin, CreateView):
     model = AccountPayablePayment
     template_name = 'account_payable/create.html'
     form_class = AccountPayablePaymentForm
@@ -66,7 +70,11 @@ class AccountPayableCreateView(GroupPermissionMixin, CreateView):
             if action == 'search_account_payable':
                 data = []
                 term = request.POST['term']
-                for i in AccountPayable.objects.filter(Q(purchase__provider__name__icontains=term) | Q(purchase__number__icontains=term)).exclude(active=False)[0:10]:
+                qs = AccountPayable.objects.filter(Q(purchase__provider__name__icontains=term) | Q(purchase__number__icontains=term)).exclude(active=False)
+                company = getattr(request, 'company', None)
+                if company:
+                    qs = qs.filter(company=company)
+                for i in qs[0:10]:
                     data.append(i.as_dict())
             elif action == 'add':
                 with transaction.atomic():
@@ -90,7 +98,7 @@ class AccountPayableCreateView(GroupPermissionMixin, CreateView):
         return context
 
 
-class AccountPayableDeleteView(GroupPermissionMixin, DeleteView):
+class AccountPayableDeleteView(GroupPermissionMixin, CompanyQuerysetMixin, DeleteView):
     model = AccountPayable
     template_name = 'delete.html'
     success_url = reverse_lazy('account_payable_list')
