@@ -1,13 +1,195 @@
 import json
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 
 from django.http import HttpResponse, HttpResponseForbidden
 from django.urls import reverse_lazy
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView
+from django.conf import settings
 
 from core.subscription.forms import SubscriptionForm
 from core.subscription.models import Subscription, Plan
 from core.security.mixins import GroupPermissionMixin
 from core.subscription.services import count_for
+
+
+def get_all_subscriptions():
+    """Función independiente para obtener todas las suscripciones."""
+    try:
+        subscriptions = (
+            Subscription.objects
+            .select_related('user__company', 'plan', 'user')
+            .prefetch_related('user__groups')
+            .order_by('-created_at')
+        )
+        
+        result = []
+        for s in subscriptions:
+            try:
+                company = s.company
+                admin_name = s.user.get_full_name() or s.user.username
+                admin_groups = ', '.join([g.name for g in s.user.groups.all()[:2]])
+                
+                subscription_data = {
+                    'id': s.id,
+                    'owner': {
+                        'id': s.user_id,
+                        'name': admin_name,
+                        'username': s.user.username,
+                        'email': getattr(s.user, 'email', ''),
+                        'groups': admin_groups,
+                    },
+                    'company': {
+                        'id': getattr(company, 'id', None),
+                        'name': getattr(company, 'commercial_name', 'Sin asignar'),
+                        'ruc': getattr(company, 'ruc', ''),
+                    },
+                    'plan': {
+                        'id': s.plan_id,
+                        'name': s.plan.name,
+                    },
+                    'usage': get_usage(company, s.plan),
+                    'start_date': s.start_date.isoformat() if s.start_date else None,
+                    'end_date': s.end_date.isoformat() if s.end_date else None,
+                    'is_active': s.is_active,
+                    'expired': s.expired,
+                    'days_left': s.days_left,
+                }
+                result.append(subscription_data)
+            except Exception as e:
+                print(f"Error serializando suscripción {s.id}: {e}")
+                continue
+                
+        return result
+    except Exception as e:
+        print(f"Error obteniendo suscripciones: {e}")
+        return []
+
+
+def get_usage(company, plan: Plan):
+    """Calcula el uso actual de recursos para una compañía y plan."""
+    metrics = {
+        'invoice': ('Facturas', plan.max_invoices, 'pos.Invoice'),
+        'customer': ('Clientes', plan.max_customers, 'pos.Customer'),
+        'product': ('Productos', plan.max_products, 'pos.Product'),
+    }
+    usage = {}
+    for key, (label, limit, model_label) in metrics.items():
+        used = count_for(company, model_label) if company else 0
+        if not limit:
+            display = f'{used} / ∞'
+            percent = None
+        else:
+            percent = round((used / limit) * 100, 2)
+            display = f'{used} / {limit}'
+        usage[key] = {
+            'label': label,
+            'used': used,
+            'limit': limit,
+            'percent': percent,
+            'display': display,
+        }
+    return usage
+
+
+def send_subscription_email(user, subscription):
+    """Envía correo de notificación de activación de suscripción."""
+    if not user.email:
+        return
+
+    try:
+        plan = subscription.plan
+        company = subscription.company
+        
+        message = MIMEMultipart('alternative')
+        message['Subject'] = f'Plan {plan.name} activado - Facturador SRI'
+        message['From'] = settings.EMAIL_HOST_USER
+        message['To'] = user.email
+
+        # Texto plano
+        text_content = f"""
+Hola {user.get_full_name() or user.username},
+
+¡Su plan {plan.name} ha sido activado exitosamente!
+
+Características de su plan:
+- Máximo de facturas: {plan.max_invoices if plan.max_invoices else 'Ilimitadas'}
+- Máximo de clientes: {plan.max_customers if plan.max_customers else 'Ilimitados'}
+- Máximo de productos: {plan.max_products if plan.max_products else 'Ilimitados'}
+- Duración: {plan.period_days} días
+- Precio: ${plan.price}
+
+Vigencia: {subscription.start_date} hasta {subscription.end_date}
+
+¡Gracias por confiar en nosotros!
+"""
+
+        # HTML con diseño
+        html_content = f"""
+<html>
+<body style="font-family:Arial, sans-serif; background:#f4f4f7; padding:20px;">
+    <table style="max-width:600px; margin:auto; background:#ffffff; border-radius:8px; overflow:hidden; box-shadow:0 2px 6px rgba(0,0,0,0.1);">
+        <tr>
+            <td style="background:#10b981; color:#fff; padding:20px; text-align:center;">
+                <h2 style="margin:0;">✅ Plan Activado</h2>
+            </td>
+        </tr>
+        <tr>
+            <td style="padding:30px; color:#2d3748;">
+                <p style="font-size:16px;">Hola <strong>{user.get_full_name() or user.username}</strong>,</p>
+                <p style="font-size:16px;">¡Su plan <strong>{plan.name}</strong> ha sido activado exitosamente!</p>
+                
+                <div style="background:#f7fafc; padding:20px; border-radius:8px; margin:20px 0;">
+                    <h3 style="color:#2d3748; margin-top:0;">Características de su plan:</h3>
+                    <ul style="list-style:none; padding:0;">
+                        <li style="padding:8px 0; border-bottom:1px solid #e2e8f0;">
+                            <strong>Facturas:</strong> {plan.max_invoices if plan.max_invoices else 'Ilimitadas'}
+                        </li>
+                        <li style="padding:8px 0; border-bottom:1px solid #e2e8f0;">
+                            <strong>Clientes:</strong> {plan.max_customers if plan.max_customers else 'Ilimitados'}
+                        </li>
+                        <li style="padding:8px 0; border-bottom:1px solid #e2e8f0;">
+                            <strong>Productos:</strong> {plan.max_products if plan.max_products else 'Ilimitados'}
+                        </li>
+                        <li style="padding:8px 0; border-bottom:1px solid #e2e8f0;">
+                            <strong>Duración:</strong> {plan.period_days} días
+                        </li>
+                        <li style="padding:8px 0;">
+                            <strong>Precio:</strong> ${plan.price}
+                        </li>
+                    </ul>
+                </div>
+                
+                <p style="font-size:16px; background:#ebf8ff; padding:15px; border-radius:8px; border-left:4px solid #3182ce;">
+                    <strong>Vigencia:</strong> {subscription.start_date} hasta {subscription.end_date}
+                </p>
+                
+                <p style="font-size:16px;">¡Gracias por confiar en nosotros!</p>
+            </td>
+        </tr>
+        <tr>
+            <td style="background:#edf2f7; color:#4a5568; padding:15px; text-align:center; font-size:12px;">
+                © 2025 Facturador SRI
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
+        """
+
+        message.attach(MIMEText(text_content, 'plain'))
+        message.attach(MIMEText(html_content, 'html'))
+
+        # Envío por SSL en puerto 465
+        server = smtplib.SMTP_SSL(settings.EMAIL_HOST, 465)
+        server.login(settings.EMAIL_HOST_USER, settings.EMAIL_HOST_PASSWORD)
+        server.sendmail(settings.EMAIL_HOST_USER, [user.email], message.as_string())
+        server.quit()
+
+    except Exception:
+        # Se silencian errores de correo para no interrumpir el flujo
+        pass
 
 
 class SubscriptionListView(GroupPermissionMixin, ListView):
@@ -27,30 +209,6 @@ class SubscriptionListView(GroupPermissionMixin, ListView):
             .select_related('user__company', 'plan')
             .order_by('user__username')
         )
-
-    def get_usage(self, company, plan: Plan):
-        metrics = {
-            'invoice': ('Facturas', plan.max_invoices, 'core.pos.Invoice'),
-            'customer': ('Clientes', plan.max_customers, 'core.pos.Customer'),
-            'product': ('Productos', plan.max_products, 'core.pos.Product'),
-        }
-        usage = {}
-        for key, (label, limit, model_label) in metrics.items():
-            used = count_for(company, model_label) if company else 0
-            if not limit:
-                display = f'{used} / ∞'
-                percent = None
-            else:
-                percent = round((used / limit) * 100, 2)
-                display = f'{used} / {limit}'
-            usage[key] = {
-                'label': label,
-                'used': used,
-                'limit': limit,
-                'percent': percent,
-                'display': display,
-            }
-        return usage
 
     def serialize(self, s: Subscription):
         company = s.company
@@ -74,7 +232,7 @@ class SubscriptionListView(GroupPermissionMixin, ListView):
                 'id': s.plan_id,
                 'name': s.plan.name,
             },
-            'usage': self.get_usage(company, s.plan),
+            'usage': get_usage(company, s.plan),
             'start_date': s.start_date.isoformat(),
             'end_date': s.end_date.isoformat() if s.end_date else None,
             'is_active': s.is_active,
@@ -89,7 +247,9 @@ class SubscriptionListView(GroupPermissionMixin, ListView):
             if not request.user.is_superuser:
                 return HttpResponseForbidden(json.dumps({'error': 'Acceso restringido a super administradores.'}), content_type='application/json')
             if action == 'search':
-                data = [self.serialize(s) for s in self.get_queryset()]
+                print("DEBUG: Ejecutando búsqueda de suscripciones...")
+                data = get_all_subscriptions()
+                print(f"DEBUG: Se encontraron {len(data)} suscripciones")
             elif action == 'delete':
                 pk = request.POST.get('id')
                 obj = Subscription.objects.get(pk=pk)
@@ -98,7 +258,10 @@ class SubscriptionListView(GroupPermissionMixin, ListView):
             else:
                 data['error'] = 'Acción inválida'
         except Exception as e:
+            print(f"DEBUG: Error en SubscriptionListView.post: {e}")
             data['error'] = str(e)
+        
+        print(f"DEBUG: Respuesta final: {data}")
         return HttpResponse(json.dumps(data, default=str), content_type='application/json')
 
     def get_context_data(self, **kwargs):
@@ -130,7 +293,40 @@ class SubscriptionCreateView(GroupPermissionMixin, CreateView):
                 form = self.get_form()
                 if form.is_valid():
                     obj = form.save()
-                    data = {'id': obj.id, 'object': SubscriptionListView.serialize(self, obj)}
+                    # Enviar correo de notificación si la suscripción está activa
+                    if obj.is_active:
+                        send_subscription_email(obj.user, obj)
+                    
+                    # Serializar objeto para respuesta
+                    company = obj.company
+                    admin_name = obj.user.get_full_name() or obj.user.username
+                    admin_groups = ', '.join([g.name for g in obj.user.groups.all()[:2]])
+                    serialized_obj = {
+                        'id': obj.id,
+                        'owner': {
+                            'id': obj.user_id,
+                            'name': admin_name,
+                            'username': obj.user.username,
+                            'email': getattr(obj.user, 'email', ''),
+                            'groups': admin_groups,
+                        },
+                        'company': {
+                            'id': getattr(company, 'id', None),
+                            'name': getattr(company, 'commercial_name', 'Sin asignar'),
+                            'ruc': getattr(company, 'ruc', ''),
+                        },
+                        'plan': {
+                            'id': obj.plan_id,
+                            'name': obj.plan.name,
+                        },
+                        'usage': get_usage(company, obj.plan),
+                        'start_date': obj.start_date.isoformat(),
+                        'end_date': obj.end_date.isoformat() if obj.end_date else None,
+                        'is_active': obj.is_active,
+                        'expired': obj.expired,
+                        'days_left': obj.days_left,
+                    }
+                    data = {'id': obj.id, 'object': serialized_obj}
                 else:
                     data['error'] = form.errors
             else:
@@ -165,10 +361,45 @@ class SubscriptionUpdateView(GroupPermissionMixin, UpdateView):
             if not request.user.is_superuser:
                 return HttpResponseForbidden(json.dumps({'error': 'Acceso restringido a super administradores.'}), content_type='application/json')
             if action == 'edit':
+                old_instance = self.get_object()
+                was_active = old_instance.is_active
                 form = self.get_form()
                 if form.is_valid():
                     obj = form.save()
-                    data = {'id': obj.id, 'object': SubscriptionListView.serialize(self, obj)}
+                    # Enviar correo si se activó la suscripción (no estaba activa antes)
+                    if obj.is_active and not was_active:
+                        send_subscription_email(obj.user, obj)
+                    
+                    # Serializar objeto para respuesta
+                    company = obj.company
+                    admin_name = obj.user.get_full_name() or obj.user.username
+                    admin_groups = ', '.join([g.name for g in obj.user.groups.all()[:2]])
+                    serialized_obj = {
+                        'id': obj.id,
+                        'owner': {
+                            'id': obj.user_id,
+                            'name': admin_name,
+                            'username': obj.user.username,
+                            'email': getattr(obj.user, 'email', ''),
+                            'groups': admin_groups,
+                        },
+                        'company': {
+                            'id': getattr(company, 'id', None),
+                            'name': getattr(company, 'commercial_name', 'Sin asignar'),
+                            'ruc': getattr(company, 'ruc', ''),
+                        },
+                        'plan': {
+                            'id': obj.plan_id,
+                            'name': obj.plan.name,
+                        },
+                        'usage': get_usage(company, obj.plan),
+                        'start_date': obj.start_date.isoformat(),
+                        'end_date': obj.end_date.isoformat() if obj.end_date else None,
+                        'is_active': obj.is_active,
+                        'expired': obj.expired,
+                        'days_left': obj.days_left,
+                    }
+                    data = {'id': obj.id, 'object': serialized_obj}
                 else:
                     data['error'] = form.errors
             else:

@@ -1,6 +1,20 @@
 {% extends 'list.html' %}
-{% load static %}
-{% block columns %}
+{% load stati            success: function(resp){
+                console.log('Respuesta del servidor:', resp);
+                const tbody = $('table tbody');
+                tbody.empty();
+                
+                // Verificar si resp es un array
+                if (!Array.isArray(resp)) {
+                    console.error('La respuesta no es un array:', resp);
+                    tbody.append('<tr><td colspan="12" class="text-center">Error: respuesta inválida</td></tr>');
+                    return;
+                }
+                
+                if(resp.length === 0){
+                    tbody.append('<tr><td colspan="12" class="text-center">Sin resultados</td></tr>');
+                } else {
+                    resp.forEach(o => {% block columns %}
 <tr>
     <th>Administrador</th>
     <th>Compañía</th>

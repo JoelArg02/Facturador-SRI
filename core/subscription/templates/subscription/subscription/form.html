@@ -7,20 +7,13 @@
         {{ form.user }}
         {% if form.user.help_text %}<small class="form-text text-muted">{{ form.user.help_text }}</small>{% endif %}
     </div>
-    <div class="col-md-3">
+    <div class="col-md-4">
         <label>Plan:</label>
         {{ form.plan }}
+        <small class="form-text text-muted">Las fechas de inicio y fin se asignarán automáticamente</small>
     </div>
-    <div class="col-md-2">
-        <label>Inicio:</label>
-        {{ form.start_date }}
-    </div>
-    <div class="col-md-2">
-        <label>Fin:</label>
-        {{ form.end_date }}
-    </div>
-    <div class="col-md-1">
-        <label>Activa:</label>
+    <div class="col-md-4">
+        <label>Estado:</label>
         {{ form.is_active }}
     </div>
 </div>

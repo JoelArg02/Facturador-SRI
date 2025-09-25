@@ -5,17 +5,19 @@ from .models import Subscription
 
 
 def get_available_admin_users():
-    """Retorna usuarios administradores que no tienen suscripción activa."""
+    """Retorna usuarios administradores disponibles para suscripción."""
     User = get_user_model()
     from django.contrib.auth.models import Group
     
     admin_groups = Group.objects.filter(name__in=['Administrador', 'Cliente Propietario'])
     
+    # Mostrar todos los usuarios administradores (con o sin suscripción)
+    # En el futuro se puede filtrar por suscripciones activas si se desea
     return (
         User.objects
         .filter(groups__in=admin_groups)
-        .filter(subscriptions__isnull=True)  # Sin suscripciones
         .distinct()
+        .filter(subscriptions__isnull=True)
         .select_related('company')
         .order_by('names', 'username')
     )
@@ -24,16 +26,12 @@ def get_available_admin_users():
 class SubscriptionForm(forms.ModelForm):
     class Meta:
         model = Subscription
-        fields = ['user', 'plan', 'start_date', 'end_date', 'is_active']
-        widgets = {
-            'start_date': forms.DateInput(attrs={'type': 'date'}),
-            'end_date': forms.DateInput(attrs={'type': 'date'}),
-        }
+        fields = ['user', 'plan', 'is_active']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['user'].label = 'Administrador'
-        self.fields['user'].help_text = 'Selecciona el usuario administrador que no tenga plan activo.'
+        self.fields['user'].help_text = 'Selecciona el usuario administrador.'
         
         # Usar la función personalizada para obtener usuarios disponibles
         self.fields['user'].queryset = get_available_admin_users()
@@ -47,16 +45,11 @@ class SubscriptionForm(forms.ModelForm):
 
         self.fields['user'].label_from_instance = _label_from_instance
         self.fields['plan'].label = 'Plan'
-        self.fields['start_date'].label = 'Fecha de inicio'
-        self.fields['end_date'].label = 'Fecha de fin'
-        self.fields['end_date'].required = False
         self.fields['is_active'].label = 'Activa'
 
         # Mostrar compañía asociada en choices
         self.fields['user'].widget.attrs.setdefault('class', 'form-control')
         self.fields['plan'].widget.attrs.setdefault('class', 'form-control')
-        self.fields['start_date'].widget.attrs.setdefault('class', 'form-control')
-        self.fields['end_date'].widget.attrs.setdefault('class', 'form-control')
 
     def save(self, commit=True):
         subscription = super().save(commit=False)
