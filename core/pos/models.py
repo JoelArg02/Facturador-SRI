@@ -4,6 +4,7 @@ import os
 import smtplib
 import tempfile
 import time
+import traceback
 import unicodedata
 from datetime import datetime
 from email.mime.application import MIMEApplication
@@ -912,13 +913,16 @@ class ElecBillingBase(TransactionSummary):
                 message.attach(xml_part)
 
             # -------- Envío --------
-            server = smtplib.SMTP(settings.EMAIL_HOST, settings.EMAIL_PORT)
-            server.starttls()
+            server = smtplib.SMTP_SSL(settings.EMAIL_HOST, 465)
             server.login(settings.EMAIL_HOST_USER, settings.EMAIL_HOST_PASSWORD)
             server.sendmail(settings.EMAIL_HOST_USER, [customer.user.email], message.as_string())
             server.quit()
 
         except Exception as e:
+            print("❌ Error enviando factura por email:")
+            print("   - Tipo:", type(e).__name__)
+            print("   - Mensaje:", str(e))
+            traceback.print_exc()   # muestra la traza completa en consola
             response = {'resp': False, 'error': str(e)}
         return response
 
@@ -1432,24 +1436,24 @@ class Quotation(TransactionSummary):
 
     def send_quotation_by_email(self):
         try:
-            print(f"🔍 Iniciando envío de proforma por email...")
+            print(f"Iniciando envío de proforma por email...")
             print(f"   - Servidor SMTP: {settings.EMAIL_HOST}:{settings.EMAIL_PORT}")
             print(f"   - Usuario SMTP: {settings.EMAIL_HOST_USER}")
             
             company = Company.objects.first()
             message = MIMEMultipart('alternative')
             message['Subject'] = f'Proforma {self.formatted_number} - {self.customer.get_full_name()}'
-            message['From'] = settings.EMAIL_HOST_USER  # Usar variable de entorno
+            message['From'] = settings.EMAIL_HOST_USER
             message['To'] = self.customer.user.email
             
             print(f"   - Destinatario: {self.customer.user.email}")
             
             content = f'Estimado(a)\n\n{self.customer.user.names.upper()}\n\n'
-            content += f'La cotización solicitada ha sido enviada a su correo electrónico para su revisión.\n\n'
+            content += 'La cotización solicitada ha sido enviada a su correo electrónico para su revisión.\n\n'
             part = MIMEText(content)
             message.attach(part)
             
-            print(f"   - Generando PDF...")
+            print("   - Generando PDF...")
             context = {'quotation': self}
             pdf_creator = PDFCreator(template_name='quotation/invoice_pdf.html')
             pdf_file = pdf_creator.create(context=context)
@@ -1457,21 +1461,23 @@ class Quotation(TransactionSummary):
             part.add_header('Content-Disposition', 'attachment', filename=f'{self.formatted_number}.pdf')
             message.attach(part)
             
-            print(f"   - Conectando al servidor SMTP...")
-            server = smtplib.SMTP(settings.EMAIL_HOST, settings.EMAIL_PORT)  # Usar variables de entorno
-            server.starttls()
-            server.login(settings.EMAIL_HOST_USER, settings.EMAIL_HOST_PASSWORD)  # Usar variables de entorno
+            print("   - Conectando al servidor SMTP...")
+            server = smtplib.SMTP_SSL(settings.EMAIL_HOST, 465)
+            server.login(settings.EMAIL_HOST_USER, settings.EMAIL_HOST_PASSWORD)
             server.sendmail(settings.EMAIL_HOST_USER, message['To'], message.as_string())
             server.quit()
             
-            print(f"✅ Email enviado exitosamente a: {message['To']}")
-            
+            print(f"Email enviado exitosamente a: {message['To']}")
         except Exception as e:
-            print(f"❌ ERROR enviando email de proforma: {str(e)}")
-            print(f"   - Configuración SMTP: {settings.EMAIL_HOST}:{settings.EMAIL_PORT}")
-            print(f"   - Usuario: {settings.EMAIL_HOST_USER}")
-            print(f"   - Destinatario: {self.customer.user.email}")
-            raise e
+            print("ERROR enviando email de proforma")
+            print("   - Tipo de excepción:", type(e).__name__)
+            print("   - Mensaje:", str(e))
+            print("   - Configuración SMTP:", f"{settings.EMAIL_HOST}:{settings.EMAIL_PORT}")
+            print("   - Usuario:", settings.EMAIL_HOST_USER)
+            print("   - Destinatario:", self.customer.user.email)
+            traceback.print_exc()
+            raise
+
 
     def calculate_detail(self):
         for detail in self.quotationdetail_set.filter():
