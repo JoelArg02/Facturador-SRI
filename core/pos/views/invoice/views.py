@@ -40,21 +40,43 @@ class InvoiceListView(GroupPermissionMixin, CompanyQuerysetMixin, ListView):
                 for i in InvoiceDetail.objects.filter(invoice_id=request.POST['id']):
                     data.append(i.as_dict())
             elif action == 'create_electronic_invoice':
-                with transaction.atomic():
-                    invoice = self.model.objects.get(pk=request.POST['id'])
-                    receipt_number_is_null = invoice.receipt_number_is_null()
+                invoice = self.model.objects.get(pk=request.POST['id'])
+                
+                # Verificar si necesita número de recibo
+                receipt_number_is_null = invoice.receipt_number_is_null()
+                if receipt_number_is_null:
+                    invoice.receipt_number = invoice.generate_receipt_number()
+                    invoice.receipt_number_full = invoice.generate_receipt_number_full()
+                    invoice.edit()
+                
+                # Intentar generar factura electrónica
+                data = invoice.generate_electronic_invoice_document()
+                
+                # Si hay error de secuencial registrado, intentar con el siguiente
+                if not data['resp'] and 'error' in data:
+                    if invoice.check_sequential_error(errors=data):
+                        # Guardar el error actual
+                        invoice.create_receipt_error(errors=data, change_status=False)
+                        
+                        # Intentar con el siguiente secuencial disponible
+                        if invoice.find_next_available_sequential():
+                            invoice.edit()  # Guardar el nuevo secuencial
+                            
+                            # Reintentar la generación
+                            data = invoice.generate_electronic_invoice_document()
+                            
+                            if data['resp']:
+                                invoice.create_electronic_invoice = True
+                                invoice.edit()
+                        else:
+                            # Si no se pudo encontrar secuencial disponible
+                            data['error'] = 'No se pudo encontrar un secuencial disponible'
+                elif data['resp']:
+                    # Éxito en el primer intento
+                    invoice.create_electronic_invoice = True
+                    invoice.edit()
                     if receipt_number_is_null:
-                        invoice.receipt_number = invoice.generate_receipt_number()
-                        invoice.receipt_number_full = invoice.generate_receipt_number_full()
-                        invoice.edit()
-                    data = invoice.generate_electronic_invoice_document()
-                    if not data['resp']:
-                        transaction.set_rollback(True)
-                    else:
-                        invoice.create_electronic_invoice = True
-                        invoice.edit()
-                        if receipt_number_is_null:
-                            invoice.save_sequence_number()
+                        invoice.save_sequence_number()
             elif action == 'create_credit_note':
                 with transaction.atomic():
                     invoice = self.model.objects.get(pk=request.POST['id'])
@@ -140,7 +162,14 @@ class InvoiceCreateView(AutoAssignCompanyMixin, GroupPermissionMixin, CompanyQue
                         invoice = Invoice()
                         invoice.date_joined = request.POST['date_joined']
                         invoice.end_credit = request.POST['end_credit']
-                        invoice.company = self.get_company()
+                        
+                        # Debug: verificar qué tipo de objeto es company
+                        company = self.get_company()
+                        print(f"[InvoiceCreateView.add] Company obtenida: {company}")
+                        print(f"[InvoiceCreateView.add] Tipo de company: {type(company)}")
+                        print(f"[InvoiceCreateView.add] Es instancia de Company: {isinstance(company, Company)}")
+                        
+                        invoice.company = company
                         invoice.environment_type = invoice.company.environment_type
                         invoice.receipt = Receipt.objects.get(voucher_type=request.POST['receipt'], establishment_code=invoice.company.establishment_code, issuing_point_code=invoice.company.issuing_point_code)
                         invoice.receipt_number = invoice.generate_receipt_number()
@@ -327,7 +356,7 @@ class InvoiceUpdateView(AutoAssignCompanyMixin, GroupPermissionMixin, CompanyQue
                         if not data['resp']:
                             transaction.set_rollback(True)
                 if 'error' in data:
-                    invoice.create_receipt_errors(errors=data, change_status=False)
+                    invoice.create_receipt_error(errors=data, change_status=False)
             elif action == 'get_receipt_number':
                 company = self.get_company()
                 data['receipt_number'] = ''
@@ -360,9 +389,6 @@ class InvoiceUpdateView(AutoAssignCompanyMixin, GroupPermissionMixin, CompanyQue
             elif action == 'search_customer':
                 data = []
                 term = request.POST['term']
-                print(f"[InvoiceUpdateView.search_customer] Buscando clientes con término: '{term}'")
-                print(f"[InvoiceUpdateView.search_customer] Usuario: {request.user}")
-                print(f"[InvoiceUpdateView.search_customer] Company del request: {getattr(request, 'company', 'NO COMPANY')}")
                 
                 # Obtener la company del request
                 company = getattr(request, 'company', None)
@@ -373,16 +399,12 @@ class InvoiceUpdateView(AutoAssignCompanyMixin, GroupPermissionMixin, CompanyQue
                 # Agregar filtro por company si existe
                 if company:
                     customers_qs = Customer.objects.filter(base_filter, company=company)
-                    print(f"[InvoiceUpdateView.search_customer] Filtrando por company {company.id}: {company.company_name}")
                 else:
                     customers_qs = Customer.objects.filter(base_filter)
-                    print(f"[InvoiceUpdateView.search_customer] SIN FILTRO DE COMPANY - se traerán todos los clientes")
                 
                 customers_qs = customers_qs.order_by('user__names')[0:10]
-                print(f"[InvoiceUpdateView.search_customer] Clientes encontrados: {customers_qs.count()}")
                 
                 for i in customers_qs:
-                    print(f"[InvoiceUpdateView.search_customer] Cliente: {i.user.names} (ID: {i.id}, Company: {i.company})")
                     data.append(i.as_dict())
             else:
                 data['error'] = 'No ha seleccionado ninguna opción'

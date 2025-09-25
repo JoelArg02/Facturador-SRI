@@ -2,10 +2,16 @@ from django.db import models, transaction
 from django.db.models import Sum, FloatField
 from django.db.models.functions import Coalesce
 from django.forms import model_to_dict
+from django.conf import settings
 from core.pos.choices import PAYMENT_TYPE, INVOICE_PAYMENT_METHOD, VOUCHER_TYPE, TAX_CODES, RETENTION_AGENT
 from .billing_base import ElecBillingBase, ElecBillingDetailBase
 from .catalog import Receipt
 from .company import Company
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.mime.application import MIMEApplication
+from email.utils import formataddr
 
 class Invoice(ElecBillingBase):
     customer = models.ForeignKey('pos.Customer', on_delete=models.PROTECT, verbose_name='Cliente')
@@ -27,11 +33,13 @@ class Invoice(ElecBillingBase):
     def calculate_detail(self):
         for detail in self.invoicedetail_set.filter():
             detail.price = float(detail.price)
-            detail.tax = float(self.tax)
-            detail.price_with_tax = detail.price + (detail.price * detail.tax)
+            # Usar el porcentaje de IVA de la compañía dividido entre 100 para obtener el decimal
+            tax_rate = float(self.company.tax_percentage) / 100.0
+            detail.tax = tax_rate
+            detail.price_with_tax = detail.price + (detail.price * tax_rate) if detail.product.has_tax else detail.price
             detail.subtotal = detail.price * detail.quantity
             detail.total_discount = detail.subtotal * float(detail.discount)
-            detail.total_tax = (detail.subtotal - detail.total_discount) * detail.tax
+            detail.total_tax = (detail.subtotal - detail.total_discount) * tax_rate if detail.product.has_tax else 0.00
             detail.total_amount = detail.subtotal - detail.total_discount
             detail.save()
     def calculate_invoice(self):
@@ -40,6 +48,8 @@ class Invoice(ElecBillingBase):
         self.total_tax = round(float(self.invoicedetail_set.filter(product__has_tax=True).aggregate(result=Coalesce(Sum('total_tax'), 0.00, output_field=FloatField()))['result']), 2)
         self.total_discount = float(self.invoicedetail_set.filter().aggregate(result=Coalesce(Sum('total_discount'), 0.00, output_field=FloatField()))['result'])
         self.total_amount = round(self.subtotal, 2) + float(self.total_tax)
+        # Asignar el porcentaje de IVA correctamente al campo tax de la factura
+        self.tax = float(self.company.tax_percentage) / 100.0
         self.save()
     def recalculate_invoice(self):
         self.calculate_detail(); self.calculate_invoice()
@@ -132,6 +142,150 @@ class Invoice(ElecBillingBase):
         item['cash'] = float(self.cash)
         item['change'] = float(self.change)
         return item
+    
+    def get_client_from_model(self):
+        """Retorna el cliente asociado a esta factura"""
+        return self.customer
+    
+    def send_invoice_files_to_customer(self):
+        """Envía la factura por email al cliente con archivos PDF y XML adjuntos"""
+        response = {'resp': True}
+        try:
+            customer = self.get_client_from_model()
+
+            message = MIMEMultipart('alternative')
+            message['Subject'] = f'Factura electrónica – {self.receipt_number_full}'
+            message['From'] = formataddr(("OptimusPos Facturación", settings.EMAIL_HOST_USER))
+            message['To'] = customer.user.email
+
+            # --------- HTML Responsive ------------
+            html_content = f"""
+            <!DOCTYPE html>
+            <html>
+            <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <style>
+                body {{
+                margin:0;
+                padding:0;
+                background:#f6f8fa;
+                font-family:'Segoe UI',Roboto,Arial,sans-serif;
+                color:#333;
+                }}
+                .container {{
+                max-width:600px;
+                margin:20px auto;
+                background:#ffffff;
+                border-radius:12px;
+                box-shadow:0 4px 12px rgba(0,0,0,0.1);
+                overflow:hidden;
+                }}
+                .header {{
+                background:linear-gradient(135deg,#4e73df,#2e59d9);
+                color:#fff;
+                text-align:center;
+                padding:30px 20px;
+                }}
+                .header h1 {{
+                margin:0;
+                font-size:28px;
+                letter-spacing:0.5px;
+                }}
+                .content {{
+                padding:25px 20px;
+                }}
+                .content h2 {{
+                margin-top:0;
+                color:#2e59d9;
+                }}
+                .info-table {{
+                width:100%;
+                border-collapse:collapse;
+                margin:20px 0;
+                }}
+                .info-table td {{
+                padding:10px;
+                border-top:1px solid #e1e4e8;
+                }}
+                .btn {{
+                display:inline-block;
+                margin-top:20px;
+                background:#2e59d9;
+                color:#fff !important;
+                text-decoration:none;
+                padding:12px 24px;
+                border-radius:6px;
+                font-weight:600;
+                }}
+                .footer {{
+                text-align:center;
+                padding:20px;
+                font-size:12px;
+                color:#888;
+                }}
+                @media screen and (max-width: 600px) {{
+                .header h1 {{ font-size:24px; }}
+                .content h2 {{ font-size:20px; }}
+                }}
+            </style>
+            </head>
+            <body>
+            <div class="container">
+                <div class="header">
+                <h1>OptimusPos Facturación</h1>
+                </div>
+                <div class="content">
+                <h2>Hola {customer.user.names.title()}</h2>
+                <p>
+                    Gracias por confiar en <strong>{self.company.commercial_name}</strong>. 
+                    Adjuntamos su documento electrónico en formato <strong>PDF</strong> y <strong>XML</strong>.
+                </p>
+                <table class="info-table">
+                    <tr><td><strong>Documento:</strong></td><td>{self.receipt.name} {self.receipt_number_full}</td></tr>
+                    <tr><td><strong>Fecha:</strong></td><td>{self.formatted_date_joined()}</td></tr>
+                    <tr><td><strong>Monto:</strong></td><td>${float(round(self.total_amount, 2))}</td></tr>
+                    <tr><td><strong>Código de acceso:</strong></td><td>{self.access_code}</td></tr>
+                    <tr><td><strong>Autorización:</strong></td><td>{self.access_code}</td></tr>
+                </table>
+                <p>
+                    Puede descargar los archivos directamente desde este correo o desde su cuenta en nuestro sistema.
+                </p>
+                
+                </div>
+                <div class="footer">
+                © {self.company.commercial_name} – Todos los derechos reservados
+                </div>
+            </div>
+            </body>
+            </html>
+            """
+            message.attach(MIMEText(html_content, 'html'))
+
+            # -------- Adjuntar archivos --------
+            pdf_file = self.create_invoice_pdf()
+            pdf_part = MIMEApplication(pdf_file, _subtype='pdf')
+            pdf_part.add_header('Content-Disposition', 'attachment',
+                                filename=f'{self.access_code}.pdf')
+            message.attach(pdf_part)
+
+            with open(f'{settings.BASE_DIR}{self.get_authorized_xml()}', 'rb') as f:
+                xml_part = MIMEApplication(f.read())
+                xml_part.add_header('Content-Disposition', 'attachment',
+                                    filename=f'{self.access_code}.xml')
+                message.attach(xml_part)
+
+            # -------- Envío --------
+            server = smtplib.SMTP_SSL(settings.EMAIL_HOST, 465)
+            server.login(settings.EMAIL_HOST_USER, settings.EMAIL_HOST_PASSWORD)
+            server.sendmail(settings.EMAIL_HOST_USER, [customer.user.email], message.as_string())
+            
+            server.quit()
+
+        except Exception as e:
+            response = {'resp': False, 'error': str(e)}
+        return response
+    
     class Meta:
         verbose_name = 'Factura'
         verbose_name_plural = 'Facturas'

@@ -111,6 +111,26 @@ class ElecBillingBase(TransactionSummary):
                     if 'mensaje' in error and error['mensaje'] == 'ERROR SECUENCIAL REGISTRADO':
                         return True
         return False
+    def find_next_available_sequential(self):
+        """Encuentra el siguiente secuencial disponible incrementando automáticamente"""
+        current_sequence = self.receipt.sequence
+        max_attempts = 100  # Límite de seguridad para evitar bucles infinitos
+        
+        for attempt in range(max_attempts):
+            # Incrementar el secuencial del recibo
+            self.receipt.sequence = current_sequence + 1 + attempt
+            self.receipt.save()
+            
+            # Actualizar el número de recibo
+            self.receipt_number = self.generate_receipt_number(increase=False)
+            self.receipt_number_full = self.get_receipt_number_full()
+            
+            # Verificar si este secuencial está disponible
+            # (esto podría incluir una verificación adicional con el SRI si es necesario)
+            return True
+            
+        return False
+    
     def create_receipt_error(self, errors, change_status=True):
         try:
             from .catalog import ReceiptError
@@ -126,8 +146,14 @@ class ElecBillingBase(TransactionSummary):
         finally:
             if self.check_sequential_error(errors=errors) and change_status:
                 from core.pos.choices import INVOICE_STATUS
-                self.status = INVOICE_STATUS[4][0]
-                self.edit()
+                # Intentar encontrar el siguiente secuencial disponible
+                if self.find_next_available_sequential():
+                    self.status = INVOICE_STATUS[0][0]  # Cambiar a estado inicial para reintentar
+                    self.edit()
+                    print(f"Secuencial actualizado automáticamente a: {self.receipt.sequence}")
+                else:
+                    self.status = INVOICE_STATUS[4][0]  # Error si no se pudo encontrar secuencial
+                    self.edit()
                 self.receipt.sequence = self.receipt.sequence + 1
                 self.receipt.save()
     def generate_receipt_number(self, increase=True):

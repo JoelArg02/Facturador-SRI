@@ -48,12 +48,18 @@ class ReceiptCreateView(AutoAssignCompanyMixin, GroupPermissionMixin, CompanyQue
             if action == 'add':
                 form = self.get_form()
                 if form.is_valid():
-                    obj = form.save(commit=False)
-                    # Asignar compañía si aún no se estableció
-                    if hasattr(obj, 'company') and obj.company is None:
-                        obj.company = getattr(request, 'company', None)
-                    obj.save()
-                    data = obj.as_dict() if hasattr(obj, 'as_dict') else {'id': obj.pk}
+                    # Usar form_valid para que AutoAssignCompanyMixin maneje la asignación de compañía
+                    response = self.form_valid(form)
+                    obj = form.instance
+                    # Devolver un diccionario simple compatible con el frontend
+                    data = {
+                        'id': obj.pk,
+                        'name': obj.name if hasattr(obj, 'name') else str(obj),
+                        'voucher_type': obj.voucher_type,
+                        'establishment_code': obj.establishment_code,
+                        'issuing_point_code': obj.issuing_point_code,
+                        'sequence': obj.sequence
+                    }
                 else:
                     data['error'] = form.errors
             elif action == 'validate_data':
