@@ -1,11 +1,12 @@
 import json
-from django.http import HttpResponse
-from django.contrib import messages
-from django.urls import reverse_lazy
-from django.views.generic import ListView, CreateView, UpdateView, DeleteView
 
-from core.subscription.models import Plan
+from django.contrib import messages
+from django.http import HttpResponse
+from django.urls import reverse_lazy
+from django.views.generic import CreateView, DeleteView, ListView, UpdateView
+
 from core.security.mixins import GroupPermissionMixin
+from core.subscription.models import Plan
 
 
 class PlanListView(GroupPermissionMixin, ListView):
@@ -60,18 +61,27 @@ class PlanCreateView(GroupPermissionMixin, CreateView):
         return PlanListView.serialize(self, obj)
 
     def post(self, request, *args, **kwargs):
-        # Determinar si es AJAX (modal) o flujo normal (vista completa)
-        action = request.POST.get('action')
-        is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest' or action == 'add'
+        # Solo tratamos como AJAX si realmente viene el header de XMLHttpRequest.
+        is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
         if not is_ajax:
-            # Delegamos en CreateView para validación estándar; form_valid agregará mensaje
             return super().post(request, *args, **kwargs)
         form = self.get_form()
         if form.is_valid():
             self.object = form.save()
-            data = {'success': True, 'object': self.serialize(self.object)}
+            data = {
+                'success': True,
+                'icon': 'success',
+                'message': f'Plan "{self.object.name}" creado correctamente',
+                'redirect': str(self.success_url),
+                'object': self.serialize(self.object)
+            }
         else:
-            data = {'error': form.errors}
+            data = {
+                'success': False,
+                'icon': 'error',
+                'message': 'Errores de validación',
+                'error': form.errors
+            }
         return HttpResponse(json.dumps(data, default=str), content_type='application/json')
 
     def form_valid(self, form):
@@ -96,16 +106,28 @@ class PlanUpdateView(GroupPermissionMixin, UpdateView):
         return PlanListView.serialize(self, obj)
 
     def post(self, request, *args, **kwargs):
-        action = request.POST.get('action')
-        is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest' or action == 'edit'
+        # Asegurar self.object antes de construir formulario
+        self.object = self.get_object()
+        is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
         if not is_ajax:
             return super().post(request, *args, **kwargs)
         form = self.get_form()
         if form.is_valid():
             self.object = form.save()
-            data = {'success': True, 'object': self.serialize(self.object)}
+            data = {
+                'success': True,
+                'icon': 'success',
+                'message': f'Plan "{self.object.name}" actualizado correctamente',
+                'redirect': str(self.success_url),
+                'object': self.serialize(self.object)
+            }
         else:
-            data = {'error': form.errors}
+            data = {
+                'success': False,
+                'icon': 'error',
+                'message': 'Errores de validación',
+                'error': form.errors
+            }
         return HttpResponse(json.dumps(data, default=str), content_type='application/json')
 
     def form_valid(self, form):

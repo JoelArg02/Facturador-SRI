@@ -1,5 +1,6 @@
 {% extends 'list.html' %}
 {% load static %}
+
 {% block columns %}
 <tr>
     <th>Nombre</th>
@@ -13,134 +14,71 @@
     <th class="text-center">Opciones</th>
 </tr>
 {% endblock %}
+
 {% block rows %}{% endblock %}
+
 {% block javascript_list %}
 <script>
-    function modalError(msg){
-        $('#planModal .modal-body').html('<div class="alert alert-danger">'+msg+'</div>');
-    }
-    function openPlanModal(title, action, id){
-        $('#planModalLabel').text(title);
-        $('#planModal .modal-body').html('<div class="text-center p-3"><i class="fas fa-spinner fa-spin"></i></div>');
-        $('#planModal').modal('show');
-        let url = action === 'add' ? "{% url 'plan_create' %}" : '/subscription/plan/update/'+id+'/';
-        $.ajax({
-            url: url,
-            method: 'GET',
-            headers: {'X-Requested-With':'XMLHttpRequest'},
-            success: function(html){
-            let formHtml = $(html).find('form');
-            if(formHtml.length === 0){ formHtml = $(html); }
-            formHtml.attr('id','plan-modal-form');
-            if(!formHtml.find('input[name="action"]').length){
-                formHtml.prepend('<input type="hidden" name="action" value="'+(action === 'add' ? 'add':'edit')+'">');
-            } else {
-                formHtml.find('input[name="action"]').val(action === 'add' ? 'add' : 'edit');
-            }
-            $('#planModal .modal-body').html(formHtml);
-            },
-            error: function(){ modalError('Error cargando formulario'); }
-        });
-    }
     function loadPlans(){
         $.ajax({
             url: window.location.pathname,
             method: 'POST',
+            dataType: 'json',
             data: {action: 'search', csrfmiddlewaretoken: '{{ csrf_token }}'},
             success: function(resp){
-                const tbody = $('table tbody');
+                var tbody = $('table tbody');
                 tbody.empty();
                 if(resp.length === 0){
                     tbody.append('<tr><td colspan="9" class="text-center">Sin resultados</td></tr>');
                 } else {
-                    resp.forEach(o => {
-                        tbody.append(`
-                        <tr>
-                            <td>${o.name}</td>
-                            <td>${o.description || '-'}</td>
-                            <td>${o.max_invoices || '∞'}</td>
-                            <td>${o.max_customers || '∞'}</td>
-                            <td>${o.max_products || '∞'}</td>
-                            <td>$${o.price}</td>
-                            <td>${o.period_days}</td>
-                            <td>${o.active ? '<span class="badge badge-success">Sí</span>' : '<span class="badge badge-danger">No</span>'}</td>
-                            <td class="text-center">
-                                <a href="/subscription/plan/update/${o.id}/" class="btn btn-warning btn-xs"><i class="fas fa-edit"></i></a>
-                                <button class="btn btn-danger btn-xs btn-delete" data-id="${o.id}"><i class="fas fa-trash"></i></button>
-                            </td>
-                        </tr>`);
+                    resp.forEach(function(o){
+                        tbody.append(
+                        '<tr>'+
+                            '<td>'+o.name+'</td>'+
+                            '<td>'+(o.description || '-')+'</td>'+
+                            '<td>'+(o.max_invoices || '∞')+'</td>'+
+                            '<td>'+(o.max_customers || '∞')+'</td>'+
+                            '<td>'+(o.max_products || '∞')+'</td>'+
+                            '<td>$'+o.price+'</td>'+
+                            '<td>'+o.period_days+'</td>'+
+                            '<td>'+(o.active ? '<span class="badge badge-success">Sí</span>' : '<span class="badge badge-danger">No</span>')+'</td>'+
+                            '<td class="text-center">'+
+                                '<a href="/subscription/plan/update/'+o.id+'/" class="btn btn-warning btn-xs"><i class="fas fa-edit"></i></a> '+
+                                '<button class="btn btn-danger btn-xs btn-delete" data-id="'+o.id+'"><i class="fas fa-trash"></i></button>'+
+                            '</td>'+
+                        '</tr>');
                     });
                 }
+            },
+            error: function(){
+                alert('Error cargando planes');
             }
         });
     }
+
     $(function(){
-        // botón nuevo (si tu template base define un botón con id="btn-add")
-        if($('#btn-add').length){
-            $('#btn-add').off('click').on('click', function(e){
-                e.preventDefault();
-                openPlanModal('Crear Plan','add');
-            });
-        }
         loadPlans();
+
         $('table').on('click','.btn-delete', function(){
             if(!confirm('¿Eliminar plan?')) return;
-            const id = $(this).data('id');
+            var id = $(this).data('id');
             $.ajax({
                 url: window.location.pathname,
                 method: 'POST',
+                dataType: 'json',
                 data: {action: 'delete', id: id, csrfmiddlewaretoken: '{{ csrf_token }}'},
                 success: function(resp){
-                    if(resp.error){ alert(resp.error); } else { loadPlans(); }
-                }
-            });
-        });
-        // Edición ahora redirige a página completa, no modal.
-        $('#planModal').on('submit','#plan-modal-form', function(e){
-            e.preventDefault();
-            const form = $(this);
-            const formData = form.serializeArray();
-            $.ajax({
-                url: form.attr('action') || window.location.pathname,
-                method: 'POST',
-                headers: {'X-Requested-With':'XMLHttpRequest'},
-                data: formData,
-                success: function(resp){
                     if(resp.error){
-                        let msg='';
-                        if(typeof resp.error === 'object'){
-                            Object.keys(resp.error).forEach(k => {msg += k+': '+ resp.error[k].join(', ')+'\n';});
-                        } else { msg = resp.error; }
-                        modalError(msg.replace(/\n/g,'<br>'));
+                        alert(resp.error);
                     } else {
-                        $('#planModal').modal('hide');
                         loadPlans();
                     }
                 },
-                error: function(){ modalError('Error en el servidor'); }
+                error: function(){
+                    alert('Error eliminando plan');
+                }
             });
         });
     });
 </script>
-{% endblock %}
-{% block extra_content %}
-<div class="modal fade" id="planModal" tabindex="-1" role="dialog" aria-labelledby="planModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="planModalLabel">Plan</h5>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
-      </div>
-      <div class="modal-body">
-        <div class="text-center p-3"><i class="fas fa-spinner fa-spin"></i></div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
-        <button type="submit" form="plan-modal-form" class="btn btn-primary">Guardar</button>
-      </div>
-    </div>
-  </div>
-</div>
 {% endblock %}
