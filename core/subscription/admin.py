@@ -20,3 +20,12 @@ class SubscriptionAdmin(admin.ModelAdmin):
     def company_name(self, obj):
         company = obj.company
         return company.commercial_name if company else '—'
+    
+    def get_queryset(self, request):
+        # Solo mostrar suscripciones de usuarios administradores
+        from django.contrib.auth.models import Group
+        admin_groups = Group.objects.filter(name__in=['Administrador', 'Cliente Propietario'])
+        return super().get_queryset(request).filter(
+            user__groups__in=admin_groups,
+            user__company__isnull=False
+        ).distinct()

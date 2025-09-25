@@ -54,14 +54,16 @@ class SubscriptionListView(GroupPermissionMixin, ListView):
 
     def serialize(self, s: Subscription):
         company = s.company
-        owner_name = s.user.get_full_name() or s.user.username
+        admin_name = s.user.get_full_name() or s.user.username
+        admin_groups = ', '.join([g.name for g in s.user.groups.all()[:2]])
         return {
             'id': s.id,
             'owner': {
                 'id': s.user_id,
-                'name': owner_name,
+                'name': admin_name,
                 'username': s.user.username,
                 'email': getattr(s.user, 'email', ''),
+                'groups': admin_groups,
             },
             'company': {
                 'id': getattr(company, 'id', None),

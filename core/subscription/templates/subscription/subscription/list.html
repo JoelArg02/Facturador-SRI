@@ -2,7 +2,7 @@
 {% load static %}
 {% block columns %}
 <tr>
-    <th>Propietario</th>
+    <th>Administrador</th>
     <th>Compañía</th>
     <th>Plan</th>
     <th>Facturas</th>
@@ -54,7 +54,8 @@
                         <tr>
                             <td>
                                 ${o.owner.name}<br>
-                                <small class="text-muted">@${o.owner.username}</small>
+                                <small class="text-muted">@${o.owner.username}</small><br>
+                                <small class="badge badge-primary">${o.owner.groups}</small>
                             </td>
                             <td>${companyInfo}</td>
                             <td>${o.plan.name}</td>
