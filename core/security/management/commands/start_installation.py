@@ -444,7 +444,6 @@ class Command(BaseCommand):
         else:
             self.stdout.write('Módulo Suscripciones ya existía')
 
-        # 6. Asegurar grupos multi-tenant (segunda pasada idempotente para garantizar coherencia)
         super_admin_group, _ = Group.objects.get_or_create(name='Super Administrador')
         admin_group, _ = Group.objects.get_or_create(name='Administrador')
         owner_group, _ = Group.objects.get_or_create(name='Cliente Propietario')
@@ -511,7 +510,6 @@ class Command(BaseCommand):
             user.set_password('admin')
             user.save()
             user.groups.add(super_admin_group)
-            user.groups.add(admin_group)
             self.stdout.write(self.style.SUCCESS('Usuario admin creado (super + admin)'))
         else:
             self.stdout.write('Usuario admin ya existe')

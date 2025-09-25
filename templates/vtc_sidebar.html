@@ -37,12 +37,24 @@
                     {% endfor %}
                 {% endif %}
                 {% for module in request.user.get_session_user_group.get_session_modules %}
-                    <li class="nav-item">
-                        <a href="{{ module.url }}" class="nav-link" data-name="single_module" data-id="{{ forloop.counter }}">
-                            <i class="nav-icon {{ module.icon }}"></i>
-                            <p>{{ module.name }}</p>
-                        </a>
-                    </li>
+                    {# Ocultar 'Compañia' salvo para Super Administrador y Cliente Propietario #}
+                    {% if module.name == 'Compañia' %}
+                        {% if request.user.get_session_user_group.name == 'Super Administrador' or request.user.get_session_user_group.name == 'Cliente Propietario' %}
+                            <li class="nav-item">
+                                <a href="{{ module.url }}" class="nav-link" data-name="single_module" data-id="{{ forloop.counter }}">
+                                    <i class="nav-icon {{ module.icon }}"></i>
+                                    <p>{{ module.name }}</p>
+                                </a>
+                            </li>
+                        {% endif %}
+                    {% else %}
+                        <li class="nav-item">
+                            <a href="{{ module.url }}" class="nav-link" data-name="single_module" data-id="{{ forloop.counter }}">
+                                <i class="nav-icon {{ module.icon }}"></i>
+                                <p>{{ module.name }}</p>
+                            </a>
+                        </li>
+                    {% endif %}
                 {% endfor %}
             </ul>
         </nav>
