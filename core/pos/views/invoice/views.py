@@ -11,6 +11,7 @@ from core.pos.utilities.pdf_creator import PDFCreator
 from core.pos.utilities.sri import SRI
 from core.report.forms import ReportForm
 from core.security.mixins import GroupPermissionMixin, AutoAssignCompanyMixin, CompanyQuerysetMixin
+from core.subscription.models import check_quota_limits
 
 
 class InvoiceListView(GroupPermissionMixin, CompanyQuerysetMixin, ListView):
@@ -130,48 +131,53 @@ class InvoiceCreateView(AutoAssignCompanyMixin, GroupPermissionMixin, CompanyQue
         action = request.POST['action']
         try:
             if action == 'add':
-                with transaction.atomic():
-                    invoice = Invoice()
-                    invoice.date_joined = request.POST['date_joined']
-                    invoice.end_credit = request.POST['end_credit']
-                    invoice.company = self.get_company()
-                    invoice.environment_type = invoice.company.environment_type
-                    invoice.receipt = Receipt.objects.get(voucher_type=request.POST['receipt'], establishment_code=invoice.company.establishment_code, issuing_point_code=invoice.company.issuing_point_code)
-                    invoice.receipt_number = invoice.generate_receipt_number()
-                    invoice.receipt_number_full = invoice.get_receipt_number_full()
-                    invoice.employee_id = request.user.id
-                    invoice.payment_type = request.POST['payment_type']
-                    invoice.customer_id = int(request.POST['customer'])
-                    invoice.tax = invoice.company.tax_rate
-                    invoice.create_electronic_invoice = False
-                    if not invoice.receipt.is_ticket:
-                        invoice.create_electronic_invoice = 'create_electronic_invoice' in request.POST
-                        invoice.is_draft_invoice = 'is_draft_invoice' in request.POST
-                    invoice.additional_info = json.loads(request.POST['additional_info'])
-                    invoice.save()
-                    for i in json.loads(request.POST['products']):
-                        product = Product.objects.get(pk=i['id'])
-                        invoice_detail = InvoiceDetail.objects.create(
-                            invoice_id=invoice.id,
-                            product_id=product.id,
-                            quantity=int(i['quantity']),
-                            price=float(i['current_price']),
-                            discount=float(i['discount']) / 100
-                        )
-                        invoice_detail.deduct_product_stock()
-                    invoice.recalculate_invoice()
-                    if invoice.payment_type == PAYMENT_TYPE[1][0]:
-                        AccountReceivable.objects.create(
-                            invoice_id=invoice.id,
-                            date_joined=invoice.date_joined,
-                            end_date=invoice.end_credit,
-                            debt=invoice.total_amount
-                        )
-                    data = {'print_url': str(reverse_lazy('invoice_print', kwargs={'pk': invoice.id, 'code': invoice.receipt.voucher_type}))}
-                    if invoice.create_electronic_invoice and not invoice.is_draft_invoice:
-                        data = invoice.generate_electronic_invoice_document()
-                        if not data['resp']:
-                            transaction.set_rollback(True)
+                # Verificar cuotas antes de crear
+                quota_check = check_quota_limits(request.user, 'invoice')
+                if not quota_check['can_create']:
+                    data['error'] = quota_check['message']
+                else:
+                    with transaction.atomic():
+                        invoice = Invoice()
+                        invoice.date_joined = request.POST['date_joined']
+                        invoice.end_credit = request.POST['end_credit']
+                        invoice.company = self.get_company()
+                        invoice.environment_type = invoice.company.environment_type
+                        invoice.receipt = Receipt.objects.get(voucher_type=request.POST['receipt'], establishment_code=invoice.company.establishment_code, issuing_point_code=invoice.company.issuing_point_code)
+                        invoice.receipt_number = invoice.generate_receipt_number()
+                        invoice.receipt_number_full = invoice.get_receipt_number_full()
+                        invoice.employee_id = request.user.id
+                        invoice.payment_type = request.POST['payment_type']
+                        invoice.customer_id = int(request.POST['customer'])
+                        invoice.tax = invoice.company.tax_rate
+                        invoice.create_electronic_invoice = False
+                        if not invoice.receipt.is_ticket:
+                            invoice.create_electronic_invoice = 'create_electronic_invoice' in request.POST
+                            invoice.is_draft_invoice = 'is_draft_invoice' in request.POST
+                        invoice.additional_info = json.loads(request.POST['additional_info'])
+                        invoice.save()
+                        for i in json.loads(request.POST['products']):
+                            product = Product.objects.get(pk=i['id'])
+                            invoice_detail = InvoiceDetail.objects.create(
+                                invoice_id=invoice.id,
+                                product_id=product.id,
+                                quantity=int(i['quantity']),
+                                price=float(i['current_price']),
+                                discount=float(i['discount']) / 100
+                            )
+                            invoice_detail.deduct_product_stock()
+                        invoice.recalculate_invoice()
+                        if invoice.payment_type == PAYMENT_TYPE[1][0]:
+                            AccountReceivable.objects.create(
+                                invoice_id=invoice.id,
+                                date_joined=invoice.date_joined,
+                                end_date=invoice.end_credit,
+                                debt=invoice.total_amount
+                            )
+                        data = {'print_url': str(reverse_lazy('invoice_print', kwargs={'pk': invoice.id, 'code': invoice.receipt.voucher_type}))}
+                        if invoice.create_electronic_invoice and not invoice.is_draft_invoice:
+                            data = invoice.generate_electronic_invoice_document()
+                            if not data['resp']:
+                                transaction.set_rollback(True)
                 if 'error' in data:
                     invoice.create_receipt_error(errors=data, change_status=False)
             elif action == 'get_receipt_number':
@@ -208,6 +214,10 @@ class InvoiceCreateView(AutoAssignCompanyMixin, GroupPermissionMixin, CompanyQue
                 term = request.POST['term']
                 for i in Customer.objects.filter(Q(user__names__icontains=term) | Q(dni__icontains=term)).order_by('user__names')[0:10]:
                     data.append(i.as_dict())
+            elif action == 'check_quota':
+                # Nueva acción para verificar cuotas
+                quota_check = check_quota_limits(request.user, 'invoice')
+                data = quota_check
             else:
                 data['error'] = 'No ha seleccionado ninguna opción'
         except Exception as e:
@@ -222,6 +232,11 @@ class InvoiceCreateView(AutoAssignCompanyMixin, GroupPermissionMixin, CompanyQue
         context['end_consumer'] = json.dumps(self.get_end_consumer())
         context['products'] = []
         context['additional_info'] = []
+        
+        # Agregar información de cuotas
+        quota_check = check_quota_limits(self.request.user, 'invoice')
+        context['quota_info'] = quota_check
+        
         return context
 
 

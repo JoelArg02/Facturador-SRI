@@ -16,6 +16,7 @@ from config import settings
 from core.pos.forms import CustomerForm, Customer, CustomerUserForm
 from core.pos.utilities.sri import SRI
 from core.security.mixins import GroupModuleMixin, GroupPermissionMixin, CompanyQuerysetMixin
+from core.subscription.models import check_quota_limits
 
 
 class CustomerListView(GroupPermissionMixin, CompanyQuerysetMixin, ListView):
@@ -187,32 +188,39 @@ class CustomerCreateView(GroupPermissionMixin, CreateView):
         action = request.POST['action']
         try:
             if action == 'add':
-                with transaction.atomic():
-                    form1 = self.get_form_user()
-                    form2 = self.get_form()
-                    if form1.is_valid() and form2.is_valid():
-                        try:
-                            user, raw_password = self.create_customer_user(form1, form2.cleaned_data['dni'])
-                        except Exception as e:
-                            data['error'] = f'Error creando usuario cliente: {e}'
-                            raise
-                        # Crear Customer
-                        form_customer = form2.save(commit=False)
-                        form_customer.user = user
-                        company = getattr(request, 'company', None)
-                        if company:
-                            form_customer.company = company
-                        form_customer.save()
-                        data = form_customer.as_dict()
-                        # Enviar email
-                        self.send_credentials_email(user, raw_password)
-                    else:
-                        invalids = {}
-                        if not form1.is_valid():
-                            invalids['user_form'] = form1.errors
-                        if not form2.is_valid():
-                            invalids['customer_form'] = form2.errors
-                        data['error'] = invalids
+                # Verificar cuotas antes de crear
+                quota_check = check_quota_limits(request.user, 'customer')
+                if not quota_check['can_create']:
+                    data['error'] = quota_check['message']
+                else:
+                    with transaction.atomic():
+                        form1 = self.get_form_user()
+                        form2 = self.get_form()
+                        if form1.is_valid() and form2.is_valid():
+                            try:
+                                user, raw_password = self.create_customer_user(form1, form2.cleaned_data['dni'])
+                            except Exception as e:
+                                data['error'] = f'Error creando usuario cliente: {e}'
+                                raise
+                            # Crear Customer
+                            form_customer = form2.save(commit=False)
+                            form_customer.user = user
+                            # Asignar la compañía del request
+                            form_customer.company = getattr(request, 'company', None)
+                            if not form_customer.company:
+                                data['error'] = 'No se pudo obtener la compañía. Contacta al administrador.'
+                                raise Exception('No company associated')
+                            form_customer.save()
+                            data = form_customer.as_dict()
+                            # Enviar email
+                            self.send_credentials_email(user, raw_password)
+                        else:
+                            invalids = {}
+                            if not form1.is_valid():
+                                invalids['user_form'] = form1.errors
+                            if not form2.is_valid():
+                                invalids['customer_form'] = form2.errors
+                            data['error'] = invalids
             elif action == 'validate_data':
                 field = request.POST['field']
                 filters = Q()
@@ -221,6 +229,10 @@ class CustomerCreateView(GroupPermissionMixin, CreateView):
                 data['valid'] = not self.model.objects.filter(filters).exists() if filters.children else True
             elif action == 'search_ruc_in_sri':
                 data = SRI().search_ruc_in_sri(ruc=request.POST['dni'])
+            elif action == 'check_quota':
+                # Nueva acción para verificar cuotas
+                quota_check = check_quota_limits(request.user, 'customer')
+                data = quota_check
             else:
                 data['error'] = 'No ha seleccionado ninguna opción'
         except Exception as e:
@@ -233,6 +245,11 @@ class CustomerCreateView(GroupPermissionMixin, CreateView):
         context['list_url'] = self.success_url
         context['action'] = 'add'
         context['frmUser'] = self.get_form_user()
+        
+        # Agregar información de cuotas
+        quota_check = check_quota_limits(self.request.user, 'customer')
+        context['quota_info'] = quota_check
+        
         return context
 
 

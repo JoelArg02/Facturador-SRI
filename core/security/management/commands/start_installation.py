@@ -244,12 +244,6 @@ class Command(BaseCommand):
             if m.name not in excluded_admin_names:
                 link_module(admin_group, m, include_perms=True)
 
-        excluded_owner_module_names = set([])
-        for m in all_modules:
-            if m.name in excluded_owner_module_names:
-                continue
-            link_module(admin_group, m, include_perms=True)
-
         # 9.4 Operador Bodega: módulos relacionados a inventario / productos / compras / proveedores
         warehouse_keywords = ['Producto', 'Product', 'Inventario', 'Inventory', 'Bodega', 'Compra', 'Purchase', 'Proveedor', 'Provider']
         for m in all_modules:
@@ -277,24 +271,6 @@ class Command(BaseCommand):
                     readonly_group.permissions.add(perm)
 
         # Nota: no se eliminan permisos existentes para conservar personalizaciones previas.
-
-        # 10. Crear usuario admin si no existe
-        if not User.objects.filter(username='admin').exists():
-            user = User.objects.create(
-                username='admin',
-                names='Administrador General',
-                email='admin@example.com',
-                is_active=True,
-                is_superuser=True,
-                is_staff=True
-            )
-            user.set_password('admin')
-            user.save()
-            user.groups.add(super_admin_group)
-            self.stdout.write(self.style.SUCCESS('Usuario admin creado'))
-        else:
-            self.stdout.write('Usuario admin ya existe')
-
         # 11. Seed planes
         DEFAULT_PLANS = [
             {

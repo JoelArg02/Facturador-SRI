@@ -14,6 +14,7 @@ from django.views.generic.base import View
 
 from core.pos.forms import ProductForm, Product, Category
 from core.security.mixins import GroupPermissionMixin, CompanyQuerysetMixin, AutoAssignCompanyMixin
+from core.subscription.models import check_quota_limits
 
 
 class ProductListView(GroupPermissionMixin, CompanyQuerysetMixin, ListView):
@@ -74,13 +75,52 @@ class ProductCreateView(AutoAssignCompanyMixin, GroupPermissionMixin, CompanyQue
         action = request.POST['action']
         try:
             if action == 'add':
-                data = self.get_form().save()
+                quota_check = check_quota_limits(request.user, 'product')
+                if not quota_check['can_create']:
+                    data['error'] = quota_check['message']
+                else:
+                    form = self.get_form()
+                    if form.is_valid():
+                        product = form.save(commit=False)
+                        if product is None:
+                            data['error'] = 'Errores de validación'
+                        else:
+                            # Fallbacks para determinar company_id
+                            company_id = None
+                            # 1. request.company
+                            req_company = getattr(request, 'company', None)
+                            if req_company:
+                                company_id = getattr(req_company, 'id', None)
+                            # 2. user.company_id
+                            if not company_id:
+                                company_id = getattr(request.user, 'company_id', None)
+                            # 3. Buscar por owner
+                            if not company_id:
+                                try:
+                                    from core.pos.models import Company
+                                    owner_company = Company.objects.filter(owner=request.user).only('id').first()
+                                    if owner_company:
+                                        company_id = owner_company.id
+                                except Exception:
+                                    pass
+
+                            if not company_id:
+                                data['error'] = 'No se pudo determinar la compañía'
+                            else:
+                                product.company_id = company_id
+                                product.save()
+                                data = product.as_dict()
+                    else:
+                        data['error'] = form.errors
             elif action == 'validate_data':
                 field = request.POST['field']
                 filters = Q()
                 if field == 'code':
                     filters &= Q(code__iexact=request.POST['code'])
                 data['valid'] = not self.model.objects.filter(filters).exists() if filters.children else True
+            elif action == 'check_quota':
+                quota_check = check_quota_limits(request.user, 'product')
+                data = quota_check
             else:
                 data['error'] = 'No ha seleccionado ninguna opción'
         except Exception as e:
@@ -92,6 +132,10 @@ class ProductCreateView(AutoAssignCompanyMixin, GroupPermissionMixin, CompanyQue
         context['title'] = f'Creación de un {self.model._meta.verbose_name}'
         context['list_url'] = self.success_url
         context['action'] = 'add'
+        
+        quota_check = check_quota_limits(self.request.user, 'product')
+        context['quota_info'] = quota_check
+        
         return context
 
 

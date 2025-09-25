@@ -131,3 +131,93 @@ def get_active_subscription(subject: Union['Company', models.Model, None]):
         if not sub.is_active:
             return None
     return sub
+
+
+def check_quota_limits(user, resource_type='product'):
+    """
+    Verifica si el usuario puede crear más recursos según su plan.
+    
+    Args:
+        user: Usuario a verificar
+        resource_type: 'product', 'customer', 'invoice'
+        
+    Returns:
+        dict: {
+            'can_create': bool,
+            'current_count': int,
+            'max_allowed': int,
+            'message': str
+        }
+    """
+    print(f"DEBUG check_quota_limits - user: {user}")
+    print(f"DEBUG check_quota_limits - user type: {type(user)}")
+    print(f"DEBUG check_quota_limits - resource_type: {resource_type}")
+    
+    result = {
+        'can_create': True,
+        'current_count': 0,
+        'max_allowed': 0,
+        'message': ''
+    }
+    
+    # Obtener suscripción activa
+    subscription = get_active_subscription(user)
+    print(f"DEBUG check_quota_limits - subscription: {subscription}")
+    if not subscription:
+        result.update({
+            'can_create': False,
+            'message': 'No tienes una suscripción activa. Contacta al administrador.'
+        })
+        print(f"DEBUG check_quota_limits - no subscription, returning: {result}")
+        return result
+    
+    # Importaciones lazy para evitar dependencias circulares
+    from core.pos.models import Product, Customer, Invoice
+    
+    # Obtener la compañía del usuario (exactamente como funciona en las vistas)
+    print(f"DEBUG check_quota_limits - hasattr(user, 'company'): {hasattr(user, 'company')}")
+    company = getattr(user, 'company', None)
+    print(f"DEBUG check_quota_limits - company: {company}")
+    if not company:
+        result.update({
+            'can_create': False,
+            'message': 'No tienes una compañía asociada. Contacta al administrador.'
+        })
+        print(f"DEBUG check_quota_limits - no company, returning: {result}")
+        return result
+    
+    # Verificar según el tipo de recurso
+    if resource_type == 'product':
+        current_count = Product.objects.filter(company=company).count()
+        max_allowed = subscription.plan.max_products
+        resource_name = 'productos'
+    elif resource_type == 'customer':
+        current_count = Customer.objects.filter(company=company).count()
+        max_allowed = subscription.plan.max_customers
+        resource_name = 'clientes'
+    elif resource_type == 'invoice':
+        current_count = Invoice.objects.filter(company=company).count()
+        max_allowed = subscription.plan.max_invoices
+        resource_name = 'facturas'
+    else:
+        result.update({
+            'can_create': False,
+            'message': 'Tipo de recurso no válido.'
+        })
+        return result
+    
+    result.update({
+        'current_count': current_count,
+        'max_allowed': max_allowed
+    })
+    
+    if current_count >= max_allowed:
+        result.update({
+            'can_create': False,
+            'message': f'Has alcanzado el límite de {resource_name} de tu plan ({max_allowed}). Actualiza tu plan para crear más {resource_name}.'
+        })
+    else:
+        remaining = max_allowed - current_count
+        result['message'] = f'Puedes crear {remaining} {resource_name} más en tu plan actual.'
+    
+    return result

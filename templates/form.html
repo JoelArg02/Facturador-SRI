@@ -27,6 +27,27 @@
             </div>
             <div class="card-body" style="display: block;">
                 <div class="container-fluid">
+                    <!-- Alerta de cuotas -->
+                    {% if quota_info %}
+                        {% if quota_info.can_create %}
+                            <div class="alert alert-info alert-dismissible fade show" role="alert">
+                                <i class="fas fa-info-circle"></i>
+                                {{ quota_info.message }} ({{ quota_info.current_count }}/{{ quota_info.max_allowed }})
+                                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                        {% else %}
+                            <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <strong>Límite alcanzado:</strong> {{ quota_info.message }}
+                                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                        {% endif %}
+                    {% endif %}
+                    
                     <input type="hidden" name="action" id="action" value="{{ action }}">
                     {% csrf_token %}
                     {% block form_fields %}
@@ -67,4 +88,15 @@
         </div>
     </form>
     {% block content_form_before %}{% endblock %}
+    
+    <!-- Script para validación de cuotas -->
+    <script>
+        $(document).ready(function() {
+            {% if quota_info and not quota_info.can_create %}
+                // Deshabilitar el botón de guardar si se alcanzó el límite
+                $('button[type="submit"]').prop('disabled', true).addClass('disabled');
+                $('button[type="submit"]').html('<i class="fas fa-ban"></i> Límite alcanzado');
+            {% endif %}
+        });
+    </script>
 {% endblock %}
