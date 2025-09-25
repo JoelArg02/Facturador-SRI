@@ -92,6 +92,22 @@ Validar helper de cuotas:
 
 ```python
 c.can_create('invoice')  # (True, None) si está dentro del límite
+
+## Roles SaaS (Multi-tenant)
+
+Durante la instalación (`python manage.py start_installation`) se crean/actualizan roles:
+
+| Rol | Acceso |
+|-----|--------|
+| Super Administrador | Todos los módulos y configuraciones (Planes, Suscripciones, Dashboard, Tipos de Módulos, Módulos, Grupos). Usuarios marcados además como `is_superuser`. |
+| Administrador | Gestión operativa completa (compañía, inventario, ventas, gastos, cuentas, reportes) pero NO ve: Planes, Suscripciones, Conf. Dashboard, Tipos de Módulos, Módulos, Grupos. |
+| Cliente Propietario | Similar a Administrador (puede ajustarse para más o menos alcance). |
+| Operador Bodega | Solo inventario / compras / proveedores / stock. |
+| Operador Venta | Ventas (facturas, clientes, notas de crédito, proformas). |
+| Cliente | Portal reducido (perfil, facturas propias, notas de crédito cliente, cambio de password). |
+| Consulta | Todos los módulos solo en modo lectura (solo permisos `view_*`). |
+
+Si necesitas ampliar o restringir más, ajusta los sets `excluded_admin_names`, palabras clave de detección o añade filtros manuales en `start_installation.py`.
 ```
 
 ## Consideraciones futuras

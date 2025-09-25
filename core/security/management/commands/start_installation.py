@@ -212,22 +212,81 @@ class Command(BaseCommand):
         else:
             self.stdout.write('Módulo Suscripciones ya existía')
 
-        # 9. Crear / asegurar grupos base
+        # 9. Crear / asegurar grupos base y nuevos roles multi-tenant
+        # Roles:
+        # - Super Administrador (usa is_superuser, accede a todo)
+        # - Administrador (interno full access sin marcar is_superuser)
+        # - Cliente Propietario (dueño de la compañía: puede gestionar su empresa, usuarios de su tenant, catálogo y facturación)
+        # - Operador Bodega (gestiona inventario / productos / compras, no configura compañía ni usuarios)
+        # - Operador Venta (crea facturas y ve clientes, no cambia configuración ni usuarios)
+        # - Cliente (perfil final para que un cliente final revise sus facturas / portal reducido)
+        # - Consulta (solo lectura de reportes e inventario)
         admin_group, _ = Group.objects.get_or_create(name='Administrador')
+        super_admin_group, _ = Group.objects.get_or_create(name='Super Administrador')
+        owner_group, _ = Group.objects.get_or_create(name='Cliente Propietario')
+        warehouse_group, _ = Group.objects.get_or_create(name='Operador Bodega')
+        sales_group, _ = Group.objects.get_or_create(name='Operador Venta')
         client_group, _ = Group.objects.get_or_create(name='Cliente')
+        readonly_group, _ = Group.objects.get_or_create(name='Consulta')
 
-        for module in Module.objects.all():
-            if not GroupModule.objects.filter(group=admin_group, module=module).exists():
-                GroupModule.objects.create(group=admin_group, module=module)
+        # Map de permisos a excluir para roles restringidos (codenames startswith patterns)
+        # Construiremos sets dinámicos según módulos.
+        from django.contrib.auth.models import Permission as DjPermission
+
+        all_modules = list(Module.objects.all())
+
+        def link_module(group: Group, module: Module, include_perms=True):
+            if not GroupModule.objects.filter(group=group, module=module).exists():
+                GroupModule.objects.create(group=group, module=module)
+            if include_perms:
                 for perm in module.permissions.all():
-                    admin_group.permissions.add(perm)
+                    group.permissions.add(perm)
 
+        # 9.1 Super Administrador: asignar todos los módulos y permisos
+        for m in all_modules:
+            link_module(super_admin_group, m, include_perms=True)
+        # 9.2 Administrador (excluye configuraciones SaaS globales)
+        excluded_admin_names = {
+            'Planes', 'Suscripciones', 'Conf. Dashboard', 'Tipos de Módulos', 'Módulos', 'Grupos'
+        }
+        for m in all_modules:
+            if m.name not in excluded_admin_names:
+                link_module(admin_group, m, include_perms=True)
+
+        # 9.3 Cliente Propietario: todos los módulos excepto aquellos netamente administrativos globales si existieran
+        excluded_owner_module_names = set([])  # placeholder para excluir futuros módulos globales (ej: Planes/Suscripciones si se desea limitar)
+        for m in all_modules:
+            if m.name in excluded_owner_module_names:
+                continue
+            link_module(owner_group, m, include_perms=True)
+
+        # 9.4 Operador Bodega: módulos relacionados a inventario / productos / compras / proveedores
+        warehouse_keywords = ['Producto', 'Product', 'Inventario', 'Inventory', 'Bodega', 'Compra', 'Purchase', 'Proveedor', 'Provider']
+        for m in all_modules:
+            if any(k.lower() in m.name.lower() for k in warehouse_keywords):
+                link_module(warehouse_group, m, include_perms=True)
+
+        # 9.5 Operador Venta: módulos de facturación, clientes, notas de crédito
+        sales_keywords = ['Factura', 'Invoice', 'Cliente', 'Customer', 'Crédito', 'Credit']
+        for m in all_modules:
+            if any(k.lower() in m.name.lower() for k in sales_keywords):
+                link_module(sales_group, m, include_perms=True)
+
+        # 9.6 Cliente final (portal reducido)
         client_urls = ['/pos/customer/update/profile/', '/pos/invoice/customer/', '/pos/credit/note/customer/']
         for module in Module.objects.filter(url__in=client_urls + ['/user/update/password/']):
-            if not GroupModule.objects.filter(group=client_group, module=module).exists():
-                GroupModule.objects.create(group=client_group, module=module)
-                for perm in module.permissions.all():
-                    client_group.permissions.add(perm)
+            link_module(client_group, module, include_perms=True)
+
+        # 9.7 Consulta: asignar módulos pero solo permisos de view
+        view_perms_cache = {}
+        for m in all_modules:
+            # asignar el módulo
+            link_module(readonly_group, m, include_perms=False)
+            for perm in m.permissions.all():
+                if perm.codename.startswith('view_'):
+                    readonly_group.permissions.add(perm)
+
+        # Nota: no se eliminan permisos existentes para conservar personalizaciones previas.
 
         # 10. Crear usuario admin si no existe
         if not User.objects.filter(username='admin').exists():
@@ -239,7 +298,7 @@ class Command(BaseCommand):
                 is_superuser=True,
                 is_staff=True
             )
-            user.set_password('hacker94')
+            user.set_password('admin')
             user.save()
             user.groups.add(admin_group)
             self.stdout.write(self.style.SUCCESS('Usuario admin creado'))
@@ -385,39 +444,75 @@ class Command(BaseCommand):
         else:
             self.stdout.write('Módulo Suscripciones ya existía')
 
-        # 6. Crear / asegurar grupos base
+        # 6. Asegurar grupos multi-tenant (segunda pasada idempotente para garantizar coherencia)
+        super_admin_group, _ = Group.objects.get_or_create(name='Super Administrador')
         admin_group, _ = Group.objects.get_or_create(name='Administrador')
+        owner_group, _ = Group.objects.get_or_create(name='Cliente Propietario')
+        warehouse_group, _ = Group.objects.get_or_create(name='Operador Bodega')
+        sales_group, _ = Group.objects.get_or_create(name='Operador Venta')
         client_group, _ = Group.objects.get_or_create(name='Cliente')
+        readonly_group, _ = Group.objects.get_or_create(name='Consulta')
 
-        # Vincular módulos al grupo Administrador (todos los módulos existentes)
-        for module in Module.objects.all():
-            if not GroupModule.objects.filter(group=admin_group, module=module).exists():
-                GroupModule.objects.create(group=admin_group, module=module)
+        all_modules = list(Module.objects.all())
+
+        def link_module(group: Group, module: Module, include_perms=True):
+            if not GroupModule.objects.filter(group=group, module=module).exists():
+                GroupModule.objects.create(group=group, module=module)
+            if include_perms:
                 for perm in module.permissions.all():
-                    admin_group.permissions.add(perm)
+                    group.permissions.add(perm)
 
-        # Cliente: restringido solo a urls cliente (similar lógica anterior)
+        excluded_admin_names = {
+            'Planes', 'Suscripciones', 'Conf. Dashboard', 'Tipos de Módulos', 'Módulos', 'Grupos'
+        }
+        for m in all_modules:
+            # Super Administrador siempre todo
+            link_module(super_admin_group, m, include_perms=True)
+            # Administrador: excluir configuraciones globales SaaS
+            if m.name not in excluded_admin_names:
+                link_module(admin_group, m, include_perms=True)
+
+        excluded_owner_module_names = set([])
+        for m in all_modules:
+            if m.name in excluded_owner_module_names:
+                continue
+            link_module(owner_group, m, include_perms=True)
+
+        warehouse_keywords = ['Producto', 'Product', 'Inventario', 'Inventory', 'Bodega', 'Compra', 'Purchase', 'Proveedor', 'Provider']
+        for m in all_modules:
+            if any(k.lower() in m.name.lower() for k in warehouse_keywords):
+                link_module(warehouse_group, m, include_perms=True)
+
+        sales_keywords = ['Factura', 'Invoice', 'Cliente', 'Customer', 'Crédito', 'Credit']
+        for m in all_modules:
+            if any(k.lower() in m.name.lower() for k in sales_keywords):
+                link_module(sales_group, m, include_perms=True)
+
         client_urls = ['/pos/customer/update/profile/', '/pos/invoice/customer/', '/pos/credit/note/customer/']
         for module in Module.objects.filter(url__in=client_urls + ['/user/update/password/']):
-            if not GroupModule.objects.filter(group=client_group, module=module).exists():
-                GroupModule.objects.create(group=client_group, module=module)
-                for perm in module.permissions.all():
-                    client_group.permissions.add(perm)
+            link_module(client_group, module, include_perms=True)
 
-        # 7. Crear usuario admin si no existe
+        for m in all_modules:
+            link_module(readonly_group, m, include_perms=False)
+            for perm in m.permissions.all():
+                if perm.codename.startswith('view_'):
+                    readonly_group.permissions.add(perm)
+
+        # 7. Crear usuario admin si no existe (asociado a Super Administrador y Administrador)
         if not User.objects.filter(username='admin').exists():
             user = User.objects.create(
                 username='admin',
                 names='Administrador General',
                 email='admin@example.com',
                 is_active=True,
-                is_superuser=True,
+                is_superuser=True,  # super admin real
                 is_staff=True
             )
             user.set_password('admin')
             user.save()
+            user.groups.add(super_admin_group)
             user.groups.add(admin_group)
-            self.stdout.write(self.style.SUCCESS('Usuario admin creado'))
+            self.stdout.write(self.style.SUCCESS('Usuario admin creado (super + admin)'))
         else:
             self.stdout.write('Usuario admin ya existe')
 
