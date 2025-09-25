@@ -71,7 +71,8 @@ class PlanCreateView(GroupPermissionMixin, CreateView):
             data = {
                 'success': True,
                 'icon': 'success',
-                'message': f'Plan "{self.object.name}" creado correctamente',
+                # Por solicitud del usuario no se enviará mensaje de éxito
+                'message': '',
                 'redirect': str(self.success_url),
                 'object': self.serialize(self.object)
             }
@@ -79,14 +80,15 @@ class PlanCreateView(GroupPermissionMixin, CreateView):
             data = {
                 'success': False,
                 'icon': 'error',
-                'message': 'Errores de validación',
+                # Por solicitud del usuario no se enviará mensaje de error general
+                'message': '',
                 'error': form.errors
             }
         return HttpResponse(json.dumps(data, default=str), content_type='application/json')
 
     def form_valid(self, form):
         response = super().form_valid(form)
-        messages.success(self.request, f'Plan "{self.object.name}" creado correctamente.')
+        # Se elimina el mensaje flash de éxito
         return response
 
     def get_context_data(self, **kwargs):
@@ -117,7 +119,8 @@ class PlanUpdateView(GroupPermissionMixin, UpdateView):
             data = {
                 'success': True,
                 'icon': 'success',
-                'message': f'Plan "{self.object.name}" actualizado correctamente',
+                # Por solicitud del usuario no se enviará mensaje de éxito
+                'message': '',
                 'redirect': str(self.success_url),
                 'object': self.serialize(self.object)
             }
@@ -125,14 +128,15 @@ class PlanUpdateView(GroupPermissionMixin, UpdateView):
             data = {
                 'success': False,
                 'icon': 'error',
-                'message': 'Errores de validación',
+                # Por solicitud del usuario no se enviará mensaje de error general
+                'message': '',
                 'error': form.errors
             }
         return HttpResponse(json.dumps(data, default=str), content_type='application/json')
 
     def form_valid(self, form):
         response = super().form_valid(form)
-        messages.success(self.request, f'Plan "{self.object.name}" actualizado correctamente.')
+        # Se elimina el mensaje flash de éxito
         return response
 
     def get_context_data(self, **kwargs):
