@@ -16,11 +16,12 @@ class SubscriptionRequiredMiddleware(MiddlewareMixin):
     """
 
     EXEMPT_PREFIXES = (
-        '/static', '/media', '/admin', '/login', '/logout',
+        '/static', '/media', '/admin', '/login', '/logout', '/subscription/logout',
     )
     EXEMPT_URL_NAMES = {
         'subscription_required', 'subscription_list', 'plan_list', 'subscription_create',
-        'subscription_update', 'subscription_delete', 'plan_create', 'plan_update', 'plan_delete'
+        'subscription_update', 'subscription_delete', 'plan_create', 'plan_update', 'plan_delete',
+        'logout', 'subscription_logout'
     }
 
     def process_view(self, request, view_func, view_args, view_kwargs):

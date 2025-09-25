@@ -3,13 +3,15 @@ import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
-from django.http import HttpResponse, HttpResponseForbidden
+from django.http import HttpResponse, HttpResponseForbidden, HttpResponseRedirect
 from django.urls import reverse_lazy
-from django.views.generic import ListView, CreateView, UpdateView, DeleteView, TemplateView
+from django.views.generic import ListView, CreateView, UpdateView, DeleteView, TemplateView, View
+from django.contrib.auth import logout
 from django.conf import settings
 
 from core.subscription.forms import SubscriptionForm
 from core.subscription.models import Subscription, Plan
+from core.subscription.repositories.plan_repository import PlanRepository
 from core.security.mixins import GroupPermissionMixin
 from core.subscription.services import count_for
 
@@ -425,7 +427,77 @@ class SubscriptionRequiredView(TemplateView):
         ctx['user_has_company'] = bool(getattr(user, 'company_id', None))
         ctx['plans_url'] = reverse_lazy('plan_list')
         ctx['contact_email'] = 'soporte@example.com'
+        ctx['plans'] = PlanRepository.list_public_plans()
         return ctx
+
+
+class SubscriptionLogoutView(View):
+    """Vista especial de logout que limpia la memoria del navegador y redirije"""
+    
+    def get(self, request):
+        # Forzar logout completo borrando datos de sesión
+        if hasattr(request, 'session'):
+            request.session.flush()  # Borra completamente la sesión
+        
+        # Logout estándar de Django
+        logout(request)
+        
+        # Crear respuesta con JavaScript para forzar limpieza y redirección
+        html_content = """
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Cerrando sesión...</title>
+            <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+            <meta http-equiv="Pragma" content="no-cache">
+            <meta http-equiv="Expires" content="0">
+        </head>
+        <body>
+            <div style="text-align:center; padding:50px; font-family:Arial;">
+                <h3>Cerrando sesión...</h3>
+                <p>Redirigiendo...</p>
+            </div>
+            <script>
+                // Limpiar almacenamiento local y de sesión
+                if (typeof(Storage) !== "undefined") {
+                    localStorage.clear();
+                    sessionStorage.clear();
+                }
+                
+                // Limpiar caché si es posible
+                if ('caches' in window) {
+                    caches.keys().then(function(names) {
+                        names.forEach(function(name) {
+                            caches.delete(name);
+                        });
+                    });
+                }
+                
+                // Redireccionar después de limpiar
+                setTimeout(function() {
+                    window.location.replace('/login/');
+                }, 1000);
+                
+                // Prevenir que se pueda volver atrás
+                history.pushState(null, null, window.location.href);
+                window.onpopstate = function () {
+                    window.location.replace('/login/');
+                };
+            </script>
+        </body>
+        </html>
+        """
+        
+        response = HttpResponse(html_content, content_type='text/html')
+        
+        # Headers de limpieza de caché
+        response['Cache-Control'] = 'no-cache, no-store, must-revalidate, max-age=0'
+        response['Pragma'] = 'no-cache'
+        response['Expires'] = '0'
+        response['Clear-Site-Data'] = '"cache", "storage", "executionContexts"'
+        response['X-Frame-Options'] = 'DENY'
+        
+        return response
 
 
 class SubscriptionDeleteView(GroupPermissionMixin, DeleteView):

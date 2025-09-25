@@ -13,15 +13,52 @@
             Para continuar usando el sistema necesitas que un administrador te asigne un plan.
             Si eres el propietario de la compañía puedes seleccionar o crear una suscripción.
           </p>
-          <ul>
-            <li>Revisar planes disponibles y seleccionar uno</li>
-            <li>Solicitar asignación de plan a un administrador</li>
-            <li>Si crees que es un error, intenta nuevamente más tarde</li>
-          </ul>
+          
+          <h5 class="mb-3"><i class="fas fa-layer-group"></i> Planes Disponibles</h5>
+          {% if plans %}
+            <div class="row">
+              {% for plan in plans %}
+                <div class="col-md-6 mb-3">
+                  <div class="card border-primary">
+                    <div class="card-header bg-primary text-white">
+                      <h6 class="mb-0">{{ plan.name }}</h6>
+                    </div>
+                    <div class="card-body">
+                      {% if plan.description %}
+                        <p class="card-text small">{{ plan.description }}</p>
+                      {% endif %}
+                      <ul class="list-unstyled small">
+                        <li><i class="fas fa-file-invoice text-success"></i> Hasta {{ plan.max_invoices }} facturas</li>
+                        <li><i class="fas fa-users text-info"></i> Hasta {{ plan.max_customers }} clientes</li>
+                        <li><i class="fas fa-boxes text-warning"></i> Hasta {{ plan.max_products }} productos</li>
+                        <li><i class="fas fa-calendar text-secondary"></i> {{ plan.period_days }} días</li>
+                      </ul>
+                      <div class="text-center">
+                        <strong class="text-primary h5">${{ plan.price }}</strong>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <div class="alert alert-info">
+              <i class="fas fa-info-circle"></i> No hay planes disponibles en este momento.
+            </div>
+          {% endif %}
+
+          <div class="mt-4">
+            <p><strong>¿Qué puedes hacer?</strong></p>
+            <ul>
+              <li>Solicitar asignación de plan a un administrador</li>
+              <li>Si eres propietario, contacta soporte para activar un plan</li>
+              <li>Si crees que es un error, intenta nuevamente más tarde</li>
+            </ul>
+          </div>
+          
           <div class="mt-4 d-flex flex-wrap gap-2">
-            <a href="{{ plans_url }}" class="btn btn-primary"><i class="fas fa-layer-group"></i> Ver Planes</a>
             <a href="mailto:{{ contact_email }}?subject=Asignación%20de%20Plan" class="btn btn-outline-secondary"><i class="fas fa-envelope"></i> Contactar soporte</a>
-            <a href="{% url 'logout' %}" class="btn btn-outline-danger"><i class="fas fa-sign-out-alt"></i> Cerrar sesión</a>
+            <a href="{% url 'subscription_logout' %}" class="btn btn-outline-danger"><i class="fas fa-sign-out-alt"></i> Cerrar sesión</a>
           </div>
         </div>
       </div>

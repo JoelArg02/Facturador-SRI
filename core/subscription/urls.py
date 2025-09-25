@@ -4,7 +4,7 @@ from core.subscription.views.plan import (
 )
 from core.subscription.views.subscription import (
     SubscriptionListView, SubscriptionCreateView, SubscriptionUpdateView, SubscriptionDeleteView,
-    SubscriptionRequiredView,
+    SubscriptionRequiredView, SubscriptionLogoutView,
 )
 
 urlpatterns = [
@@ -18,4 +18,5 @@ urlpatterns = [
     path('update/<int:pk>/', SubscriptionUpdateView.as_view(), name='subscription_update'),
     path('delete/<int:pk>/', SubscriptionDeleteView.as_view(), name='subscription_delete'),
     path('required/', SubscriptionRequiredView.as_view(), name='subscription_required'),
+    path('logout/', SubscriptionLogoutView.as_view(), name='subscription_logout'),
 ]

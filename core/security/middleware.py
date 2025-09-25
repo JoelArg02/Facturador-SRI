@@ -9,14 +9,18 @@ class ActiveCompanyMiddleware(MiddlewareMixin):
     def process_request(self, request):
         user = getattr(request, 'user', None)
         if user and user.is_authenticated:
-            # No interferir si estamos en la pantalla de suscripción requerida para evitar loops
+            # No interferir si estamos en la pantalla de suscripción requerida o logout especial para evitar loops
             try:
                 subscription_required_url = reverse('subscription_required')
+                subscription_logout_url = reverse('subscription_logout')
             except Exception:
                 subscription_required_url = None
+                subscription_logout_url = None
 
             # Prioridad: si el usuario no tiene plan (el otro middleware hará la redirección) no forzamos onboarding aquí
             if subscription_required_url and request.path == subscription_required_url:
+                return None
+            if subscription_logout_url and request.path == subscription_logout_url:
                 return None
 
             # Flujo original de onboarding solo si no hay compañías y el usuario no es superuser
