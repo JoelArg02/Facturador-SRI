@@ -45,6 +45,35 @@ class CustomerListView(GroupPermissionMixin, CompanyQuerysetMixin, ListView):
         return context
 
 
+def get_customer_group():
+    """Obtiene (o crea) el grupo válido para clientes finales."""
+    group_setting = getattr(settings, 'GROUPS', {}).get('customer') if hasattr(settings, 'GROUPS') else None
+    candidate = None
+
+    def is_valid(group: Group) -> bool:
+        return group is not None and 'cliente' in group.name.lower()
+
+    if isinstance(group_setting, int):
+        candidate = Group.objects.filter(pk=group_setting).first()
+        if not is_valid(candidate):
+            candidate = None
+    elif isinstance(group_setting, str):
+        candidate = Group.objects.filter(name__iexact=group_setting).first()
+        if not is_valid(candidate):
+            candidate = None
+
+    if candidate is None:
+        for name in ['Cliente', 'Cliente final', 'Customer']:
+            candidate = Group.objects.filter(name__iexact=name).first()
+            if is_valid(candidate):
+                break
+
+    if candidate is None:
+        candidate = Group.objects.create(name='Cliente')
+
+    return candidate
+
+
 class CustomerCreateView(GroupPermissionMixin, CreateView):
     model = Customer
     template_name = 'customer/create.html'
@@ -134,6 +163,24 @@ class CustomerCreateView(GroupPermissionMixin, CreateView):
             # Se silencian errores; puedes manejar logging si lo necesitas
             pass
 
+    def create_customer_user(self, form_user, customer_dni):
+        raw_password = self.generate_password()
+        temp_user = form_user.save(commit=False)
+        from core.user.models import User  # import local para evitar ciclos
+        user = User.objects.create_user(username=customer_dni, email=temp_user.email, password=raw_password)
+        user.names = temp_user.names
+        if temp_user.image:
+            user.image = temp_user.image
+        user.is_superuser = False
+        user.is_staff = False
+        user.save(update_fields=['names', 'image', 'is_superuser', 'is_staff'])
+        # Asignar grupo cliente garantizado
+        user.groups.set([get_customer_group()])
+        user.is_superuser = False
+        user.is_staff = False
+        user.save(update_fields=['is_superuser', 'is_staff'])
+        return user, raw_password
+
 
     def post(self, request, *args, **kwargs):
         data = {}
@@ -144,45 +191,28 @@ class CustomerCreateView(GroupPermissionMixin, CreateView):
                     form1 = self.get_form_user()
                     form2 = self.get_form()
                     if form1.is_valid() and form2.is_valid():
-                        user = form1.save(commit=False)
-                        user.username = form2.cleaned_data['dni']
-                        raw_password = self.generate_password()
-                        user.set_password(raw_password)
-                        # Quitar privilegios peligrosos explícitamente
-                        user.is_superuser = False
-                        user.is_staff = False
-                        user.save()
-                        # Limpiar grupos existentes (si por algún motivo hereda)
-                        user.groups.clear()
-                        # Asignar grupo cliente (crear si no existe el id configurado)
                         try:
-                            group_id = settings.GROUPS.get('customer')
-                            cust_group = None
-                            if group_id:
-                                cust_group = Group.objects.filter(pk=group_id).first()
-                            if cust_group is None:
-                                # fallback: buscar por nombre 'cliente' o crear
-                                cust_group = Group.objects.filter(name__iexact='cliente').first()
-                                if cust_group is None:
-                                    cust_group = Group.objects.create(name='cliente')
-                            user.groups.add(cust_group)
+                            user, raw_password = self.create_customer_user(form1, form2.cleaned_data['dni'])
                         except Exception as e:
-                            print(f"No se pudo asignar/crear el grupo cliente: {e}")
+                            data['error'] = f'Error creando usuario cliente: {e}'
+                            raise
+                        # Crear Customer
                         form_customer = form2.save(commit=False)
                         form_customer.user = user
-                        # Asignar compañía automáticamente si el request la tiene
                         company = getattr(request, 'company', None)
                         if company:
                             form_customer.company = company
                         form_customer.save()
                         data = form_customer.as_dict()
-                        # Enviar email con credenciales
+                        # Enviar email
                         self.send_credentials_email(user, raw_password)
                     else:
+                        invalids = {}
                         if not form1.is_valid():
-                            data['error'] = form1.errors
-                        elif not form2.is_valid():
-                            data['error'] = form2.errors
+                            invalids['user_form'] = form1.errors
+                        if not form2.is_valid():
+                            invalids['customer_form'] = form2.errors
+                        data['error'] = invalids
             elif action == 'validate_data':
                 field = request.POST['field']
                 filters = Q()
@@ -239,14 +269,7 @@ class CustomerUpdateView(GroupPermissionMixin, UpdateView):
                         user.save()
                         # Mantener sólo grupo cliente
                         try:
-                            group_id = settings.GROUPS.get('customer')
-                            cust_group = None
-                            if group_id:
-                                cust_group = Group.objects.filter(pk=group_id).first()
-                            if cust_group is None:
-                                cust_group = Group.objects.filter(name__iexact='cliente').first()
-                            if cust_group:
-                                user.groups.set([cust_group])
+                            user.groups.set([get_customer_group()])
                         except Exception as e:
                             print(f"No se pudo reafirmar grupo cliente en edición: {e}")
                         form_customer = form2.save(commit=False)
