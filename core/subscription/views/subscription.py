@@ -286,8 +286,14 @@ class SubscriptionCreateView(GroupPermissionMixin, CreateView):
         return super().dispatch(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
-        data = {}
         action = request.POST.get('action')
+        
+        # Si no es una petición AJAX, usar el comportamiento estándar de CreateView
+        if not request.headers.get('X-Requested-With') == 'XMLHttpRequest' and action != 'add':
+            return super().post(request, *args, **kwargs)
+        
+        # Manejo AJAX para peticiones con action=add
+        data = {}
         try:
             if not request.user.is_superuser:
                 return HttpResponseForbidden(json.dumps({'error': 'Acceso restringido a super administradores.'}), content_type='application/json')
@@ -299,36 +305,42 @@ class SubscriptionCreateView(GroupPermissionMixin, CreateView):
                     if obj.is_active:
                         send_subscription_email(obj.user, obj)
                     
-                    # Serializar objeto para respuesta
-                    company = obj.company
-                    admin_name = obj.user.get_full_name() or obj.user.username
-                    admin_groups = ', '.join([g.name for g in obj.user.groups.all()[:2]])
-                    serialized_obj = {
-                        'id': obj.id,
-                        'owner': {
-                            'id': obj.user_id,
-                            'name': admin_name,
-                            'username': obj.user.username,
-                            'email': getattr(obj.user, 'email', ''),
-                            'groups': admin_groups,
-                        },
-                        'company': {
-                            'id': getattr(company, 'id', None),
-                            'name': getattr(company, 'commercial_name', 'Sin asignar'),
-                            'ruc': getattr(company, 'ruc', ''),
-                        },
-                        'plan': {
-                            'id': obj.plan_id,
-                            'name': obj.plan.name,
-                        },
-                        'usage': get_usage(company, obj.plan),
-                        'start_date': obj.start_date.isoformat(),
-                        'end_date': obj.end_date.isoformat() if obj.end_date else None,
-                        'is_active': obj.is_active,
-                        'expired': obj.expired,
-                        'days_left': obj.days_left,
-                    }
-                    data = {'id': obj.id, 'object': serialized_obj}
+                    # Si es petición AJAX, devolver JSON
+                    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                        # Serializar objeto para respuesta
+                        company = obj.company
+                        admin_name = obj.user.get_full_name() or obj.user.username
+                        admin_groups = ', '.join([g.name for g in obj.user.groups.all()[:2]])
+                        serialized_obj = {
+                            'id': obj.id,
+                            'owner': {
+                                'id': obj.user_id,
+                                'name': admin_name,
+                                'username': obj.user.username,
+                                'email': getattr(obj.user, 'email', ''),
+                                'groups': admin_groups,
+                            },
+                            'company': {
+                                'id': getattr(company, 'id', None),
+                                'name': getattr(company, 'commercial_name', 'Sin asignar'),
+                                'ruc': getattr(company, 'ruc', ''),
+                            },
+                            'plan': {
+                                'id': obj.plan_id,
+                                'name': obj.plan.name,
+                            },
+                            'usage': get_usage(company, obj.plan),
+                            'start_date': obj.start_date.isoformat(),
+                            'end_date': obj.end_date.isoformat() if obj.end_date else None,
+                            'is_active': obj.is_active,
+                            'expired': obj.expired,
+                            'days_left': obj.days_left,
+                        }
+                        data = {'id': obj.id, 'object': serialized_obj}
+                        return HttpResponse(json.dumps(data, default=str), content_type='application/json')
+                    else:
+                        # Si no es AJAX, redireccionar
+                        return HttpResponseRedirect(self.success_url)
                 else:
                     data['error'] = form.errors
             else:

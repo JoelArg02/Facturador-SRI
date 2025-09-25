@@ -11,6 +11,11 @@ if TYPE_CHECKING:
     from core.pos.models import Company
 
 
+def get_current_date():
+    """Función helper para obtener la fecha actual (sin tiempo) para DateField"""
+    return timezone.now().date()
+
+
 class Plan(models.Model):
     name = models.CharField(max_length=100, unique=True, verbose_name='Nombre')
     description = models.TextField(null=True, blank=True, verbose_name='Descripción')
@@ -38,7 +43,7 @@ class Plan(models.Model):
 class Subscription(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='subscriptions', verbose_name='Usuario')
     plan = models.ForeignKey(Plan, on_delete=models.PROTECT, verbose_name='Plan')
-    start_date = models.DateField(default=timezone.now, verbose_name='Fecha de inicio')
+    start_date = models.DateField(default=get_current_date, verbose_name='Fecha de inicio')
     end_date = models.DateField(null=True, blank=True, verbose_name='Fecha de fin')
     is_active = models.BooleanField(default=True, verbose_name='Activa')
     canceled_at = models.DateTimeField(null=True, blank=True, verbose_name='Cancelada en')
