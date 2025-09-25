@@ -21,6 +21,7 @@ var user = {
                 {data: "id"},
                 {data: "names"},
                 {data: "username"},
+                {data: "company"},
                 {data: "is_active"},
                 {data: "image"},
                 {data: "groups"},
@@ -28,7 +29,17 @@ var user = {
             ],
             columnDefs: [
                 {
-                    targets: [-3],
+                    targets: [3], // Columna de compañía
+                    class: 'text-center',
+                    render: function (data, type, row) {
+                        if (data && data.name) {
+                            return '<span class="badge badge-primary badge-pill">' + data.name + '</span>';
+                        }
+                        return '<span class="badge badge-secondary badge-pill">Sin compañía</span>';
+                    }
+                },
+                {
+                    targets: [-3], // Columna de imagen (ajustado por nueva columna)
                     class: 'text-center',
                     orderable: false,
                     render: function (data, type, row) {
@@ -36,7 +47,7 @@ var user = {
                     }
                 },
                 {
-                    targets: [-4],
+                    targets: [-4], // Columna de estado (ajustado por nueva columna)
                     class: 'text-center',
                     render: function (data, type, row) {
                         if (data) {
@@ -46,7 +57,7 @@ var user = {
                     }
                 },
                 {
-                    targets: [-2],
+                    targets: [-2], // Columna de grupos (ajustado por nueva columna)
                     class: 'text-center',
                     render: function (data, type, row) {
                         var content = '';

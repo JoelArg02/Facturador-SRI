@@ -13,14 +13,23 @@ from django.views.generic import CreateView, UpdateView, DeleteView, ListView, F
 from config import settings
 from core.login.forms import UpdatePasswordForm
 from core.security.form_handlers.helpers import update_form_fields_attributes
-from core.security.mixins import GroupPermissionMixin, GroupModuleMixin
+from core.security.mixins import GroupPermissionMixin, GroupModuleMixin, CompanyQuerysetMixin, AutoAssignCompanyMixin
 from core.user.forms import UserForm, ProfileForm, User
 
 
-class UserListView(GroupPermissionMixin, ListView):
+class UserListView(GroupPermissionMixin, CompanyQuerysetMixin, ListView):
     model = User
     template_name = 'user/list.html'
     permission_required = 'view_user'
+
+    def get_queryset(self):
+        """Filtrar usuarios por compañía solo si no es super administrador"""
+        if self.request.user.is_superuser:
+            # Super administrador ve todos los usuarios
+            return self.model.objects.all()
+        else:
+            # Administradores regulares solo ven usuarios de su compañía
+            return super().get_queryset()
 
     def post(self, request, *args, **kwargs):
         data = {}
@@ -28,7 +37,7 @@ class UserListView(GroupPermissionMixin, ListView):
         try:
             if action == 'search':
                 data = []
-                for i in self.model.objects.all():
+                for i in self.get_queryset():
                     data.append(i.as_dict())
             elif action == 'reset_password':
                 user = self.model.objects.get(pk=request.POST['id'])
@@ -62,7 +71,7 @@ class UserListView(GroupPermissionMixin, ListView):
         return context
 
 
-class UserCreateView(GroupPermissionMixin, CreateView):
+class UserCreateView(AutoAssignCompanyMixin, GroupPermissionMixin, CompanyQuerysetMixin, CreateView):
     model = User
     template_name = 'user/create.html'
     form_class = UserForm

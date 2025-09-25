@@ -104,7 +104,16 @@ class User(AbstractBaseUser, PermissionsMixin):
         item['last_login'] = self.last_login.strftime('%Y-%m-%d') if self.last_login else None
         item['image'] = self.get_image()
         item['date_joined'] = self.date_joined.strftime('%Y-%m-%d')
-        item['company'] = self.company_id
+        # Incluir información completa de la compañía
+        if self.company:
+            item['company'] = {
+                'id': self.company.id,
+                'name': self.company.company_name,
+                'commercial_name': self.company.commercial_name,
+                'ruc': self.company.ruc
+            }
+        else:
+            item['company'] = {'id': None, 'name': 'Sin compañía asignada'}
         return item
 
     # Compatibilidad con código existente que invoca user.toJSON()
