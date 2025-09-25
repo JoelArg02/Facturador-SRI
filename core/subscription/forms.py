@@ -4,6 +4,23 @@ from django.contrib.auth import get_user_model
 from .models import Subscription
 
 
+def get_available_admin_users():
+    """Retorna usuarios administradores que no tienen suscripción activa."""
+    User = get_user_model()
+    from django.contrib.auth.models import Group
+    
+    admin_groups = Group.objects.filter(name__in=['Administrador', 'Cliente Propietario'])
+    
+    return (
+        User.objects
+        .filter(groups__in=admin_groups)
+        .filter(subscriptions__isnull=True)  # Sin suscripciones
+        .distinct()
+        .select_related('company')
+        .order_by('names', 'username')
+    )
+
+
 class SubscriptionForm(forms.ModelForm):
     class Meta:
         model = Subscription
@@ -15,34 +32,18 @@ class SubscriptionForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        User = get_user_model()
         self.fields['user'].label = 'Administrador'
-        self.fields['user'].help_text = 'Selecciona el usuario administrador propietario de una compañía.'
+        self.fields['user'].help_text = 'Selecciona el usuario administrador que no tenga plan activo.'
         
-        # Filtrar usuarios que sean administradores (propietarios de compañías)
-        # Incluir usuarios que:
-        # 1. Tengan una compañía asignada (company__isnull=False)
-        # 2. Sean staff o pertenezcan a grupos administrativos
-        from django.contrib.auth.models import Group
-        admin_groups = Group.objects.filter(name__in=['Administrador', 'Cliente Propietario'])
-        
-        self.fields['user'].queryset = (
-            User.objects.filter(
-                company__isnull=False,
-                groups__in=admin_groups
-            )
-            .distinct()
-            .select_related('company')
-            .order_by('names', 'username')
-        )
+        # Usar la función personalizada para obtener usuarios disponibles
+        self.fields['user'].queryset = get_available_admin_users()
         self.fields['user'].empty_label = 'Seleccione un administrador'
 
         def _label_from_instance(user):
             company = getattr(user, 'company', None)
-            company_name = company.commercial_name if company else 'Sin compañía asignada'
+            company_name = company.commercial_name if company else 'Sin compañía'
             display_name = user.get_full_name() or user.username
-            groups_str = ', '.join([g.name for g in user.groups.all()[:2]])  # Mostrar primeros 2 grupos
-            return f'{display_name} · {company_name} [{groups_str}]'
+            return f'{display_name} · {company_name}'
 
         self.fields['user'].label_from_instance = _label_from_instance
         self.fields['plan'].label = 'Plan'
