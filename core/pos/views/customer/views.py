@@ -15,10 +15,10 @@ from django.views.generic import CreateView, UpdateView, DeleteView, ListView
 from config import settings
 from core.pos.forms import CustomerForm, Customer, CustomerUserForm
 from core.pos.utilities.sri import SRI
-from core.security.mixins import GroupModuleMixin, GroupPermissionMixin
+from core.security.mixins import GroupModuleMixin, GroupPermissionMixin, CompanyQuerysetMixin
 
 
-class CustomerListView(GroupPermissionMixin, ListView):
+class CustomerListView(GroupPermissionMixin, CompanyQuerysetMixin, ListView):
     model = Customer
     template_name = 'customer/list.html'
     permission_required = 'view_customer'
@@ -29,7 +29,8 @@ class CustomerListView(GroupPermissionMixin, ListView):
         try:
             if action == 'search':
                 data = []
-                for i in self.model.objects.filter():
+                qs = self.get_queryset()
+                for i in qs:
                     data.append(i.as_dict())
             else:
                 data['error'] = 'No ha seleccionado ninguna opción'
@@ -64,45 +65,74 @@ class CustomerCreateView(GroupPermissionMixin, CreateView):
 
     def send_credentials_email(self, user, raw_password):
         if not user.email:
-            print("⚠️ Usuario sin email, no se enviará nada.")
             return
-        try:
-            print("📧 Preparando mensaje de credenciales...")
 
+        try:
             message = MIMEMultipart('alternative')
-            message['Subject'] = 'Credenciales de acceso'
+            message['Subject'] = 'Credenciales de acceso - OptimusPos Facturación'
             message['From'] = settings.EMAIL_HOST_USER
             message['To'] = user.email
 
-            content = (
+            # Texto plano (fallback)
+            text_content = (
                 f"Hola {user.names},\n\n"
-                f"Se ha creado su cuenta para acceder al portal de facturación.\n\n"
+                f"Se ha creado su cuenta en OptimusPos Facturación.\n\n"
                 f"Usuario: {user.username}\n"
                 f"Contraseña: {raw_password}\n"
                 f"URL: {getattr(settings, 'SITE_URL', '')}\n\n"
                 f"Por favor cambie su contraseña después de iniciar sesión."
             )
-            part = MIMEText(content)
-            message.attach(part)
-            print("✅ Mensaje preparado.")
 
-            # Conexión directa por SSL en puerto 465
-            print("➡️ Conectando con SMTP SSL en el puerto 465 ...")
+            # HTML con diseño
+            html_content = f"""
+            <html>
+            <body style="font-family:Arial, sans-serif; background:#f4f4f7; padding:20px;">
+                <table style="max-width:600px; margin:auto; background:#ffffff; border-radius:8px; overflow:hidden;
+                            box-shadow:0 2px 6px rgba(0,0,0,0.1);">
+                    <tr>
+                        <td style="background:#2b6cb0; color:#fff; padding:20px; text-align:center;">
+                            <h2 style="margin:0;">OptimusPos Facturación</h2>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding:30px; color:#2d3748;">
+                            <p style="font-size:16px;">Hola <strong>{user.names}</strong>,</p>
+                            <p style="font-size:16px;">
+                                Se ha creado su cuenta para acceder al portal de <strong>OptimusPos Facturación</strong>.
+                            </p>
+                            <p style="font-size:16px;">
+                                <strong>Usuario:</strong> {user.username}<br>
+                                <strong>Contraseña:</strong> {raw_password}<br>
+                                <strong>URL:</strong> <a href="{getattr(settings, 'SITE_URL', '#')}" 
+                                style="color:#2b6cb0;text-decoration:none;">{getattr(settings, 'SITE_URL', '')}</a>
+                            </p>
+                            <p style="font-size:16px;">
+                                Por favor cambie su contraseña después de iniciar sesión.
+                            </p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="background:#edf2f7; color:#4a5568; padding:15px; text-align:center; font-size:12px;">
+                            © {user.date_joined.year} OptimusPos Facturación
+                        </td>
+                    </tr>
+                </table>
+            </body>
+            </html>
+            """
+
+            message.attach(MIMEText(text_content, 'plain'))
+            message.attach(MIMEText(html_content, 'html'))
+
+            # Envío directo por SSL en puerto 465
             server = smtplib.SMTP_SSL(settings.EMAIL_HOST, 465)
-
-            print(f"🔑 Iniciando sesión SMTP con usuario {settings.EMAIL_HOST_USER} ...")
             server.login(settings.EMAIL_HOST_USER, settings.EMAIL_HOST_PASSWORD)
-            print("✅ Login correcto.")
-
-            print(f"📤 Enviando email a {user.email} ...")
             server.sendmail(settings.EMAIL_HOST_USER, [user.email], message.as_string())
-            print("✅ Email enviado correctamente.")
-
             server.quit()
-            print("🔌 Conexión SMTP cerrada.")
 
-        except Exception as e:
-            print(f"❌ Error enviando credenciales al cliente: {e}")
+        except Exception:
+            # Se silencian errores; puedes manejar logging si lo necesitas
+            pass
 
 
     def post(self, request, *args, **kwargs):
@@ -118,20 +148,32 @@ class CustomerCreateView(GroupPermissionMixin, CreateView):
                         user.username = form2.cleaned_data['dni']
                         raw_password = self.generate_password()
                         user.set_password(raw_password)
+                        # Quitar privilegios peligrosos explícitamente
                         user.is_superuser = False
                         user.is_staff = False
                         user.save()
-                        # Asignar grupo cliente de forma segura
+                        # Limpiar grupos existentes (si por algún motivo hereda)
+                        user.groups.clear()
+                        # Asignar grupo cliente (crear si no existe el id configurado)
                         try:
                             group_id = settings.GROUPS.get('customer')
+                            cust_group = None
                             if group_id:
                                 cust_group = Group.objects.filter(pk=group_id).first()
-                                if cust_group:
-                                    user.groups.add(cust_group)
+                            if cust_group is None:
+                                # fallback: buscar por nombre 'cliente' o crear
+                                cust_group = Group.objects.filter(name__iexact='cliente').first()
+                                if cust_group is None:
+                                    cust_group = Group.objects.create(name='cliente')
+                            user.groups.add(cust_group)
                         except Exception as e:
-                            print(f"No se pudo asignar el grupo cliente: {e}")
+                            print(f"No se pudo asignar/crear el grupo cliente: {e}")
                         form_customer = form2.save(commit=False)
                         form_customer.user = user
+                        # Asignar compañía automáticamente si el request la tiene
+                        company = getattr(request, 'company', None)
+                        if company:
+                            form_customer.company = company
                         form_customer.save()
                         data = form_customer.as_dict()
                         # Enviar email con credenciales
@@ -195,6 +237,18 @@ class CustomerUpdateView(GroupPermissionMixin, UpdateView):
                         user.is_superuser = False
                         user.is_staff = False
                         user.save()
+                        # Mantener sólo grupo cliente
+                        try:
+                            group_id = settings.GROUPS.get('customer')
+                            cust_group = None
+                            if group_id:
+                                cust_group = Group.objects.filter(pk=group_id).first()
+                            if cust_group is None:
+                                cust_group = Group.objects.filter(name__iexact='cliente').first()
+                            if cust_group:
+                                user.groups.set([cust_group])
+                        except Exception as e:
+                            print(f"No se pudo reafirmar grupo cliente en edición: {e}")
                         form_customer = form2.save(commit=False)
                         form_customer.user = user
                         form_customer.save()
