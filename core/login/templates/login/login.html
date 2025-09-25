@@ -1,63 +1,78 @@
 {% extends 'login/base.html' %}
 {% load static %}
 {% block assets_login %}
+    <link rel="stylesheet" href="{% static 'login/css/optimus.css' %}">
     <script src="{% static 'login/js/login.js' %}"></script>
 {% endblock %}
 
 {% block content %}
-    <div class="login-box">
-        <div class="login-box-body">
-            <div class="card">
-                <div class="card-body login-card-body">
-                    <div class="login-image">
-                        <i class="{{ dashboard.get_icon }} fa-5x"></i>
-                    </div>
-                    <p class="login-box-msg">Inicio de Sesión</p>
-                    <form method="post" id="frmForm" autocomplete="off">
-                        {% csrf_token %}
-                        <input type="hidden" name="next" value="{{ next }}">
-                        <div class="form-group">
-                            <label>{{ form.username.label }}:</label>
-                            {{ form.username }}
-                        </div>
-                        <div class="form-group">
-                            <label>{{ form.password.label }}:</label>
-                            <div class="input-group">
-                                {{ form.password }}
-                                <div class="input-group-append">
-                                    <button class="btn btn-primary btnShowPassword btn-flat" type="button">
-                                        <i class="fas fa-eye"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-lg-12">
-                                <button type="submit" class="btn btn-primary btn-block btn-flat">
-                                    <i class="fas fa-sign-in-alt"></i> Ingresar
-                                </button>
-                            </div>
-                        </div>
-                    </form>
-                    <p class="mt-3 text-center details">
-                        Si has olvidado tu contraseña <a href="{% url 'reset_password' %}">da click aqui <i class="fas fa-key"></i></a>
-                    </p>
-                </div>
+<div class="optimus-auth-wrapper">
+    <div class="optimus-brand-panel d-none d-md-flex">
+        <div class="brand-inner">
+            <div class="logo-circle">
+                <i class="{{ dashboard.get_icon }}"></i>
             </div>
+            <h1 class="brand-title">Optimus<span>Pos</span></h1>
+            <p class="brand-subtitle">Plataforma integral de facturación<br>y gestión comercial.</p>
+            <ul class="brand-bullets">
+                <li><i class="fas fa-check-circle"></i> Facturación Electrónica</li>
+                <li><i class="fas fa-check-circle"></i> Control de Inventario</li>
+                <li><i class="fas fa-check-circle"></i> Reportes en Tiempo Real</li>
+            </ul>
+            <p class="brand-footer">&copy; {{ now|date:'Y' }} OptimusPos</p>
         </div>
     </div>
-    <script type="application/javascript">
-        {% if form.errors %}
-            var errors = '';
-            {% for field in form %}
-                {% for error in field.errors %}
-                    errors += '{{ error }}\n';
-                {% endfor %}
-            {% endfor %}
-            {% for error in form.non_field_errors %}
+    <div class="optimus-form-panel">
+        <div class="form-header">
+            <h2>Bienvenido</h2>
+            <p>Ingresa tus credenciales para continuar</p>
+        </div>
+        <form method="post" id="frmForm" autocomplete="off" class="optimus-form">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ next }}">
+            <div class="form-group">
+                <label class="control-label">{{ form.username.label }}</label>
+                <div class="input-icon">
+                    <i class="fas fa-user"></i>
+                    {{ form.username }}
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="control-label">{{ form.password.label }}</label>
+                <div class="input-icon">
+                    <i class="fas fa-lock"></i>
+                    {{ form.password }}
+                    <button class="btn btn-link toggle-pass btnShowPassword" type="button" tabindex="-1" aria-label="Mostrar contraseña"><i class="fas fa-eye"></i></button>
+                </div>
+            </div>
+            <div class="form-group form-extra d-flex justify-content-between align-items-center">
+                <a href="{% url 'reset_password' %}" class="link-recover" style="color: #e67e22;"><i class="fas fa-key"></i> Recuperar contraseña</a>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block optimus-btn-submit">
+                <i class="fas fa-sign-in-alt"></i> Ingresar
+            </button>
+            <div class="security-hint">
+                <i class="fas fa-shield-alt"></i> Tus credenciales están protegidas.
+            </div>
+        </form>
+        <footer class="login-footer">
+            <small>Desarrollado por <strong>OptimusPos</strong> | {{ dashboard.footer_url }}</small>
+        </footer>
+    </div>
+</div>
+
+<script type="application/javascript">
+    {% if form.errors %}
+        var errors = '';
+        {% for field in form %}
+            {% for error in field.errors %}
                 errors += '{{ error }}\n';
             {% endfor %}
-            message_error(errors);
-        {% endif %}
-    </script>
+        {% endfor %}
+        {% for error in form.non_field_errors %}
+            errors += '{{ error }}\n';
+        {% endfor %}
+        message_error(errors);
+    {% endif %}
+</script>
 {% endblock %}

@@ -1,0 +1,96 @@
+/* OptimusPos Login Theme */
+:root {
+  --optimus-bg: radial-gradient(circle at 20% 20%, #1e3c72, #2a5298);
+  --optimus-primary: #1f6feb;
+  --optimus-primary-hover: #1658bb;
+  --optimus-accent: #ffb347;
+  --optimus-text-light: #eef5ff;
+  --optimus-card-bg: rgba(255,255,255,0.08);
+  --optimus-border: rgba(255,255,255,0.15);
+  --optimus-danger: #dc3545;
+}
+body.login-page {
+  background: var(--optimus-bg); /* fallback */
+  background-attachment: fixed;
+  color: #fff;
+  font-family: 'Roboto', 'Segoe UI', Arial, sans-serif;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.2rem;
+}
+.optimus-auth-wrapper {
+  width: 100%;
+  max-width: 1080px;
+  background: linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02));
+  backdrop-filter: blur(14px) saturate(140%);
+  border: 1px solid var(--optimus-border);
+  border-radius: 22px;
+  box-shadow: 0 10px 28px -6px rgba(0,0,0,0.55), 0 2px 8px -2px rgba(0,0,0,0.3);
+  display: flex;
+  overflow: hidden;
+  position: relative;
+}
+.optimus-brand-panel {
+  flex: 1 1 48%;
+  padding: 3rem 2.75rem 2.5rem;
+  background: linear-gradient(160deg, rgba(0,0,0,0.55), rgba(0,0,0,0.15));
+  position: relative;
+}
+.optimus-brand-panel:before, .optimus-brand-panel:after {
+  content: '';
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.18), rgba(255,255,255,0));
+  filter: blur(6px);
+  opacity: .55;
+}
+.optimus-brand-panel:before { width: 320px; height: 320px; top: -60px; left: -40px; }
+.optimus-brand-panel:after { width: 260px; height: 260px; bottom: -40px; right: -30px; }
+.brand-inner { position: relative; z-index: 2; }
+.logo-circle {
+  width: 96px; height: 96px;
+  border-radius: 22px;
+  display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(140deg,#1f6feb,#2a5298 55%,#1e3c72);
+  box-shadow: 0 6px 16px -4px rgba(0,0,0,0.55);
+  margin-bottom: 1.75rem;
+}
+.logo-circle i { font-size: 46px; color: #fff; }
+.brand-title { font-size: 2.35rem; font-weight: 700; letter-spacing: .5px; margin: 0 0 .75rem; }
+.brand-title span { color: var(--optimus-accent); }
+.brand-subtitle { font-size: .95rem; line-height: 1.4rem; color: var(--optimus-text-light); margin-bottom: 1.6rem; }
+.brand-bullets { list-style: none; padding: 0; margin: 0 0 2.2rem; }
+.brand-bullets li { font-size: .85rem; margin-bottom: .55rem; display: flex; align-items: center; gap: .5rem; color: #e5edff; }
+.brand-bullets i { color: var(--optimus-accent); }
+.brand-footer { font-size: .75rem; opacity: .75; }
+.optimus-form-panel { flex: 1 1 52%; padding: 2.75rem 2.25rem 2.25rem; display: flex; flex-direction: column; }
+.form-header h2 { font-weight: 600; margin: 0 0 .35rem; font-size: 1.85rem; }
+.form-header p { margin: 0 0 2rem; font-size: .9rem; color: #cfd9eb; }
+.optimus-form .form-group { margin-bottom: 1.25rem; }
+.input-icon { position: relative; display: flex; align-items: center; background: rgba(255,255,255,0.08); border: 1px solid var(--optimus-border); border-radius: 12px; padding: .35rem .75rem; transition: border .25s, background .25s; }
+.input-icon:focus-within { border-color: var(--optimus-primary); background: rgba(255,255,255,0.15); }
+.input-icon i { color: var(--optimus-accent); margin-right: .6rem; font-size: 1rem; }
+.input-icon input { background: transparent !important; border: none; color: #fff; width: 100%; padding: .55rem .25rem; }
+.input-icon input:focus { outline: none; box-shadow: none; }
+.toggle-pass { color: #b7c7e5; font-size: .9rem; margin-left: .35rem; }
+.toggle-pass:hover { color: #fff; text-decoration: none; }
+.optimus-btn-submit { margin-top: .35rem; padding: .75rem 1rem; font-weight: 600; letter-spacing: .3px; border-radius: 14px; background: linear-gradient(120deg,var(--optimus-primary),#2a5298); border: none; }
+.optimus-btn-submit:hover { background: linear-gradient(120deg,var(--optimus-primary-hover),#244b8a); }
+.security-hint { margin-top: 1.1rem; font-size: .75rem; color: #c3d2e9; display: flex; align-items: center; gap: .4rem; }
+.security-hint i { color: var(--optimus-accent); }
+.login-footer { margin-top: auto; text-align: center; font-size: .7rem; padding-top: 2.25rem; color: #b7c7e5; }
+.login-footer a { color: #fff; }
+.login-footer a:hover { text-decoration: underline; }
+
+/* Responsive */
+@media (max-width: 992px) {
+  .optimus-auth-wrapper { flex-direction: column; max-width: 520px; }
+  .optimus-brand-panel { display: none !important; }
+  .optimus-form-panel { flex: 1 1 auto; }
+}
+
+/* Form validation error styles (reusing existing message_error JS) */
+input.is-invalid { border-color: var(--optimus-danger) !important; }
+.form-group .errorlist { margin: .35rem 0 0; list-style: none; padding: 0; font-size: .7rem; color: var(--optimus-danger); }
