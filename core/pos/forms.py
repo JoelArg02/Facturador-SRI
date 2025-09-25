@@ -32,6 +32,13 @@ class CompanyForm(BaseModelForm):
 
 
 class CompanyOnboardingForm(forms.ModelForm):
+    # Campos ocultos con valores por defecto
+    establishment_address = forms.CharField(widget=forms.HiddenInput(), required=False)
+    special_taxpayer = forms.CharField(widget=forms.HiddenInput(), required=False, initial='000')
+    environment_type = forms.IntegerField(widget=forms.HiddenInput(), initial=2)
+    emission_type = forms.IntegerField(widget=forms.HiddenInput(), initial=1)
+    tax = forms.DecimalField(widget=forms.HiddenInput(), required=False, initial=15.0)
+    
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # Placeholders específicos solicitados
@@ -59,26 +66,111 @@ class CompanyOnboardingForm(forms.ModelForm):
         if 'description' in self.fields:
             self.fields['description'].widget.attrs['rows'] = 3
             
-        # Configurar valores por defecto para campos simplificados
-        if 'environment_type' in self.fields:
-            # Siempre producción
-            self.fields['environment_type'].initial = 2
-            self.fields['environment_type'].widget.attrs['readonly'] = True
-            
+        # Establecer valores por defecto para campos ocultos
+        self.fields['environment_type'].initial = 2  # Producción
+        self.fields['emission_type'].initial = 1     # Normal
+        self.fields['establishment_address'].initial = ''
+        self.fields['special_taxpayer'].initial = '000'  # No es contribuyente especial por defecto
+        
         if 'tax_percentage' in self.fields:
             # IVA 15% por defecto
             self.fields['tax_percentage'].initial = 15
 
+    def clean(self):
+        cleaned_data = super().clean()
+        print(f"[CompanyOnboardingForm] Datos limpiados: {cleaned_data}")
+        
+        # Validaciones adicionales
+        ruc = cleaned_data.get('ruc')
+        if ruc and len(ruc) not in [10, 13]:
+            raise forms.ValidationError("El RUC debe tener 10 o 13 dígitos")
+        
+        # Establecer valores automáticos para campos ocultos
+        main_address = cleaned_data.get('main_address', '')
+        if not cleaned_data.get('establishment_address'):
+            cleaned_data['establishment_address'] = main_address
+            
+        # Special taxpayer por defecto 000 (la mayoría de empresas no son contribuyentes especiales)
+        if not cleaned_data.get('special_taxpayer') or cleaned_data.get('special_taxpayer') == '':
+            cleaned_data['special_taxpayer'] = '000'
+            
+        # Asegurar valores por defecto
+        cleaned_data['environment_type'] = 2  # Producción
+        cleaned_data['emission_type'] = 1     # Normal
+        
+        # Sincronizar tax con tax_percentage
+        tax_percentage = cleaned_data.get('tax_percentage')
+        if tax_percentage:
+            cleaned_data['tax'] = float(tax_percentage)
+        else:
+            cleaned_data['tax'] = 15.0  # Default IVA 15%
+            cleaned_data['tax_percentage'] = 15
+        
+        print(f"[CompanyOnboardingForm] Datos después de clean: {cleaned_data}")
+        return cleaned_data
+
     def save(self, commit=True):
-        instance = super().save(commit=False)
-        # Asegurar que environment_type siempre sea producción
-        instance.environment_type = 2
-        # Sincronizar tax con tax_percentage si está disponible
-        if hasattr(instance, 'tax_percentage') and instance.tax_percentage:
-            instance.tax = instance.tax_percentage
-        if commit:
-            instance.save()
-        return instance
+        try:
+            print("[CompanyOnboardingForm] Iniciando save del formulario")
+            instance = super().save(commit=False)
+            
+            # Asegurar valores por defecto para campos requeridos
+            instance.environment_type = 2  # Siempre producción
+            instance.emission_type = 1     # Valor por defecto
+            
+            # Sincronizar tax con tax_percentage (tax debe ser el mismo valor que tax_percentage)
+            if hasattr(instance, 'tax_percentage') and instance.tax_percentage:
+                instance.tax = float(instance.tax_percentage)
+            else:
+                instance.tax = 15.0  # Default IVA 15%
+                instance.tax_percentage = 15
+            
+            # Asegurar códigos por defecto
+            if not instance.establishment_code:
+                instance.establishment_code = '001'
+            if not instance.issuing_point_code:
+                instance.issuing_point_code = '001'
+                
+            # Campo establishment_address requerido - usar main_address como fallback
+            if not hasattr(instance, 'establishment_address') or not instance.establishment_address:
+                instance.establishment_address = instance.main_address
+                
+            # Special taxpayer siempre vacío por defecto
+            instance.special_taxpayer = ''
+                
+            # Campos opcionales con valores por defecto
+            if not instance.website:
+                instance.website = ''
+            if not instance.electronic_signature_key:
+                instance.electronic_signature_key = ''
+                
+            # Campos de email por defecto (pueden configurarse después)
+            if not hasattr(instance, 'email_host_user') or not instance.email_host_user:
+                instance.email_host_user = ''
+            if not hasattr(instance, 'email_host_password') or not instance.email_host_password:
+                instance.email_host_password = ''
+            
+            print(f"[CompanyOnboardingForm] Instance preparada:")
+            print(f"  - RUC: {instance.ruc}")
+            print(f"  - Company name: {instance.company_name}")
+            print(f"  - Commercial name: {instance.commercial_name}")
+            print(f"  - Environment type: {instance.environment_type}")
+            print(f"  - Tax: {instance.tax}")
+            print(f"  - Tax percentage: {instance.tax_percentage}")
+            print(f"  - Special taxpayer: '{instance.special_taxpayer}'")
+            print(f"  - Establishment address: {instance.establishment_address}")
+            
+            if commit:
+                instance.save()
+                print(f"[CompanyOnboardingForm] Compañía guardada con ID: {instance.id}")
+            
+            return instance
+            
+        except Exception as e:
+            print(f"[CompanyOnboardingForm] Error en save: {e}")
+            import traceback
+            traceback.print_exc()
+            raise
 
     class Meta:
         model = Company
@@ -91,8 +183,10 @@ class CompanyOnboardingForm(forms.ModelForm):
             'obligated_accounting', 'retention_agent', 'regimen_rimpe', 'tax_percentage',
             # Contacto (Paso 4)
             'mobile', 'phone', 'email', 'website', 'description',
-            # Firma electrónica (Paso 5)
-            'electronic_signature', 'electronic_signature_key'
+            # Firma electrónica (Paso 5) - opcional
+            'electronic_signature', 'electronic_signature_key',
+            # Campos ocultos con valores por defecto
+            'establishment_address', 'special_taxpayer', 'environment_type', 'emission_type', 'tax'
         ]
         widgets = {
             'description': forms.Textarea(attrs={'rows': 3}),

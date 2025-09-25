@@ -20,6 +20,15 @@ class Customer(TransactionSummary):
     def as_dict(self):
         item = super().as_dict()
         item['user'] = self.user.toJSON()
+        
+        # Campo 'text' requerido para Select2
+        display_name = self.user.get_full_name()
+        if self.ruc:
+            display_name += f" (RUC: {self.ruc})"
+        elif self.dni:
+            display_name += f" (CI: {self.dni})"
+        item['text'] = display_name
+        
         # Derivar identificación: priorizar RUC si existe
         if self.ruc:
             item['identification_type'] = {'id': '04', 'name': 'RUC'}

@@ -14,22 +14,20 @@ class ActiveCompanyMiddleware(MiddlewareMixin):
             try:
                 user_dict = model_to_dict(user, fields=[f.name for f in user._meta.fields])
                 user_dict['groups'] = list(user.groups.values_list('name', flat=True))
-            except Exception as e:
-                print("[ActiveCompanyMiddleware] Error imprimiendo usuario:", e)
+            except Exception:
+                pass
         else:
-            print("[ActiveCompanyMiddleware] Usuario no autenticado o no existe.")
+            pass
 
         if not user or not user.is_authenticated:
             return None
 
-        # Rutas que no requieren verificación de empresa
         excluded_paths = ['/static', '/media', '/subscription', '/login', '/logout']
         if any(request.path.startswith(path) for path in excluded_paths):
             return None
 
         active_subscription = get_active_subscription(user)
-        
-        # Si no hay suscripción activa, asignar empresa disponible y continuar
+
         if not active_subscription:
             if not hasattr(request, 'company'):
                 company = getattr(user, 'company', None)
@@ -38,13 +36,11 @@ class ActiveCompanyMiddleware(MiddlewareMixin):
                 request.company = company
             return None
 
-        # Si hay suscripción activa, verificar el onboarding
         try:
             onboarding_url = reverse('company_onboarding')
         except Exception:
             onboarding_url = None
 
-        # Verificar si el usuario necesita completar el onboarding
         user_company = getattr(user, 'company', None)
         needs_onboarding = (
             onboarding_url
@@ -52,11 +48,9 @@ class ActiveCompanyMiddleware(MiddlewareMixin):
             and not user_company
         )
 
-        # Si necesita onboarding y no está ya en la página de onboarding
         if needs_onboarding and request.path != onboarding_url:
             return redirect(onboarding_url)
 
-        # Asignar empresa al request
         if not hasattr(request, 'company'):
             company = user_company
             if company is None and user.is_staff:

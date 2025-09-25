@@ -69,22 +69,69 @@ class CompanyOnboardingView(GroupPermissionMixin, FormView):
     permission_required = None  # Se maneja solo por autenticación y lógica de owner
 
     def dispatch(self, request, *args, **kwargs):
+        # Debug info
+        print(f"[CompanyOnboardingView] Usuario: {request.user}, autenticado: {request.user.is_authenticated}")
+        print(f"[CompanyOnboardingView] Tiene company: {hasattr(request.user, 'company')}")
+        if hasattr(request.user, 'company'):
+            print(f"[CompanyOnboardingView] Company actual: {request.user.company}")
+        
         # Si el usuario ya tiene una compañía asignada, redirigimos (evitar duplicados)
-        if hasattr(request.user, 'company') and request.user.company is not None:
+        if request.user.is_authenticated and hasattr(request.user, 'company') and request.user.company is not None:
+            print(f"[CompanyOnboardingView] Usuario ya tiene company, redirigiendo a {self.success_url}")
             return redirect(self.success_url)
         return super().dispatch(request, *args, **kwargs)
 
     def form_valid(self, form):
-        company = form.save(commit=False)
-        company.owner = self.request.user
-        company.save()
-        
-        # Asignar la compañía al usuario actual si no tiene una asignada
-        if not hasattr(self.request.user, 'company') or self.request.user.company is None:
+        try:
+            print("[CompanyOnboardingView] Iniciando form_valid")
+            print(f"[CompanyOnboardingView] Usuario actual: {self.request.user} (ID: {self.request.user.id})")
+            
+            # Verificar si el usuario ya posee una compañía
+            if hasattr(self.request.user, 'owned_company') and self.request.user.owned_company:
+                print(f"[CompanyOnboardingView] Usuario ya posee una compañía: {self.request.user.owned_company}")
+                form.add_error(None, "Ya tienes una compañía registrada.")
+                return self.form_invalid(form)
+            
+            # Crear la compañía
+            company = form.save(commit=False)
+            company.owner = self.request.user
+            print(f"[CompanyOnboardingView] Asignando owner: {self.request.user} (ID: {self.request.user.id})")
+            
+            # Guardar la compañía primero
+            company.save()
+            print(f"[CompanyOnboardingView] Compañía creada con ID: {company.id}")
+            print(f"[CompanyOnboardingView] Owner asignado: {company.owner}")
+            
+            # Ahora asignar la compañía al usuario (relación ForeignKey)
             self.request.user.company = company
             self.request.user.save()
-        
-        return redirect(self.success_url)
+            print(f"[CompanyOnboardingView] Usuario actualizado. Company ID: {self.request.user.company_id}")
+            
+            # Verificar que las relaciones se establecieron correctamente
+            print(f"[CompanyOnboardingView] Verificación final:")
+            print(f"  - Company.owner: {company.owner}")
+            print(f"  - User.company: {self.request.user.company}")
+            print(f"  - User.owned_company: {getattr(self.request.user, 'owned_company', 'N/A')}")
+            
+            print(f"[CompanyOnboardingView] Redirigiendo a {self.success_url}")
+            return redirect(self.success_url)
+            
+        except Exception as e:
+            print(f"[CompanyOnboardingView] Error en form_valid: {e}")
+            import traceback
+            traceback.print_exc()
+            
+            # Agregar error al formulario para mostrarlo al usuario
+            form.add_error(None, f"Error al crear la compañía: {str(e)}")
+            return self.form_invalid(form)
+
+    def form_invalid(self, form):
+        print(f"[CompanyOnboardingView] Formulario inválido. Errores: {form.errors}")
+        return super().form_invalid(form)
+
+    def post(self, request, *args, **kwargs):
+        print(f"[CompanyOnboardingView] POST recibido. Datos: {request.POST}")
+        return super().post(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

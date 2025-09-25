@@ -21,16 +21,6 @@ class SubscriptionRequiredMiddleware(MiddlewareMixin):
 
     def process_view(self, request, view_func, view_args, view_kwargs):
         user = getattr(request, 'user', None)
-        if user and user.is_authenticated:
-            try:
-                user_dict = model_to_dict(user, fields=[f.name for f in user._meta.fields])
-                user_dict['groups'] = list(user.groups.values_list('name', flat=True))
-                print("Usuario completo:", json.dumps(user_dict, indent=4, default=str))
-                print(f"Usuario: {user.username}, Path: {request.path}")
-            except Exception as e:
-                print("Error imprimiendo usuario:", e)
-        else:
-            print("Usuario no autenticado o no existe.")
 
         if not user or not user.is_authenticated:
             return None
@@ -39,7 +29,6 @@ class SubscriptionRequiredMiddleware(MiddlewareMixin):
 
         path = request.path
 
-        # Verificar prefijos exentos
         for prefix in self.EXEMPT_PREFIXES:
             if path.startswith(prefix):
                 return None

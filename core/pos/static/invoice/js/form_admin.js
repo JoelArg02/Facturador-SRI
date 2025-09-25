@@ -415,12 +415,22 @@ $(function () {
             },
             url: pathname,
             data: function (params) {
+                console.log('[select_customer] Enviando búsqueda:', params.term);
                 return {
                     term: params.term,
                     action: 'search_customer'
                 };
             },
             processResults: function (data) {
+                console.log('[select_customer] Respuesta del servidor:', data);
+                console.log('[select_customer] Tipo de data:', typeof data);
+                console.log('[select_customer] Es array:', Array.isArray(data));
+                if (Array.isArray(data)) {
+                    console.log('[select_customer] Cantidad de clientes:', data.length);
+                    data.forEach((item, index) => {
+                        console.log(`[select_customer] Cliente ${index}:`, item);
+                    });
+                }
                 return {
                     results: data
                 };

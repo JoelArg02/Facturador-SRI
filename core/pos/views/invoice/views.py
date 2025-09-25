@@ -212,8 +212,35 @@ class InvoiceCreateView(AutoAssignCompanyMixin, GroupPermissionMixin, CompanyQue
             elif action == 'search_customer':
                 data = []
                 term = request.POST['term']
-                for i in Customer.objects.filter(Q(user__names__icontains=term) | Q(dni__icontains=term)).order_by('user__names')[0:10]:
-                    data.append(i.as_dict())
+                print(f"[InvoiceCreateView.search_customer] Buscando clientes con término: '{term}'")
+                print(f"[InvoiceCreateView.search_customer] Usuario: {request.user}")
+                print(f"[InvoiceCreateView.search_customer] Company del request: {getattr(request, 'company', 'NO COMPANY')}")
+                
+                # Obtener la company del request
+                company = getattr(request, 'company', None)
+                
+                # Construir el filtro base
+                base_filter = Q(user__names__icontains=term) | Q(dni__icontains=term)
+                
+                # Agregar filtro por company si existe
+                if company:
+                    customers_qs = Customer.objects.filter(base_filter, company=company)
+                    print(f"[InvoiceCreateView.search_customer] Filtrando por company {company.id}: {company.company_name}")
+                else:
+                    customers_qs = Customer.objects.filter(base_filter)
+                    print(f"[InvoiceCreateView.search_customer] SIN FILTRO DE COMPANY - se traerán todos los clientes")
+                
+                customers_qs = customers_qs.order_by('user__names')[0:10]
+                print(f"[InvoiceCreateView.search_customer] Clientes encontrados: {customers_qs.count()}")
+                
+                for i in customers_qs:
+                    customer_dict = i.as_dict()
+                    print(f"[InvoiceCreateView.search_customer] Cliente: {i.user.names} (ID: {i.id}, Company: {i.company})")
+                    print(f"[InvoiceCreateView.search_customer] Dict del cliente: {customer_dict}")
+                    print(f"[InvoiceCreateView.search_customer] Campos del dict: {list(customer_dict.keys())}")
+                    data.append(customer_dict)
+                
+                print(f"[InvoiceCreateView.search_customer] Respuesta final: {data}")
             elif action == 'check_quota':
                 # Nueva acción para verificar cuotas
                 quota_check = check_quota_limits(request.user, 'invoice')
@@ -333,7 +360,29 @@ class InvoiceUpdateView(AutoAssignCompanyMixin, GroupPermissionMixin, CompanyQue
             elif action == 'search_customer':
                 data = []
                 term = request.POST['term']
-                for i in Customer.objects.filter(Q(user__names__icontains=term) | Q(dni__icontains=term)).order_by('user__names')[0:10]:
+                print(f"[InvoiceUpdateView.search_customer] Buscando clientes con término: '{term}'")
+                print(f"[InvoiceUpdateView.search_customer] Usuario: {request.user}")
+                print(f"[InvoiceUpdateView.search_customer] Company del request: {getattr(request, 'company', 'NO COMPANY')}")
+                
+                # Obtener la company del request
+                company = getattr(request, 'company', None)
+                
+                # Construir el filtro base
+                base_filter = Q(user__names__icontains=term) | Q(dni__icontains=term)
+                
+                # Agregar filtro por company si existe
+                if company:
+                    customers_qs = Customer.objects.filter(base_filter, company=company)
+                    print(f"[InvoiceUpdateView.search_customer] Filtrando por company {company.id}: {company.company_name}")
+                else:
+                    customers_qs = Customer.objects.filter(base_filter)
+                    print(f"[InvoiceUpdateView.search_customer] SIN FILTRO DE COMPANY - se traerán todos los clientes")
+                
+                customers_qs = customers_qs.order_by('user__names')[0:10]
+                print(f"[InvoiceUpdateView.search_customer] Clientes encontrados: {customers_qs.count()}")
+                
+                for i in customers_qs:
+                    print(f"[InvoiceUpdateView.search_customer] Cliente: {i.user.names} (ID: {i.id}, Company: {i.company})")
                     data.append(i.as_dict())
             else:
                 data['error'] = 'No ha seleccionado ninguna opción'
