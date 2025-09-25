@@ -90,3 +90,28 @@ class CompanyQuerysetMixin:
         if company and hasattr(form.instance, self.company_field) and getattr(form.instance, self.company_field) is None:
             setattr(form.instance, self.company_field, company)
         return super().form_valid(form)
+
+
+class AutoAssignCompanyMixin:
+    """Asigna automáticamente request.company al instance antes de guardar y oculta el campo en el formulario."""
+    company_field = 'company'
+
+    def get_company(self):
+        return getattr(self.request, 'company', None)
+
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        company = self.get_company()
+        field_name = self.company_field
+        if field_name in form.fields:
+            # Ocultar y limpiar required: se setea en form_valid
+            form.fields[field_name].widget = form.fields[field_name].hidden_widget()
+            form.fields[field_name].required = False
+        return form
+
+    def form_valid(self, form):
+        company = self.get_company()
+        field_name = self.company_field
+        if company and hasattr(form.instance, field_name):
+            setattr(form.instance, field_name, company)
+        return super().form_valid(form)

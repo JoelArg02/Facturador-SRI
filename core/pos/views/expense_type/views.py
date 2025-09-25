@@ -6,7 +6,7 @@ from django.urls import reverse_lazy
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView
 
 from core.pos.forms import ExpenseType, ExpenseTypeForm
-from core.security.mixins import GroupPermissionMixin
+from core.security.mixins import GroupPermissionMixin, AutoAssignCompanyMixin
 
 
 class ExpenseTypeListView(GroupPermissionMixin, ListView):
@@ -35,7 +35,7 @@ class ExpenseTypeListView(GroupPermissionMixin, ListView):
         return context
 
 
-class ExpenseTypeCreateView(GroupPermissionMixin, CreateView):
+class ExpenseTypeCreateView(AutoAssignCompanyMixin, GroupPermissionMixin, CreateView):
     model = ExpenseType
     template_name = 'expense_type/create.html'
     form_class = ExpenseTypeForm
@@ -68,7 +68,7 @@ class ExpenseTypeCreateView(GroupPermissionMixin, CreateView):
         return context
 
 
-class ExpenseTypeUpdateView(GroupPermissionMixin, UpdateView):
+class ExpenseTypeUpdateView(AutoAssignCompanyMixin, GroupPermissionMixin, UpdateView):
     model = ExpenseType
     template_name = 'expense_type/create.html'
     form_class = ExpenseTypeForm

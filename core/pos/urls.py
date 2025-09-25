@@ -19,6 +19,7 @@ from core.pos.views.expense_type.views import *
 
 urlpatterns = [
     # company
+    path('company/onboarding/', CompanyOnboardingView.as_view(), name='company_onboarding'),
     path('company/update/', CompanyUpdateView.as_view(), name='company_update'),
     # provider
     path('provider/', ProviderListView.as_view(), name='provider_list'),

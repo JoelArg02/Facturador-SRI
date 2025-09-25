@@ -8,7 +8,7 @@ from django.views.generic import DeleteView, CreateView, ListView
 
 from core.pos.forms import AccountReceivable, AccountReceivablePaymentForm, AccountReceivablePayment
 from core.report.forms import ReportForm
-from core.security.mixins import GroupPermissionMixin, CompanyQuerysetMixin
+from core.security.mixins import GroupPermissionMixin, CompanyQuerysetMixin, AutoAssignCompanyMixin
 
 
 class AccountReceivableListView(GroupPermissionMixin, CompanyQuerysetMixin, ListView):
@@ -55,7 +55,7 @@ class AccountReceivableListView(GroupPermissionMixin, CompanyQuerysetMixin, List
         return context
 
 
-class AccountReceivableCreateView(GroupPermissionMixin, CompanyQuerysetMixin, CreateView):
+class AccountReceivableCreateView(AutoAssignCompanyMixin, GroupPermissionMixin, CompanyQuerysetMixin, CreateView):
     model = AccountReceivablePayment
     template_name = 'account_receivable/create.html'
     form_class = AccountReceivablePaymentForm

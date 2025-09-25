@@ -11,7 +11,7 @@ from core.pos.models import Company
 from core.pos.utilities.pdf_creator import PDFCreator
 from core.pos.utilities.sri import SRI
 from core.report.forms import ReportForm
-from core.security.mixins import GroupPermissionMixin, CompanyQuerysetMixin
+from core.security.mixins import GroupPermissionMixin, CompanyQuerysetMixin, AutoAssignCompanyMixin
 
 
 class CreditNoteListView(GroupPermissionMixin, CompanyQuerysetMixin, ListView):
@@ -58,7 +58,7 @@ class CreditNoteListView(GroupPermissionMixin, CompanyQuerysetMixin, ListView):
         return context
 
 
-class CreditNoteCreateView(GroupPermissionMixin, CompanyQuerysetMixin, CreateView):
+class CreditNoteCreateView(AutoAssignCompanyMixin, GroupPermissionMixin, CompanyQuerysetMixin, CreateView):
     model = CreditNote
     template_name = 'credit_note/create_admin.html'
     form_class = CreditNoteForm

@@ -8,7 +8,7 @@ from django.views.generic import DeleteView, CreateView, ListView
 
 from core.pos.forms import AccountPayable, AccountPayablePaymentForm, AccountPayablePayment
 from core.report.forms import ReportForm
-from core.security.mixins import GroupPermissionMixin, CompanyQuerysetMixin
+from core.security.mixins import GroupPermissionMixin, CompanyQuerysetMixin, AutoAssignCompanyMixin
 
 
 class AccountPayableListView(GroupPermissionMixin, CompanyQuerysetMixin, ListView):
@@ -56,7 +56,7 @@ class AccountPayableListView(GroupPermissionMixin, CompanyQuerysetMixin, ListVie
         return context
 
 
-class AccountPayableCreateView(GroupPermissionMixin, CompanyQuerysetMixin, CreateView):
+class AccountPayableCreateView(AutoAssignCompanyMixin, GroupPermissionMixin, CompanyQuerysetMixin, CreateView):
     model = AccountPayablePayment
     template_name = 'account_payable/create.html'
     form_class = AccountPayablePaymentForm

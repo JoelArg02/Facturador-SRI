@@ -13,7 +13,7 @@ from django.views.generic import CreateView, UpdateView, DeleteView, ListView
 from django.views.generic.base import View
 
 from core.pos.forms import ProductForm, Product, Category
-from core.security.mixins import GroupPermissionMixin, CompanyQuerysetMixin
+from core.security.mixins import GroupPermissionMixin, CompanyQuerysetMixin, AutoAssignCompanyMixin
 
 
 class ProductListView(GroupPermissionMixin, CompanyQuerysetMixin, ListView):
@@ -62,7 +62,7 @@ class ProductListView(GroupPermissionMixin, CompanyQuerysetMixin, ListView):
         return context
 
 
-class ProductCreateView(GroupPermissionMixin, CompanyQuerysetMixin, CreateView):
+class ProductCreateView(AutoAssignCompanyMixin, GroupPermissionMixin, CompanyQuerysetMixin, CreateView):
     model = Product
     template_name = 'product/create.html'
     form_class = ProductForm
@@ -95,7 +95,7 @@ class ProductCreateView(GroupPermissionMixin, CompanyQuerysetMixin, CreateView):
         return context
 
 
-class ProductUpdateView(GroupPermissionMixin, CompanyQuerysetMixin, UpdateView):
+class ProductUpdateView(AutoAssignCompanyMixin, GroupPermissionMixin, CompanyQuerysetMixin, UpdateView):
     model = Product
     template_name = 'product/create.html'
     form_class = ProductForm

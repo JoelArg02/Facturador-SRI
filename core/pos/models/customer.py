@@ -20,9 +20,17 @@ class Customer(TransactionSummary):
     def as_dict(self):
         item = super().as_dict()
         item['user'] = self.user.toJSON()
+        # Derivar identificación: priorizar RUC si existe
+        if self.ruc:
+            item['identification_type'] = {'id': '04', 'name': 'RUC'}
+            item['dni'] = self.ruc  # Para la tabla mostramos el valor usado
+        elif self.dni:
+            item['identification_type'] = {'id': '05', 'name': 'CEDULA'}
+            item['dni'] = self.dni
+        else:
+            item['identification_type'] = {'id': '', 'name': ''}
         item['business_name'] = self.business_name
         item['tradename'] = self.tradename
-        item['dni'] = self.dni
         item['ruc'] = self.ruc
         item['is_business'] = self.is_business
         item['is_credit_authorized'] = self.is_credit_authorized

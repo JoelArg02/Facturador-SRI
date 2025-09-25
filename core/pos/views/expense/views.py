@@ -7,10 +7,10 @@ from django.views.generic import CreateView, UpdateView, DeleteView, ListView
 
 from core.pos.forms import ExpenseForm, Expense
 from core.report.forms import ReportForm
-from core.security.mixins import GroupPermissionMixin
+from core.security.mixins import GroupPermissionMixin, AutoAssignCompanyMixin, CompanyQuerysetMixin
 
 
-class ExpenseListView(GroupPermissionMixin, ListView):
+class ExpenseListView(GroupPermissionMixin, CompanyQuerysetMixin, ListView):
     model = Expense
     template_name = 'expense/list.html'
     permission_required = 'view_expense'
@@ -42,7 +42,7 @@ class ExpenseListView(GroupPermissionMixin, ListView):
         return context
 
 
-class ExpenseCreateView(GroupPermissionMixin, CreateView):
+class ExpenseCreateView(AutoAssignCompanyMixin, GroupPermissionMixin, CompanyQuerysetMixin, CreateView):
     model = Expense
     template_name = 'expense/create.html'
     form_class = ExpenseForm
@@ -69,7 +69,7 @@ class ExpenseCreateView(GroupPermissionMixin, CreateView):
         return context
 
 
-class ExpenseUpdateView(GroupPermissionMixin, UpdateView):
+class ExpenseUpdateView(AutoAssignCompanyMixin, GroupPermissionMixin, CompanyQuerysetMixin, UpdateView):
     model = Expense
     template_name = 'expense/create.html'
     form_class = ExpenseForm
@@ -100,7 +100,7 @@ class ExpenseUpdateView(GroupPermissionMixin, UpdateView):
         return context
 
 
-class ExpenseDeleteView(GroupPermissionMixin, DeleteView):
+class ExpenseDeleteView(GroupPermissionMixin, CompanyQuerysetMixin, DeleteView):
     model = Expense
     template_name = 'delete.html'
     success_url = reverse_lazy('expense_list')

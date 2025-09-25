@@ -5,7 +5,7 @@ from django.urls import reverse_lazy
 from django.views.generic import CreateView, UpdateView, DeleteView, ListView
 
 from core.pos.forms import Receipt, ReceiptForm
-from core.security.mixins import GroupPermissionMixin, CompanyQuerysetMixin
+from core.security.mixins import GroupPermissionMixin, AutoAssignCompanyMixin, CompanyQuerysetMixin
 
 
 class ReceiptListView(GroupPermissionMixin, CompanyQuerysetMixin, ListView):
@@ -34,7 +34,7 @@ class ReceiptListView(GroupPermissionMixin, CompanyQuerysetMixin, ListView):
         return context
 
 
-class ReceiptCreateView(GroupPermissionMixin, CompanyQuerysetMixin, CreateView):
+class ReceiptCreateView(AutoAssignCompanyMixin, GroupPermissionMixin, CompanyQuerysetMixin, CreateView):
     model = Receipt
     template_name = 'receipt/create.html'
     form_class = ReceiptForm
@@ -76,7 +76,7 @@ class ReceiptCreateView(GroupPermissionMixin, CompanyQuerysetMixin, CreateView):
         return context
 
 
-class ReceiptUpdateView(GroupPermissionMixin, CompanyQuerysetMixin, UpdateView):
+class ReceiptUpdateView(AutoAssignCompanyMixin, GroupPermissionMixin, CompanyQuerysetMixin, UpdateView):
     model = Receipt
     template_name = 'receipt/create.html'
     form_class = ReceiptForm

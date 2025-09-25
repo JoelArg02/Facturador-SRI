@@ -10,10 +10,10 @@ from core.pos.forms import InvoiceForm, Invoice, Customer, Receipt, Product, Inv
 from core.pos.utilities.pdf_creator import PDFCreator
 from core.pos.utilities.sri import SRI
 from core.report.forms import ReportForm
-from core.security.mixins import GroupPermissionMixin
+from core.security.mixins import GroupPermissionMixin, AutoAssignCompanyMixin, CompanyQuerysetMixin
 
 
-class InvoiceListView(GroupPermissionMixin, ListView):
+class InvoiceListView(GroupPermissionMixin, CompanyQuerysetMixin, ListView):
     model = Invoice
     template_name = 'invoice/list_admin.html'
     permission_required = 'view_invoice_admin'
@@ -102,7 +102,7 @@ class InvoiceListView(GroupPermissionMixin, ListView):
         return context
 
 
-class InvoiceCreateView(GroupPermissionMixin, CreateView):
+class InvoiceCreateView(AutoAssignCompanyMixin, GroupPermissionMixin, CompanyQuerysetMixin, CreateView):
     model = Invoice
     template_name = 'invoice/create_admin.html'
     form_class = InvoiceForm
@@ -225,7 +225,7 @@ class InvoiceCreateView(GroupPermissionMixin, CreateView):
         return context
 
 
-class InvoiceUpdateView(GroupPermissionMixin, UpdateView):
+class InvoiceUpdateView(AutoAssignCompanyMixin, GroupPermissionMixin, CompanyQuerysetMixin, UpdateView):
     model = Invoice
     template_name = 'invoice/create_admin.html'
     form_class = InvoiceForm
@@ -354,7 +354,7 @@ class InvoiceUpdateView(GroupPermissionMixin, UpdateView):
         return context
 
 
-class InvoiceDeleteView(GroupPermissionMixin, DeleteView):
+class InvoiceDeleteView(GroupPermissionMixin, CompanyQuerysetMixin, DeleteView):
     model = Invoice
     template_name = 'delete.html'
     success_url = reverse_lazy('invoice_list_admin')

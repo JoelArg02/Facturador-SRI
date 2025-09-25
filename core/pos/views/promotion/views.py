@@ -9,10 +9,10 @@ from django.views.generic import CreateView, UpdateView, DeleteView, ListView
 
 from core.pos.forms import Promotion, PromotionForm, Product, PromotionDetail
 from core.report.forms import ReportForm
-from core.security.mixins import GroupPermissionMixin
+from core.security.mixins import GroupPermissionMixin, AutoAssignCompanyMixin, CompanyQuerysetMixin
 
 
-class PromotionListView(GroupPermissionMixin, ListView):
+class PromotionListView(GroupPermissionMixin, CompanyQuerysetMixin, ListView):
     model = Promotion
     template_name = 'promotion/list.html'
     form_class = ReportForm
@@ -55,7 +55,7 @@ class PromotionListView(GroupPermissionMixin, ListView):
         return context
 
 
-class PromotionCreateView(GroupPermissionMixin, CreateView):
+class PromotionCreateView(AutoAssignCompanyMixin, GroupPermissionMixin, CompanyQuerysetMixin, CreateView):
     model = Promotion
     template_name = 'promotion/create.html'
     form_class = PromotionForm
@@ -105,7 +105,7 @@ class PromotionCreateView(GroupPermissionMixin, CreateView):
         return context
 
 
-class PromotionUpdateView(GroupPermissionMixin, UpdateView):
+class PromotionUpdateView(AutoAssignCompanyMixin, GroupPermissionMixin, CompanyQuerysetMixin, UpdateView):
     model = Promotion
     template_name = 'promotion/create.html'
     form_class = PromotionForm
@@ -183,7 +183,7 @@ class PromotionUpdateView(GroupPermissionMixin, UpdateView):
         return context
 
 
-class PromotionDeleteView(GroupPermissionMixin, DeleteView):
+class PromotionDeleteView(GroupPermissionMixin, CompanyQuerysetMixin, DeleteView):
     model = Promotion
     template_name = 'delete.html'
     success_url = reverse_lazy('promotion_list')

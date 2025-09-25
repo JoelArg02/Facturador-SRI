@@ -9,10 +9,10 @@ from django.views.generic import CreateView, DeleteView, ListView
 from core.pos.forms import PurchaseForm, Purchase, PurchaseDetail, Product, Provider, AccountPayable, PAYMENT_TYPE
 from core.pos.models import Company
 from core.report.forms import ReportForm
-from core.security.mixins import GroupPermissionMixin
+from core.security.mixins import GroupPermissionMixin, AutoAssignCompanyMixin, CompanyQuerysetMixin
 
 
-class PurchaseListView(GroupPermissionMixin, ListView):
+class PurchaseListView(GroupPermissionMixin, CompanyQuerysetMixin, ListView):
     model = Purchase
     template_name = 'purchase/list.html'
     permission_required = 'view_purchase'
@@ -48,7 +48,7 @@ class PurchaseListView(GroupPermissionMixin, ListView):
         return context
 
 
-class PurchaseCreateView(GroupPermissionMixin, CreateView):
+class PurchaseCreateView(AutoAssignCompanyMixin, GroupPermissionMixin, CompanyQuerysetMixin, CreateView):
     model = Purchase
     template_name = 'purchase/create.html'
     form_class = PurchaseForm
@@ -118,7 +118,7 @@ class PurchaseCreateView(GroupPermissionMixin, CreateView):
         return context
 
 
-class PurchaseDeleteView(GroupPermissionMixin, DeleteView):
+class PurchaseDeleteView(GroupPermissionMixin, CompanyQuerysetMixin, DeleteView):
     model = Purchase
     template_name = 'delete.html'
     success_url = reverse_lazy('purchase_list')

@@ -32,6 +32,53 @@ class CompanyForm(BaseModelForm):
         fields = '__all__'
 
 
+class CompanyOnboardingForm(forms.ModelForm):
+    """Formulario reducido para creación inicial obligatoria de la Compañía (sin campos SMTP)."""
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Placeholders específicos solicitados
+        placeholders = {
+            'ruc': 'Ingrese un número de RUC',
+            'company_name': 'Ingrese la razón social',
+            'commercial_name': 'Ingrese el nombre comercial',
+            'main_address': 'Ingrese la dirección del Establecimiento Matriz',
+            'establishment_address': 'Ingrese la dirección del Establecimiento Emisor',
+            'establishment_code': 'Ingrese el código del Establecimiento Emisor',
+            'issuing_point_code': 'Ingrese el código del Punto de Emisión',
+            'special_taxpayer': 'Ingrese el número de Resolución del Contribuyente Especial',
+            'mobile': 'Ingrese el teléfono celular',
+            'phone': 'Ingrese el teléfono convencional',
+            'email': 'Ingrese la dirección de correo electrónico',
+            'website': 'Ingrese la dirección de la página web',
+            'description': 'Ingrese una breve descripción',
+            'tax': '0.00',
+            'electronic_signature_key': 'Clave de firma electrónica',
+        }
+        update_form_fields_attributes(self)
+        for name, field in self.fields.items():
+            ph = placeholders.get(name)
+            if ph:
+                field.widget.attrs['placeholder'] = ph
+        # Ajustes específicos
+        if 'description' in self.fields:
+            self.fields['description'].widget.attrs['rows'] = 2
+        if 'tax' in self.fields:
+            self.fields['tax'].widget.attrs['step'] = '0.01'
+
+    class Meta:
+        model = Company
+        fields = [
+            'ruc', 'company_name', 'commercial_name', 'main_address', 'establishment_address',
+            'establishment_code', 'issuing_point_code', 'special_taxpayer', 'obligated_accounting',
+            'image', 'environment_type', 'emission_type', 'retention_agent', 'regimen_rimpe', 'mobile',
+            'phone', 'email', 'website', 'description', 'tax', 'tax_percentage', 'electronic_signature',
+            'electronic_signature_key'
+        ]
+        widgets = {
+            'description': forms.Textarea(),
+        }
+
+
 class ProviderForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -118,30 +165,79 @@ class AccountPayablePaymentForm(BaseModelForm):
 
 
 class CustomerForm(forms.ModelForm):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        update_form_fields_attributes(self)
-        # Campos heredados de TransactionSummary que no deben mostrarse en la creación/edición de Cliente
-        hidden_summary_fields = [
-            'date_joined', 'subtotal_without_tax', 'subtotal_with_tax', 'tax',
-            'total_tax', 'total_discount', 'total_amount'
-        ]
-        for f in hidden_summary_fields:
-            if f in self.fields:
-                self.fields[f].widget = forms.HiddenInput()
-                # Opcional: limpiar required si aplica
-                self.fields[f].required = False
+    # Un solo campo de entrada para Cédula (10) o RUC (13)
+    dni = forms.CharField(label='Identificación', required=True, widget=forms.TextInput(attrs={
+        'placeholder': 'Ingrese Cédula (10) o RUC (13)',
+        'maxlength': '13'
+    }))
 
     class Meta:
         model = Customer
-        # Listar explícitamente solo los campos que interesan al usuario final
         fields = [
-            'user', 'mobile', 'address', 'business_name', 'commercial_name',
-            'tradename', 'ruc', 'dni', 'is_business', 'is_credit_authorized', 'credit_limit'
+            'user', 'dni', 'mobile', 'address', 'business_name', 'commercial_name', 'tradename',
+            'is_business', 'is_credit_authorized', 'credit_limit'
         ]
         widgets = {
-            'credit_limit': forms.NumberInput(attrs={'step': '0.01'})
+            'address': forms.Textarea(attrs={'rows': 2}),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        update_form_fields_attributes(self)
+        if self.instance and self.instance.pk:
+            # Pre-cargar en el campo único
+            if self.instance.ruc:
+                self.fields['dni'].initial = self.instance.ruc
+            elif self.instance.dni:
+                self.fields['dni'].initial = self.instance.dni
+        if 'credit_limit' in self.fields:
+            self.fields['credit_limit'].widget.attrs['step'] = '0.01'
+
+    def clean_dni(self):
+        value = (self.cleaned_data.get('dni') or '').strip()
+        if not value.isdigit():
+            raise forms.ValidationError('La identificación debe ser numérica.')
+        if len(value) not in (10, 13):
+            raise forms.ValidationError('La identificación debe tener 10 dígitos (Cédula) o 13 dígitos (RUC).')
+        return value
+
+    def clean(self):
+        cleaned = super().clean()
+        value = cleaned.get('dni')
+        if not value:
+            return cleaned
+        # Verificar unicidad lógica según longitud
+        if len(value) == 10:
+            # Cédula: no debe existir otra con mismo dni
+            qs = Customer.objects.filter(dni=value)
+            if self.instance.pk:
+                qs = qs.exclude(pk=self.instance.pk)
+            if qs.exists():
+                self.add_error('dni', 'Ya existe un cliente con esa cédula.')
+        elif len(value) == 13:
+            qs = Customer.objects.filter(ruc=value)
+            if self.instance.pk:
+                qs = qs.exclude(pk=self.instance.pk)
+            if qs.exists():
+                self.add_error('dni', 'Ya existe un cliente con ese RUC.')
+        return cleaned
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        value = self.cleaned_data['dni']
+        # Normalizar: asignar al campo correcto y limpiar el otro
+        if len(value) == 10:
+            instance.dni = value
+            instance.ruc = None
+            instance.is_business = False if 'is_business' in self.cleaned_data else instance.is_business
+        elif len(value) == 13:
+            instance.ruc = value
+            # Si es RUC asumimos empresa
+            instance.is_business = True
+            instance.dni = None
+        if commit:
+            instance.save()
+        return instance
 
 
 class CustomerUserForm(forms.ModelForm):

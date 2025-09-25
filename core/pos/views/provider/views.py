@@ -7,10 +7,10 @@ from django.views.generic import ListView, CreateView, UpdateView, DeleteView
 
 from core.pos.forms import Provider, ProviderForm
 from core.pos.utilities.sri import SRI
-from core.security.mixins import GroupPermissionMixin
+from core.security.mixins import GroupPermissionMixin, AutoAssignCompanyMixin, CompanyQuerysetMixin
 
 
-class ProviderListView(GroupPermissionMixin, ListView):
+class ProviderListView(GroupPermissionMixin, CompanyQuerysetMixin, ListView):
     model = Provider
     template_name = 'provider/list.html'
     permission_required = 'view_provider'
@@ -36,7 +36,7 @@ class ProviderListView(GroupPermissionMixin, ListView):
         return context
 
 
-class ProviderCreateView(GroupPermissionMixin, CreateView):
+class ProviderCreateView(AutoAssignCompanyMixin, GroupPermissionMixin, CompanyQuerysetMixin, CreateView):
     model = Provider
     template_name = 'provider/create.html'
     form_class = ProviderForm
@@ -77,7 +77,7 @@ class ProviderCreateView(GroupPermissionMixin, CreateView):
         return context
 
 
-class ProviderUpdateView(GroupPermissionMixin, UpdateView):
+class ProviderUpdateView(AutoAssignCompanyMixin, GroupPermissionMixin, CompanyQuerysetMixin, UpdateView):
     model = Provider
     template_name = 'provider/create.html'
     form_class = ProviderForm
@@ -122,7 +122,7 @@ class ProviderUpdateView(GroupPermissionMixin, UpdateView):
         return context
 
 
-class ProviderDeleteView(GroupPermissionMixin, DeleteView):
+class ProviderDeleteView(GroupPermissionMixin, CompanyQuerysetMixin, DeleteView):
     model = Provider
     template_name = 'delete.html'
     success_url = reverse_lazy('provider_list')

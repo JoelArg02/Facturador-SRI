@@ -3,10 +3,12 @@ import json
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.serialization import pkcs12
 from django.http import HttpResponse
-from django.views.generic import UpdateView
+from django.shortcuts import redirect
+from django.urls import reverse_lazy
+from django.views.generic import FormView, UpdateView
 
 from config import settings
-from core.pos.forms import CompanyForm, Company
+from core.pos.forms import CompanyForm, Company, CompanyOnboardingForm
 from core.security.mixins import GroupPermissionMixin
 
 
@@ -57,4 +59,29 @@ class CompanyUpdateView(GroupPermissionMixin, UpdateView):
         context['title'] = f'Configuración de la {self.model._meta.verbose_name}'
         context['list_url'] = self.success_url
         context['action'] = 'create_or_edit'
+        return context
+
+
+class CompanyOnboardingView(GroupPermissionMixin, FormView):
+    template_name = 'company/onboarding.html'
+    form_class = CompanyOnboardingForm
+    success_url = settings.LOGIN_REDIRECT_URL
+    permission_required = None  # Se maneja solo por autenticación y lógica de owner
+
+    def dispatch(self, request, *args, **kwargs):
+        # Si ya existe una compañía, redirigimos (evitar duplicados)
+        if Company.objects.exists():
+            return redirect(self.success_url)
+        return super().dispatch(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        company = form.save(commit=False)
+        company.owner = self.request.user
+        company.save()
+        return redirect(self.success_url)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Configuración Inicial de la Compañía'
+        context['action'] = 'create'
         return context

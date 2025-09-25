@@ -6,7 +6,7 @@ from django.urls import reverse_lazy
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView
 
 from core.pos.forms import Category, CategoryForm
-from core.security.mixins import GroupPermissionMixin
+from core.security.mixins import GroupPermissionMixin, AutoAssignCompanyMixin
 
 
 class CategoryListView(GroupPermissionMixin, ListView):
@@ -35,7 +35,7 @@ class CategoryListView(GroupPermissionMixin, ListView):
         return context
 
 
-class CategoryCreateView(GroupPermissionMixin, CreateView):
+class CategoryCreateView(AutoAssignCompanyMixin, GroupPermissionMixin, CreateView):
     model = Category
     template_name = 'category/create.html'
     form_class = CategoryForm
@@ -68,7 +68,7 @@ class CategoryCreateView(GroupPermissionMixin, CreateView):
         return context
 
 
-class CategoryUpdateView(GroupPermissionMixin, UpdateView):
+class CategoryUpdateView(AutoAssignCompanyMixin, GroupPermissionMixin, UpdateView):
     model = Category
     template_name = 'category/create.html'
     form_class = CategoryForm

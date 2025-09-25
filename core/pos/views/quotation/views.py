@@ -9,10 +9,10 @@ from django.views.generic import CreateView, DeleteView, ListView, UpdateView
 from core.pos.forms import QuotationForm, Quotation, Customer, Product, QuotationDetail, Company
 from core.pos.utilities.pdf_creator import PDFCreator
 from core.report.forms import ReportForm
-from core.security.mixins import GroupPermissionMixin
+from core.security.mixins import GroupPermissionMixin, AutoAssignCompanyMixin, CompanyQuerysetMixin
 
 
-class QuotationListView(GroupPermissionMixin, ListView):
+class QuotationListView(GroupPermissionMixin, CompanyQuerysetMixin, ListView):
     model = Quotation
     template_name = 'quotation/list.html'
     permission_required = 'view_quotation'
@@ -61,7 +61,7 @@ class QuotationListView(GroupPermissionMixin, ListView):
         return context
 
 
-class QuotationCreateView(GroupPermissionMixin, CreateView):
+class QuotationCreateView(AutoAssignCompanyMixin, GroupPermissionMixin, CompanyQuerysetMixin, CreateView):
     model = Quotation
     template_name = 'quotation/create.html'
     form_class = QuotationForm
@@ -143,7 +143,7 @@ class QuotationCreateView(GroupPermissionMixin, CreateView):
         return context
 
 
-class QuotationUpdateView(GroupPermissionMixin, UpdateView):
+class QuotationUpdateView(AutoAssignCompanyMixin, GroupPermissionMixin, CompanyQuerysetMixin, UpdateView):
     model = Quotation
     template_name = 'quotation/create.html'
     form_class = QuotationForm
@@ -238,7 +238,7 @@ class QuotationUpdateView(GroupPermissionMixin, UpdateView):
         return context
 
 
-class QuotationDeleteView(GroupPermissionMixin, DeleteView):
+class QuotationDeleteView(GroupPermissionMixin, CompanyQuerysetMixin, DeleteView):
     model = Quotation
     template_name = 'delete.html'
     success_url = reverse_lazy('quotation_list')

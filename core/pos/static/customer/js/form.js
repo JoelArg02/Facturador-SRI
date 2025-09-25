@@ -214,12 +214,17 @@ $(function () {
 
     input_dni
         .on('keyup', function () {
-            var dni = $(this).val();
-            btnSearchDNI.prop('disabled', dni.length < 10);
+            var val = $(this).val();
+            btnSearchDNI.prop('disabled', val.length < 10);
+            // Nada más que hacer: ahora un solo campo controla todo.
         })
         .on('keypress', function (e) {
             return validate_text_box({'event': e, 'type': 'numbers'});
         });
+
+    // Eliminar lógica antigua de ruc e identification_type; ya no aplican.
+    $('input[name="ruc"]').closest('.form-group').remove(); // Por si el template aún lo renderiza
+    $('input[name="identification_type"]').closest('.form-group').remove();
 
     $('input[name="mobile"]').on('keypress', function (e) {
         return validate_text_box({'event': e, 'type': 'numbers'});
