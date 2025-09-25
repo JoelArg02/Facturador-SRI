@@ -46,7 +46,7 @@
                 </div>
             </div>
             <div class="form-group form-extra d-flex justify-content-between align-items-center">
-                <a href="{% url 'reset_password' %}" class="link-recover" style="color: #e67e22;"><i class="fas fa-key"></i> Recuperar contraseña</a>
+                <a href="{% url 'reset_password' %}" class="link-recover" style="color: white;"><i class="fas fa-key"></i> Recuperar contraseña</a>
             </div>
             <button type="submit" class="btn btn-primary btn-block optimus-btn-submit">
                 <i class="fas fa-sign-in-alt"></i> Ingresar
@@ -56,23 +56,31 @@
             </div>
         </form>
         <footer class="login-footer">
-            <small>Desarrollado por <strong>OptimusPos</strong> | {{ dashboard.footer_url }}</small>
+            <small>Desarrollado por <strong>OptimusPos</strong> | <a href="https://allpasoft.com" target="_blank" rel="noopener">AllpaSoft</a></small>
         </footer>
     </div>
 </div>
 
-<script type="application/javascript">
-    {% if form.errors %}
-        var errors = '';
-        {% for field in form %}
-            {% for error in field.errors %}
-                errors += '{{ error }}\n';
-            {% endfor %}
-        {% endfor %}
-        {% for error in form.non_field_errors %}
-            errors += '{{ error }}\n';
-        {% endfor %}
-        message_error(errors);
-    {% endif %}
-</script>
+{% if form.errors %}
+    {% comment %} Mostrar errores usando data attributes para evitar problemas de linting {% endcomment %}
+    <div id="form-errors" 
+         data-field-errors="{% for field in form %}{% for error in field.errors %}{{ error|escapejs }}|{% endfor %}{% endfor %}"
+         data-non-field-errors="{% for error in form.non_field_errors %}{{ error|escapejs }}|{% endfor %}"
+         style="display: none;">
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var errorDiv = document.getElementById('form-errors');
+            if (errorDiv) {
+                var fieldErrors = errorDiv.getAttribute('data-field-errors') || '';
+                var nonFieldErrors = errorDiv.getAttribute('data-non-field-errors') || '';
+                var allErrors = (fieldErrors + nonFieldErrors).replace(/\|/g, '\n').trim();
+                
+                if (allErrors && typeof message_error === 'function') {
+                    message_error(allErrors);
+                }
+            }
+        });
+    </script>
+{% endif %}
 {% endblock %}

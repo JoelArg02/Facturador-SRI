@@ -129,9 +129,9 @@ class Command(BaseCommand):
         # 6. Sembrar dashboard y módulos solo si no existen (idempotente)
         if not Dashboard.objects.filter(name='INVOICE').exists():
             dashboard = Dashboard.objects.create(
-                name='INVOICE',
-                author='William Jair Dávila Vargas',
-                footer_url='https://algorisoft.com',
+                name='OptimusPos',
+                author='AllpaSoft',
+                footer_url='https://allpasoft.com',
                 icon='fas fa-shopping-cart',
             )
             image_path = f'{settings.BASE_DIR}{settings.STATIC_URL}img/default/logo.png'
