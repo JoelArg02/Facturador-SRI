@@ -33,8 +33,8 @@ class Invoice(ElecBillingBase):
     def calculate_detail(self):
         for detail in self.invoicedetail_set.filter():
             detail.price = float(detail.price)
-            # Usar el porcentaje de IVA de la compañía dividido entre 100 para obtener el decimal
-            tax_rate = float(self.company.tax_percentage) / 100.0
+            # Usar el porcentaje real de IVA de la compañía dividido entre 100 para obtener el decimal
+            tax_rate = self.company.tax_rate
             detail.tax = tax_rate
             detail.price_with_tax = detail.price + (detail.price * tax_rate) if detail.product.has_tax else detail.price
             detail.subtotal = detail.price * detail.quantity
@@ -49,7 +49,7 @@ class Invoice(ElecBillingBase):
         self.total_discount = float(self.invoicedetail_set.filter().aggregate(result=Coalesce(Sum('total_discount'), 0.00, output_field=FloatField()))['result'])
         self.total_amount = round(self.subtotal, 2) + float(self.total_tax)
         # Asignar el porcentaje de IVA correctamente al campo tax de la factura
-        self.tax = float(self.company.tax_percentage) / 100.0
+        self.tax = self.company.tax_rate
         self.save()
     def recalculate_invoice(self):
         self.calculate_detail(); self.calculate_invoice()

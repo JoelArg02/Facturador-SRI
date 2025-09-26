@@ -1,0 +1,24 @@
+<!-- Step 2: Ubicación -->
+<div class="form-step" data-step="2">
+  <h2><i class="fas fa-map-marker-alt"></i> Ubicación y Códigos</h2>
+  <div class="fields-grid">
+    <div class="field-group full-width">
+      <label for="id_main_address">{{ form.main_address.label }} <span class="required">*</span></label>
+      {{ form.main_address }}
+      {% if form.main_address.help_text %}<small>{{ form.main_address.help_text }}</small>{% endif %}
+      {% for error in form.main_address.errors %}<div class="error">{{ error }}</div>{% endfor %}
+    </div>
+    <div class="field-group">
+      <label for="id_establishment_code">{{ form.establishment_code.label }} <span class="required">*</span></label>
+      {{ form.establishment_code }}
+      <small>Código de establecimiento (por defecto: 001)</small>
+      {% for error in form.establishment_code.errors %}<div class="error">{{ error }}</div>{% endfor %}
+    </div>
+    <div class="field-group">
+      <label for="id_issuing_point_code">{{ form.issuing_point_code.label }} <span class="required">*</span></label>
+      {{ form.issuing_point_code }}
+      <small>Código de punto de emisión (por defecto: 001)</small>
+      {% for error in form.issuing_point_code.errors %}<div class="error">{{ error }}</div>{% endfor %}
+    </div>
+  </div>
+</div>

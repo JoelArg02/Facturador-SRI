@@ -1,0 +1,12 @@
+<!-- Error Messages -->
+{% if form.non_field_errors %}
+<div class="error-box">
+  <i class="fas fa-exclamation-triangle"></i>
+  <div>
+    <strong>Errores en el formulario:</strong>
+    {% for error in form.non_field_errors %}
+    <div>{{ error }}</div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}

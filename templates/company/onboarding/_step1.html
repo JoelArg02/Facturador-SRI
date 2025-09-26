@@ -1,0 +1,30 @@
+<!-- Step 1: Información Básica -->
+<div class="form-step active" data-step="1">
+  <h2><i class="fas fa-building"></i> Información Básica</h2>
+  <div class="fields-grid">
+    <div class="field-group">
+      <label for="id_ruc">{{ form.ruc.label }} <span class="required">*</span></label>
+      {{ form.ruc }}
+      {% if form.ruc.help_text %}<small>{{ form.ruc.help_text }}</small>{% endif %}
+      {% for error in form.ruc.errors %}<div class="error">{{ error }}</div>{% endfor %}
+    </div>
+    <div class="field-group">
+      <label for="id_company_name">{{ form.company_name.label }} <span class="required">*</span></label>
+      {{ form.company_name }}
+      {% if form.company_name.help_text %}<small>{{ form.company_name.help_text }}</small>{% endif %}
+      {% for error in form.company_name.errors %}<div class="error">{{ error }}</div>{% endfor %}
+    </div>
+    <div class="field-group">
+      <label for="id_commercial_name">{{ form.commercial_name.label }} <span class="required">*</span></label>
+      {{ form.commercial_name }}
+      {% if form.commercial_name.help_text %}<small>{{ form.commercial_name.help_text }}</small>{% endif %}
+      {% for error in form.commercial_name.errors %}<div class="error">{{ error }}</div>{% endfor %}
+    </div>
+    <div class="field-group">
+      <label for="id_image">{{ form.image.label }}</label>
+      {{ form.image }}
+      <small>Sube el logo de tu empresa (opcional)</small>
+      {% for error in form.image.errors %}<div class="error">{{ error }}</div>{% endfor %}
+    </div>
+  </div>
+</div>

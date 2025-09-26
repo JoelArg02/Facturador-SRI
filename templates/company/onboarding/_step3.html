@@ -1,0 +1,40 @@
+<!-- Step 3: Información Tributaria -->
+<div class="form-step" data-step="3">
+  <h2><i class="fas fa-calculator"></i> Configuración Tributaria</h2>
+  <div class="fields-grid">
+    <div class="field-group">
+      <label for="id_obligated_accounting">{{ form.obligated_accounting.label }}</label>
+      {{ form.obligated_accounting }}
+      {% for error in form.obligated_accounting.errors %}<div class="error">{{ error }}</div>{% endfor %}
+    </div>
+    <div class="field-group">
+      <label for="id_retention_agent">{{ form.retention_agent.label }}</label>
+      {{ form.retention_agent }}
+      {% for error in form.retention_agent.errors %}<div class="error">{{ error }}</div>{% endfor %}
+    </div>
+    <div class="field-group">
+      <label for="id_regimen_rimpe">{{ form.regimen_rimpe.label }}</label>
+      {{ form.regimen_rimpe }}
+      {% for error in form.regimen_rimpe.errors %}<div class="error">{{ error }}</div>{% endfor %}
+    </div>
+    <div class="field-group">
+      <label for="id_tax_percentage">{{ form.tax_percentage.label }}</label>
+      {{ form.tax_percentage }}
+      <small>Porcentaje de IVA a aplicar</small>
+      {% for error in form.tax_percentage.errors %}<div class="error">{{ error }}</div>{% endfor %}
+    </div>
+    <div class="field-group">
+      <label for="is_special_taxpayer">¿Es contribuyente especial?</label>
+      <select id="is_special_taxpayer" class="form-control">
+        <option value="no">No</option>
+        <option value="yes">Sí</option>
+      </select>
+      <small>Seleccione si la empresa es contribuyente especial</small>
+    </div>
+    <div class="field-group" id="special_taxpayer_number_group" style="display: none;">
+      <label for="special_taxpayer_number">Número de Resolución</label>
+      <input type="text" id="special_taxpayer_number" class="form-control" placeholder="Ej: 1234567890123">
+      <small>Ingrese el número de resolución del contribuyente especial</small>
+    </div>
+  </div>
+</div>

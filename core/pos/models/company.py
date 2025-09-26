@@ -1,11 +1,12 @@
 import base64
 import os
+from decimal import Decimal
 from django.db import models
 from django.forms import model_to_dict
 from config import settings
 from core.pos.choices import (
     OBLIGATED_ACCOUNTING, ENVIRONMENT_TYPE, EMISSION_TYPE,
-    RETENTION_AGENT, REGIMEN_RIMPE, TAX_PERCENTAGE
+    RETENTION_AGENT, REGIMEN_RIMPE, TAX_PERCENTAGE, TAX_PERCENTAGE_VALUE_MAP
 )
 
 class Company(models.Model):
@@ -55,6 +56,14 @@ class Company(models.Model):
         return self.retention_agent == RETENTION_AGENT[0][0]
 
     @property
+    def tax_percentage_value(self) -> Decimal:
+        """Valor numérico del IVA asociado al código almacenado."""
+        mapped = TAX_PERCENTAGE_VALUE_MAP.get(self.tax_percentage)
+        if mapped is not None:
+            return Decimal(str(mapped))
+        return Decimal(self.tax or 0)
+
+    @property
     def base64_image(self):
         try:
             if self.image:
@@ -70,7 +79,7 @@ class Company(models.Model):
 
     @property
     def tax_rate(self):
-        return float(self.tax) / 100
+        return float(self.tax_percentage_value) / 100
 
     def get_image(self):
         if self.image:
@@ -91,7 +100,8 @@ class Company(models.Model):
         item = model_to_dict(self)
         item['image'] = self.get_image()
         item['electronic_signature'] = self.get_electronic_signature()
-        item['tax'] = float(self.tax)
+        item['tax'] = float(self.tax_percentage_value)
+        item['tax_percentage_value'] = float(self.tax_percentage_value)
         item['owner'] = self.owner_id
         return item
 
@@ -108,6 +118,9 @@ class Company(models.Model):
             return False, str(e)
 
     def save(self, *args, **kwargs):
+        mapped_tax = TAX_PERCENTAGE_VALUE_MAP.get(self.tax_percentage)
+        if mapped_tax is not None:
+            self.tax = Decimal(str(mapped_tax))
         if self.pk:
             from .catalog import Receipt
             Receipt.objects.update(establishment_code=self.establishment_code, issuing_point_code=self.issuing_point_code)

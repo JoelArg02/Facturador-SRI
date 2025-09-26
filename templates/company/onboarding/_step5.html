@@ -1,0 +1,23 @@
+<!-- Step 5: Firma Electrónica -->
+<div class="form-step" data-step="5">
+  <h2><i class="fas fa-certificate"></i> Firma Electrónica</h2>
+  <div class="info-box">
+    <i class="fas fa-info-circle"></i>
+    <p>La firma electrónica es necesaria para la facturación electrónica. Si no la tienes ahora, puedes configurarla
+      más tarde.</p>
+  </div>
+  <div class="fields-grid">
+    <div class="field-group">
+      <label for="id_electronic_signature">{{ form.electronic_signature.label }}</label>
+      {{ form.electronic_signature }}
+      <small>Archivo .p12 de tu firma electrónica</small>
+      {% for error in form.electronic_signature.errors %}<div class="error">{{ error }}</div>{% endfor %}
+    </div>
+    <div class="field-group">
+      <label for="id_electronic_signature_key">{{ form.electronic_signature_key.label }}</label>
+      {{ form.electronic_signature_key }}
+      <small>Clave de tu firma electrónica</small>
+      {% for error in form.electronic_signature_key.errors %}<div class="error">{{ error }}</div>{% endfor %}
+    </div>
+  </div>
+</div>

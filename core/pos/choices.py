@@ -35,6 +35,20 @@ TAX_PERCENTAGE = (
     (10, '13%'),
 )
 
+# Mapa auxiliar para convertir los códigos oficiales del SRI al porcentaje real de IVA
+# Se utiliza para cálculos internos donde se requiere el valor numérico del impuesto.
+TAX_PERCENTAGE_VALUE_MAP = {
+    0: 0,
+    2: 12,
+    3: 14,
+    4: 15,
+    5: 5,
+    6: 0,   # No objeto de impuesto
+    7: 0,   # Exento de IVA
+    8: 0,   # IVA diferenciado (se manejará manualmente si aplica)
+    10: 13,
+}
+
 PAYMENT_TYPE = (
     ('efectivo', 'Efectivo'),
     ('credito', 'Credito'),

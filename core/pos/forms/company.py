@@ -1,4 +1,6 @@
+from decimal import Decimal
 from django import forms
+from core.pos.choices import TAX_PERCENTAGE_VALUE_MAP
 from core.pos.models import Company
 from core.security.form_handlers.base import BaseModelForm
 from core.security.form_handlers.helpers import update_form_fields_attributes
@@ -42,6 +44,16 @@ class CompanyOnboardingForm(forms.ModelForm):
             self.fields['description'].widget.attrs['rows'] = 2
         if 'tax' in self.fields:
             self.fields['tax'].widget.attrs['step'] = '0.01'
+
+    def clean(self):
+        cleaned_data = super().clean()
+        tax_percentage = cleaned_data.get('tax_percentage')
+        mapped_tax = TAX_PERCENTAGE_VALUE_MAP.get(tax_percentage)
+        if mapped_tax is not None:
+            cleaned_data['tax'] = Decimal(str(mapped_tax))
+        else:
+            cleaned_data['tax'] = Decimal(str(cleaned_data.get('tax') or 0))
+        return cleaned_data
 
     class Meta:
         model = Company
