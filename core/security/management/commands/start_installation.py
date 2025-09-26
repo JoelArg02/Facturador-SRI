@@ -102,7 +102,6 @@ class Command(BaseCommand):
         removed = self._purge_local_migrations(local_app_labels)
         self.stdout.write(self.style.SUCCESS(f'Migraciones eliminadas: {removed}'))
 
-        # 3. Generar migraciones iniciales
         try:
             self.stdout.write('Generando migraciones iniciales (0001_*)...')
             call_command('makemigrations', *local_app_labels, interactive=False, verbosity=0)
@@ -210,18 +209,12 @@ class Command(BaseCommand):
             self.stdout.write(self.style.SUCCESS('Módulo Suscripciones creado'))
         else:
             self.stdout.write('Módulo Suscripciones ya existía')
-
-
         super_admin_group, _ = Group.objects.get_or_create(name='Super Administrador')
         admin_group, _ = Group.objects.get_or_create(name='Administrador')
         warehouse_group, _ = Group.objects.get_or_create(name='Operador Bodega')
         sales_group, _ = Group.objects.get_or_create(name='Operador Venta')
         client_group, _ = Group.objects.get_or_create(name='Cliente')
         readonly_group, _ = Group.objects.get_or_create(name='Consulta')
-
-        # Map de permisos a excluir para roles restringidos (codenames startswith patterns)
-        # Construiremos sets dinámicos según módulos.
-        from django.contrib.auth.models import Permission as DjPermission
 
         all_modules = list(Module.objects.all())
 
@@ -232,17 +225,57 @@ class Command(BaseCommand):
                 for perm in module.permissions.all():
                     group.permissions.add(perm)
 
-        # 9.1 Super Administrador: asignar todos los módulos y permisos
-        for m in all_modules:
-            link_module(super_admin_group, m, include_perms=True)
-        # 9.2 Administrador (excluye configuraciones SaaS globales)
-        restricted_admin_modules = {
-            'Conf. Dashboard',  # Mantener fuera configuraciones globales
-            'Grupos',          # Gestión de grupos reservada para super administradores
+        restricted_admin_exact_names = {
+            'Conf. Dashboard',
+            'Dashboard',
+            'Grupos',
+            'Planes',
+            'Suscripciones',
+            'Módulos',
+            'Tipos de Módulos',
+            'Tipo de Módulo',
         }
-        for m in all_modules:
-            if m.name not in restricted_admin_modules:
-                link_module(admin_group, m, include_perms=True)
+        restricted_admin_keywords = {
+            'plan',
+            'suscrip',
+            'dashboard',
+            'grupo',
+            'group',
+            'module',
+            'módulo',
+            'module type',
+            'tipo de módulo',
+        }
+        restricted_admin_url_tokens = {
+            '/subscription/',
+            '/subscription',
+            '/security/module',
+            '/security/group',
+            '/dashboard',
+        }
+
+        def is_admin_restricted(module: Module) -> bool:
+            name_lower = module.name.lower()
+            url_lower = (module.url or '').lower()
+
+            if module.name in restricted_admin_exact_names:
+                return True
+
+            if any(keyword in name_lower for keyword in restricted_admin_keywords):
+                return True
+
+            if any(token in url_lower for token in restricted_admin_url_tokens):
+                return True
+
+            return False
+
+        for module in all_modules:
+            # Super Administrador siempre todo
+            link_module(super_admin_group, module, include_perms=True)
+
+            # Administrador: excluir gestión de planes, suscripciones y configuración general
+            if not is_admin_restricted(module):
+                link_module(admin_group, module, include_perms=True)
 
         # 9.4 Operador Bodega: módulos relacionados a inventario / productos / compras / proveedores
         warehouse_keywords = ['Producto', 'Product', 'Inventario', 'Inventory', 'Bodega', 'Compra', 'Purchase', 'Proveedor', 'Provider']
@@ -262,7 +295,6 @@ class Command(BaseCommand):
             link_module(client_group, module, include_perms=True)
 
         # 9.7 Consulta: asignar módulos pero solo permisos de view
-        view_perms_cache = {}
         for m in all_modules:
             # asignar el módulo
             link_module(readonly_group, m, include_perms=False)
@@ -426,22 +458,57 @@ class Command(BaseCommand):
                 for perm in module.permissions.all():
                     group.permissions.add(perm)
 
-        restricted_admin_modules = {
+        restricted_admin_exact_names = {
             'Conf. Dashboard',
+            'Dashboard',
             'Grupos',
+            'Planes',
+            'Suscripciones',
+            'Módulos',
+            'Tipos de Módulos',
+            'Tipo de Módulo',
         }
-        for m in all_modules:
-            # Super Administrador siempre todo
-            link_module(super_admin_group, m, include_perms=True)
-            # Administrador: excluir únicamente configuraciones globales críticas
-            if m.name not in restricted_admin_modules:
-                link_module(admin_group, m, include_perms=True)
+        restricted_admin_keywords = {
+            'plan',
+            'suscrip',
+            'dashboard',
+            'grupo',
+            'group',
+            'module',
+            'módulo',
+            'module type',
+            'tipo de módulo',
+        }
+        restricted_admin_url_tokens = {
+            '/subscription/',
+            '/subscription',
+            '/security/module',
+            '/security/group',
+            '/dashboard',
+        }
 
-        excluded_owner_module_names = set([])
-        for m in all_modules:
-            if m.name in excluded_owner_module_names:
-                continue
-            link_module(admin_group, m, include_perms=True)
+        def is_admin_restricted(module: Module) -> bool:
+            name_lower = module.name.lower()
+            url_lower = (module.url or '').lower()
+
+            if module.name in restricted_admin_exact_names:
+                return True
+
+            if any(keyword in name_lower for keyword in restricted_admin_keywords):
+                return True
+
+            if any(token in url_lower for token in restricted_admin_url_tokens):
+                return True
+
+            return False
+
+        for module in all_modules:
+            # Super Administrador siempre todo
+            link_module(super_admin_group, module, include_perms=True)
+
+            # Administrador: excluir gestión de planes, suscripciones y configuración general
+            if not is_admin_restricted(module):
+                link_module(admin_group, module, include_perms=True)
 
         warehouse_keywords = ['Producto', 'Product', 'Inventario', 'Inventory', 'Bodega', 'Compra', 'Purchase', 'Proveedor', 'Provider']
         for m in all_modules:
@@ -480,11 +547,6 @@ class Command(BaseCommand):
                 user.groups.add(super_admin_group)
             except Group.DoesNotExist:
                 self.stdout.write(self.style.WARNING('Grupo "Super Administrador" no existe todavía'))
-            try:
-                admin_group = Group.objects.get(name='Administrador')
-                user.groups.add(admin_group)
-            except Group.DoesNotExist:
-                self.stdout.write(self.style.WARNING('Grupo "Administrador" no existe todavía'))
             self.stdout.write(self.style.SUCCESS('Usuario admin creado y asociado a grupos'))
         else:
             self.stdout.write('Usuario admin ya existe')
