@@ -1,5 +1,6 @@
 from django import forms
 
+from core.pos.models import Company
 from core.security.form_handlers.base import BaseModelForm
 from core.security.form_handlers.helpers import update_form_fields_attributes
 from .models import *
@@ -26,6 +27,16 @@ class ModuleForm(BaseModelForm):
         widgets = {
             'permissions': forms.SelectMultiple(attrs={'class': 'form-control select2', 'multiple': 'multiple', 'style': 'width:100%'}),
         }
+
+
+class CompanyAdminForm(BaseModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        update_form_fields_attributes(self)
+
+    class Meta:
+        model = Company
+        fields = '__all__'
 
 
 class GroupForm(forms.ModelForm):

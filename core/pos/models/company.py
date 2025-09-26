@@ -143,5 +143,8 @@ class Company(models.Model):
         verbose_name_plural = 'Compañias'
         default_permissions = ()
         permissions = (
+            ('view_company', 'Can view Compañia'),
+            ('add_company', 'Can add Compañia'),
             ('change_company', 'Can change Compañia'),
+            ('delete_company', 'Can delete Compañia'),
         )

@@ -5,6 +5,7 @@ from .views.group.views import *
 from .views.module.views import *
 from .views.module_type.views import *
 from .views.user_access.views import *
+from .views.company.views import *
 
 urlpatterns = [
     # module_type
@@ -27,4 +28,9 @@ urlpatterns = [
     path('user/access/delete/<int:pk>/', UserAccessDeleteView.as_view(), name='user_access_delete'),
     # dashboard
     path('dashboard/update/', DashboardUpdateView.as_view(), name='dashboard_update'),
+    # company admin
+    path('company/', CompanyAdminListView.as_view(), name='company_admin_list'),
+    path('company/add/', CompanyAdminCreateView.as_view(), name='company_admin_create'),
+    path('company/update/<int:pk>/', CompanyAdminUpdateView.as_view(), name='company_admin_update'),
+    path('company/delete/<int:pk>/', CompanyAdminDeleteView.as_view(), name='company_admin_delete'),
 ]

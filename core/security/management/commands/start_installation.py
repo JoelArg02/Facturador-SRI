@@ -17,6 +17,7 @@ from core.security.management.install import (
     ensure_dashboard_and_types,
     ensure_owner_subscription,
     ensure_subscription_modules,
+    ensure_company_admin_module,
     generate_initial_migrations,
     maybe_start_dev_server,
     reset_database,
@@ -133,6 +134,7 @@ class Command(BaseCommand):
         ensure_dashboard_and_types(ctx)
         seed_modules_from_json(ctx)
         ensure_subscription_modules(ctx)
+        ensure_company_admin_module(ctx)
 
         groups = configure_groups_and_permissions(ctx)
         ensure_admin_user(ctx, groups)

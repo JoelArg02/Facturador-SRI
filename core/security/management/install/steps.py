@@ -178,6 +178,31 @@ def ensure_subscription_modules(ctx: InstallationContext) -> None:
         ctx.stdout.write('Módulo Suscripciones ya existía')
 
 
+def ensure_company_admin_module(ctx: InstallationContext) -> None:
+    """Crea el módulo de administración de Empresas y asocia permisos CRUD."""
+    administrativo = ModuleType.objects.filter(name='Administrativo').first()
+    defaults = {
+        'url': '/security/company/',
+        'icon': 'fas fa-building',
+        'description': 'Permite administrar las empresas (Super Administrador)',
+        'module_type': administrativo,
+    }
+    module, created = Module.objects.get_or_create(name='Empresas', defaults=defaults)
+    if created:
+        for codename in ['view_company', 'add_company', 'change_company', 'delete_company']:
+            perm = Permission.objects.filter(codename=codename).first()
+            if perm:
+                module.permissions.add(perm)
+        ctx.stdout.write(ctx.style.SUCCESS('Módulo Empresas creado'))
+    else:
+        # Asegurar permisos vinculados aunque ya exista
+        for codename in ['view_company', 'add_company', 'change_company', 'delete_company']:
+            perm = Permission.objects.filter(codename=codename).first()
+            if perm and not module.permissions.filter(id=perm.id).exists():
+                module.permissions.add(perm)
+        ctx.stdout.write('Módulo Empresas ya existía')
+
+
 def configure_groups_and_permissions(ctx: InstallationContext) -> Dict[str, Group]:
     """Configura los grupos principales y sus permisos asociados."""
 
@@ -293,10 +318,9 @@ def ensure_admin_user(ctx: InstallationContext, groups: Dict[str, Group]) -> Non
     user.set_password('admin')
     user.save()
 
-    for key in ('super_admin', 'admin'):
-        group = groups.get(key)
-        if group:
-            user.groups.add(group)
+    super_admin_group = groups.get('super_admin')
+    if super_admin_group:
+        user.groups.set([super_admin_group])
     ctx.stdout.write(ctx.style.SUCCESS('Usuario admin creado y asociado a grupos'))
 
 

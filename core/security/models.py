@@ -44,6 +44,8 @@ class Dashboard(models.Model):
 
     def as_dict(self):
         item = model_to_dict(self)
+        item['image'] = self.get_image()
+        item['icon'] = self.get_icon()
         return item
 
     class Meta:

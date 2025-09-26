@@ -29,7 +29,11 @@ class DashboardUpdateView(GroupModuleMixin, UpdateView):
         action = request.POST['action']
         try:
             if action == 'edit':
-                data = self.get_form().save()
+                result = self.get_form().save()
+                if isinstance(result, Dashboard):
+                    data = result.as_dict()
+                else:
+                    data = result
             else:
                 data['error'] = 'No ha seleccionado ninguna opción'
         except Exception as e:
