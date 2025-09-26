@@ -76,4 +76,71 @@
             </div>
         </div>
     </div>
+    {% if customer_invoice_groups %}
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-white">
+                        <h4 class="card-title mb-0">Tus facturas e interacciones por comercio</h4>
+                        <p class="mb-0 text-muted" style="font-size: 0.9rem;">Si tienes documentos con distintos comercios verás cada sección identificada por el nombre de la empresa emisora.</p>
+                    </div>
+                    <div class="card-body">
+                        {% for group in customer_invoice_groups %}
+                            <div class="mb-4">
+                                <div class="d-flex justify-content-between align-items-center flex-wrap">
+                                    <div>
+                                        <h5 class="font-weight-bold mb-1">{{ group.company.commercial_name|default:group.company.company_name }}</h5>
+                                        <span class="text-muted">RUC: {{ group.company.ruc }}</span>
+                                    </div>
+                                    <span class="badge badge-primary px-3 py-2">{{ group.invoices|length }} documento{{ group.invoices|length|pluralize }}</span>
+                                </div>
+                                <div class="table-responsive mt-3">
+                                    <table class="table table-sm table-hover mb-0">
+                                        <thead class="thead-light">
+                                            <tr>
+                                                <th>Comprobante</th>
+                                                <th class="text-center">Fecha</th>
+                                                <th class="text-center">Estado</th>
+                                                <th class="text-right">Total</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for invoice in group.invoices %}
+                                                <tr>
+                                                    <td>
+                                                        <span class="font-weight-bold">{{ invoice.receipt.name }}</span><br>
+                                                        <small class="text-muted">{{ invoice.receipt_number_full|default:invoice.receipt_number }}</small>
+                                                    </td>
+                                                    <td class="text-center">{{ invoice.formatted_date_joined }}</td>
+                                                    <td class="text-center">
+                                                        <span class="badge badge-secondary">{{ invoice.get_status_display }}</span>
+                                                    </td>
+                                                    <td class="text-right">${{ invoice.total_amount|floatformat:2 }}</td>
+                                                </tr>
+                                            {% empty %}
+                                                <tr>
+                                                    <td colspan="4" class="text-center text-muted">Sin documentos registrados para este comercio.</td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                {% if not forloop.last %}
+                                    <hr>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="alert alert-info mb-0" role="alert">
+                    Aún no tienes facturas asociadas. Cuando realices compras aparecerán aquí organizadas por comercio.
+                </div>
+            </div>
+        </div>
+    {% endif %}
 {% endblock %}

@@ -664,7 +664,9 @@ class TransactionSummary(models.Model):
         item['date_joined'] = self.formatted_date_joined()
         item['subtotal_without_tax'] = float(self.subtotal_without_tax)
         item['subtotal_with_tax'] = float(self.subtotal_with_tax)
-        item['tax'] = float(self.tax)
+        item['tax_rate'] = f"{self.tax_rate:.0f}%"
+        item['tax'] = f"{self.tax_rate:.0f}%"
+
         item['total_tax'] = float(self.total_tax)
         item['total_discount'] = float(self.total_discount)
         item['total_amount'] = float(self.total_amount)

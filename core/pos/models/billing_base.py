@@ -112,21 +112,16 @@ class ElecBillingBase(TransactionSummary):
                         return True
         return False
     def find_next_available_sequential(self):
-        """Encuentra el siguiente secuencial disponible incrementando automáticamente"""
         current_sequence = self.receipt.sequence
         max_attempts = 100  # Límite de seguridad para evitar bucles infinitos
         
         for attempt in range(max_attempts):
-            # Incrementar el secuencial del recibo
             self.receipt.sequence = current_sequence + 1 + attempt
             self.receipt.save()
             
-            # Actualizar el número de recibo
             self.receipt_number = self.generate_receipt_number(increase=False)
             self.receipt_number_full = self.get_receipt_number_full()
-            
-            # Verificar si este secuencial está disponible
-            # (esto podría incluir una verificación adicional con el SRI si es necesario)
+
             return True
             
         return False
@@ -227,6 +222,7 @@ class ElecBillingDetailBase(models.Model):
     @property
     def discount_rate(self):
         return self.discount * 100
+    
     def as_dict(self):
         from .catalog import Product
         item = model_to_dict(self)
@@ -235,7 +231,10 @@ class ElecBillingDetailBase(models.Model):
             item['product'] = self.product.as_dict()
         except Exception:
             pass
-        item['tax'] = float(self.tax)
+        
+        item['tax'] = f"{self.tax_rate:.0f}%"
+
+        item['tax_rate'] = f"{self.tax_rate:.0f}%"
         item['price'] = float(self.price)
         item['price_with_tax'] = float(self.price_with_tax)
         item['subtotal'] = float(self.subtotal)

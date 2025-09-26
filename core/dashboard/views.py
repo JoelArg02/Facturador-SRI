@@ -9,6 +9,7 @@ from django.views.generic import TemplateView
 
 from core.pos.models import Product, Invoice, Customer, Provider, Category, Purchase
 from core.security.models import Dashboard
+from collections import OrderedDict
 
 
 class DashboardView(LoginRequiredMixin, TemplateView):
@@ -58,4 +59,22 @@ class DashboardView(LoginRequiredMixin, TemplateView):
             context['categories'] = Category.objects.filter().count()
             context['products'] = Product.objects.all().count()
             context['invoices'] = Invoice.objects.filter().order_by('-id')[0:10]
+        else:
+            invoices = Invoice.objects.filter(customer__user=self.request.user).select_related('company', 'receipt').order_by('-date_joined', '-id')
+            grouped_invoices = OrderedDict()
+            for invoice in invoices:
+                grouped_invoices.setdefault(invoice.company, []).append(invoice)
+            context['customer_invoice_groups'] = [
+                {
+                    'company': company,
+                    'invoices': invoice_list
+                }
+                for company, invoice_list in grouped_invoices.items()
+            ]
+
+            customer_company = getattr(getattr(self.request.user, 'customer', None), 'company', None)
+            if customer_company:
+                context['company'] = customer_company
+            elif invoices:
+                context['company'] = invoices[0].company
         return context
