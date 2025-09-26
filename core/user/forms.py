@@ -24,8 +24,12 @@ class UserForm(forms.ModelForm):
         # Filtrado dinámico de grupos: un usuario NO superusuario no debe poder ver/crear superadministradores.
         request = get_current_request()
         if request and not request.user.is_superuser:
-            # Heurística: ocultar grupos cuyo nombre contenga 'super' para evitar escalación.
-            self.fields['group'].queryset = self.fields['group'].queryset.exclude(name__iregex=r'super')
+            # Heurística: ocultar grupos de superadministración y administración.
+            self.fields['group'].queryset = (
+                self.fields['group'].queryset
+                .exclude(name__iregex=r'super')
+                .exclude(name__iregex=r'admin|administrador')
+            )
 
     class Meta:
         model = User
@@ -60,22 +64,32 @@ class UserForm(forms.ModelForm):
             if user_form.pk is None or not user_form.check_password(password):
                 user_form.set_password(password)
 
-            # Control de elevación de privilegios:
+            # Obtener request actual una sola vez
+            request = get_current_request()
+
+            # Control de elevación de privilegios
             selected_group = self.cleaned_data['group']
             is_admin_group = 'admin' in selected_group.name.lower() or 'administrador' in selected_group.name.lower()
 
+            # Si quien crea NO es superusuario y el grupo es admin => bloquear
+            if (not request or not request.user.is_superuser) and is_admin_group:
+                data['error'] = 'No tienes permisos para crear un administrador.'
+                return data
+
             # Solo un superusuario puede crear otro superusuario
-            request = get_current_request()
             creating_superuser = selected_group.name.lower() == 'superadmin' or selected_group.name.lower() == 'super administrador'
             if creating_superuser and (not request or not request.user.is_superuser):
                 data['error'] = 'No tienes permisos para crear un superadministrador.'
                 return data
 
-            # Guardar usuario
+            # Asignar compañía automáticamente si el creador no es superusuario
+            if request and not request.user.is_superuser and getattr(request.user, 'company_id', None):
+                user_form.company_id = request.user.company_id
+
+            # Guardar usuario (marcar staff si corresponde)
             user_form.is_staff = is_admin_group or user_form.is_staff
             if not (request and request.user.is_superuser):
-                # Asegurar que no se marque superuser accidentalmente
-                user_form.is_superuser = False
+                user_form.is_superuser = False  # impedir elevación
             user_form.save()
             user_form.groups.set([selected_group])
             self.update_session(user_form)
