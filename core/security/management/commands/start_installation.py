@@ -236,11 +236,12 @@ class Command(BaseCommand):
         for m in all_modules:
             link_module(super_admin_group, m, include_perms=True)
         # 9.2 Administrador (excluye configuraciones SaaS globales)
-        excluded_admin_names = {
-            'Planes', 'Suscripciones', 'Conf. Dashboard', 'Tipos de Módulos', 'Módulos', 'Grupos'
+        restricted_admin_modules = {
+            'Conf. Dashboard',  # Mantener fuera configuraciones globales
+            'Grupos',          # Gestión de grupos reservada para super administradores
         }
         for m in all_modules:
-            if m.name not in excluded_admin_names:
+            if m.name not in restricted_admin_modules:
                 link_module(admin_group, m, include_perms=True)
 
         # 9.4 Operador Bodega: módulos relacionados a inventario / productos / compras / proveedores
@@ -425,14 +426,15 @@ class Command(BaseCommand):
                 for perm in module.permissions.all():
                     group.permissions.add(perm)
 
-        excluded_admin_names = {
-            'Planes', 'Suscripciones', 'Conf. Dashboard', 'Tipos de Módulos', 'Módulos', 'Grupos'
+        restricted_admin_modules = {
+            'Conf. Dashboard',
+            'Grupos',
         }
         for m in all_modules:
             # Super Administrador siempre todo
             link_module(super_admin_group, m, include_perms=True)
-            # Administrador: excluir configuraciones globales SaaS
-            if m.name not in excluded_admin_names:
+            # Administrador: excluir únicamente configuraciones globales críticas
+            if m.name not in restricted_admin_modules:
                 link_module(admin_group, m, include_perms=True)
 
         excluded_owner_module_names = set([])
@@ -478,6 +480,11 @@ class Command(BaseCommand):
                 user.groups.add(super_admin_group)
             except Group.DoesNotExist:
                 self.stdout.write(self.style.WARNING('Grupo "Super Administrador" no existe todavía'))
+            try:
+                admin_group = Group.objects.get(name='Administrador')
+                user.groups.add(admin_group)
+            except Group.DoesNotExist:
+                self.stdout.write(self.style.WARNING('Grupo "Administrador" no existe todavía'))
             self.stdout.write(self.style.SUCCESS('Usuario admin creado y asociado a grupos'))
         else:
             self.stdout.write('Usuario admin ya existe')
