@@ -356,9 +356,11 @@ class CustomerUpdateProfileView(GroupModuleMixin, UpdateView):
 
     def get_form(self, form_class=None):
         form = super().get_form(form_class)
-        for field in ['dni', 'identification_type', 'send_email_invoice']:
-            form.fields[field].disabled = True
-            form.fields[field].required = False
+        # Campos deshabilitados únicamente: dni (identificador principal)
+        for field in ['dni']:
+            if field in form.fields:
+                form.fields[field].disabled = True
+                form.fields[field].required = False
         return form
 
     def get_form_user(self):

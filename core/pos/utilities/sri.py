@@ -183,10 +183,8 @@ class SRI:
         try:
             instance.status = INVOICE_STATUS[2][0]
             customer = instance.get_client_from_model()
-            if not customer.send_email_invoice:
-                response['resp'] = True
-            else:
-                response = instance.send_invoice_files_to_customer()
+            # Campo send_email_invoice eliminado del modelo; por ahora siempre se envía.
+            response = instance.send_invoice_files_to_customer()
             if response['resp']:
                 instance.save()
         except Exception as e:

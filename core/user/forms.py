@@ -10,7 +10,7 @@ from core.security.form_handlers.helpers import update_form_fields_attributes
 
 class UserForm(forms.ModelForm):
     group = forms.ModelChoiceField(
-        queryset=Group.objects.all(),
+        queryset=Group.objects.all(),  # Se filtrará dinámicamente en __init__
         label="Grupo",
         widget=forms.Select(attrs={'class': 'select2', 'style': 'width:100%'})
     )
@@ -20,6 +20,12 @@ class UserForm(forms.ModelForm):
         update_form_fields_attributes(self, exclude_fields=['password'])
         self.fields['group'].required = True
         self.fields['names'].widget.attrs['autofocus'] = True
+
+        # Filtrado dinámico de grupos: un usuario NO superusuario no debe poder ver/crear superadministradores.
+        request = get_current_request()
+        if request and not request.user.is_superuser:
+            # Heurística: ocultar grupos cuyo nombre contenga 'super' para evitar escalación.
+            self.fields['group'].queryset = self.fields['group'].queryset.exclude(name__iregex=r'super')
 
     class Meta:
         model = User
@@ -54,9 +60,24 @@ class UserForm(forms.ModelForm):
             if user_form.pk is None or not user_form.check_password(password):
                 user_form.set_password(password)
 
+            # Control de elevación de privilegios:
+            selected_group = self.cleaned_data['group']
+            is_admin_group = 'admin' in selected_group.name.lower() or 'administrador' in selected_group.name.lower()
+
+            # Solo un superusuario puede crear otro superusuario
+            request = get_current_request()
+            creating_superuser = selected_group.name.lower() == 'superadmin' or selected_group.name.lower() == 'super administrador'
+            if creating_superuser and (not request or not request.user.is_superuser):
+                data['error'] = 'No tienes permisos para crear un superadministrador.'
+                return data
+
+            # Guardar usuario
+            user_form.is_staff = is_admin_group or user_form.is_staff
+            if not (request and request.user.is_superuser):
+                # Asegurar que no se marque superuser accidentalmente
+                user_form.is_superuser = False
             user_form.save()
-            # Asignar solo el grupo seleccionado
-            user_form.groups.set([self.cleaned_data['group']])
+            user_form.groups.set([selected_group])
             self.update_session(user_form)
         except Exception as e:
             data['error'] = str(e)

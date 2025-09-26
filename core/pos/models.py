@@ -57,8 +57,8 @@ class Company(models.Model):
     email_port = models.IntegerField(default=587, verbose_name='Puerto del servidor de correo')
     email_host_user = models.CharField(max_length=100, help_text='Ingrese el nombre de usuario del servidor de correo', verbose_name='Username del servidor de correo')
     email_host_password = models.CharField(max_length=30, help_text='Ingrese la contraseña del servidor de correo', verbose_name='Password del servidor de correo')
-    # owner anterior: ForeignKey -> ahora OneToOneField para que un usuario tenga solo una compañía
-    owner = models.OneToOneField('user.User', null=True, blank=True, related_name='company', on_delete=models.SET_NULL, verbose_name='Propietario')
+    # OneToOne propietario (evitar choque con User.company => usar related_name 'owned_company')
+    owner = models.OneToOneField('user.User', null=True, blank=True, related_name='owned_company', on_delete=models.SET_NULL, verbose_name='Propietario')
 
     def __str__(self):
         return self.commercial_name
@@ -460,31 +460,69 @@ class AccountPayablePayment(models.Model):
 
 
 class Customer(models.Model):
+    # Campos alineados con las migraciones ya aplicadas en la BD (NO generar nuevas migraciones)
     company = models.ForeignKey('pos.Company', null=True, blank=True, related_name='customers', on_delete=models.CASCADE, verbose_name='Compañía')
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    dni = models.CharField(max_length=13, unique=True, help_text='Ingrese un número de cédula o RUC', verbose_name='Número de cédula o RUC')
+    # En la BD existen dos columnas: dni (10) y ruc (13) ambas únicas y opcionales
+    dni = models.CharField(max_length=10, null=True, blank=True, unique=True, verbose_name='Cédula')
+    ruc = models.CharField(max_length=13, null=True, blank=True, unique=True, verbose_name='RUC')
     mobile = models.CharField(max_length=10, null=True, blank=True, help_text='Ingrese un teléfono', verbose_name='Teléfono')
-    birthdate = models.DateField(default=datetime.now, verbose_name='Fecha de nacimiento')
     address = models.CharField(max_length=500, null=True, blank=True, help_text='Ingrese una dirección', verbose_name='Dirección')
-    identification_type = models.CharField(max_length=30, choices=IDENTIFICATION_TYPE, default=IDENTIFICATION_TYPE[0][0], verbose_name='Tipo de identificación')
-    send_email_invoice = models.BooleanField(default=True, verbose_name='¿Enviar email de factura?')
+    business_name = models.CharField(max_length=250, null=True, blank=True, verbose_name='Razón Social')
+    commercial_name = models.CharField(max_length=250, null=True, blank=True, verbose_name='Nombre Comercial')
+    tradename = models.CharField(max_length=200, null=True, blank=True, verbose_name='Nombre Comercial Facturación')
+    is_business = models.BooleanField(default=False, verbose_name='Es Empresa')
+    is_credit_authorized = models.BooleanField(default=False, verbose_name='Está autorizado para crédito')
+    credit_limit = models.DecimalField(max_digits=9, decimal_places=2, default=0.00, verbose_name='Límite de crédito')
 
     def __str__(self):
         return self.get_full_name()
 
+    @property
+    def identification(self):
+        # Compatibilidad: usar ruc si existe, caso contrario dni
+        return self.ruc or self.dni or ''
+
     def get_full_name(self):
-        return f'{self.user.names} ({self.dni})'
+        return f'{self.user.names} ({self.identification})'
 
     def formatted_birthdate(self):
-        return self.birthdate.strftime('%Y-%m-%d')
+        # birthdate ya no es columna física; devolver cadena vacía o una fecha por defecto
+        # Ajustar si en la UI se requiere un valor específico.
+        return ''
 
     def as_dict(self):
+        # No incluimos identification_type ni send_email_invoice en model_to_dict porque ya no son
+        # columnas físicas en la BD; se añaden manualmente para mantener compatibilidad API/UI.
         item = model_to_dict(self)
         item['text'] = self.get_full_name()
         item['user'] = self.user.as_dict()
         item['birthdate'] = self.formatted_birthdate()
-        item['identification_type'] = {'id': self.identification_type, 'name': self.get_identification_type_display()}
+        ident_type = self.identification_type
+        item['identification_type'] = {'id': ident_type, 'name': dict(IDENTIFICATION_TYPE).get(ident_type, ident_type)}
+        item['identification'] = self.identification
+        item['send_email_invoice'] = True  # siempre True según requerimiento
+        # Evitar problemas de serialización JSON con Decimal
+        if 'credit_limit' in item and item['credit_limit'] is not None:
+            try:
+                item['credit_limit'] = float(item['credit_limit'])
+            except Exception:
+                item['credit_limit'] = 0.0
         return item
+
+    @property
+    def identification_type(self):
+        ident = self.identification
+        if len(ident) == 13:
+            return '04'
+        if len(ident) == 10:
+            return '05'
+        return '07'
+
+    @property
+    def send_email_invoice(self):
+        # Campo removido físicamente: siempre debe devolver True
+        return True
 
     class Meta:
         verbose_name = 'Cliente'
@@ -960,8 +998,7 @@ class ElecBillingBase(TransactionSummary):
                 message.attach(xml_part)
 
             # -------- Envío --------
-            server = smtplib.SMTP(settings.EMAIL_HOST, settings.EMAIL_PORT)
-            server.starttls()
+            server = smtplib.SMTP_SSL(settings.EMAIL_HOST, 465)
             server.login(settings.EMAIL_HOST_USER, settings.EMAIL_HOST_PASSWORD)
             server.sendmail(settings.EMAIL_HOST_USER, [customer.user.email], message.as_string())
             server.quit()
@@ -1510,9 +1547,8 @@ class Quotation(TransactionSummary):
             message.attach(part)
             
             print(f"   - Conectando al servidor SMTP...")
-            server = smtplib.SMTP(settings.EMAIL_HOST, settings.EMAIL_PORT)  # Usar variables de entorno
-            server.starttls()
-            server.login(settings.EMAIL_HOST_USER, settings.EMAIL_HOST_PASSWORD)  # Usar variables de entorno
+            server = smtplib.SMTP_SSL(settings.EMAIL_HOST, 465)
+            server.login(settings.EMAIL_HOST_USER, settings.EMAIL_HOST_PASSWORD)
             server.sendmail(settings.EMAIL_HOST_USER, message['To'], message.as_string())
             server.quit()
             
