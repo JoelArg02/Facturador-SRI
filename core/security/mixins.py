@@ -97,7 +97,13 @@ class AutoAssignCompanyMixin:
     company_field = 'company'
 
     def get_company(self):
-        return getattr(self.request, 'company', None)
+        # Fallback: si middleware no puso request.company, tomar de request.user
+        company = getattr(self.request, 'company', None)
+        if company is None:
+            user = getattr(self.request, 'user', None)
+            if user is not None:
+                company = getattr(user, 'company', None)
+        return company
 
     def get_form(self, form_class=None):
         form = super().get_form(form_class)
@@ -107,6 +113,9 @@ class AutoAssignCompanyMixin:
             # Ocultar y limpiar required: se setea en form_valid
             form.fields[field_name].widget = form.fields[field_name].hidden_widget()
             form.fields[field_name].required = False
+        # Asignación temprana (por si se usa form.save(commit=False) fuera de form_valid)
+        if company and hasattr(form.instance, field_name) and getattr(form.instance, field_name) is None:
+            setattr(form.instance, field_name, company)
         return form
 
     def form_valid(self, form):

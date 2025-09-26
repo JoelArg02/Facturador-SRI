@@ -13,7 +13,8 @@
 {% endblock %}
 
 {% block content %}
-    <form class="form" method="post" action="." enctype="multipart/form-data" id="frmForm" data-url="{{ list_url }}" autocomplete="off">
+    <form class="form" method="post" action="." enctype="multipart/form-data" id="frmForm" data-url="{{ list_url }}" autocomplete="off"
+        {% if quota_info and not quota_info.can_create %}data-quota-can-create="0"{% else %}data-quota-can-create="1"{% endif %}>
         <div class="card {{ dashboard.card }}">
             <div class="card-header">
                 <h3 class="card-title">
@@ -54,7 +55,17 @@
                         {% for field in form.visible_fields %}
                             <div class="form-group">
                                 <label>{{ field.label }}:</label>
-                                {% if field.field.widget.input_type == 'checkbox' %}
+                                {% if field.name == 'tax' or field.name == 'discount' or field.name == 'discount_rate' or field.name == 'tax_percentage' %}
+                                    <div class="input-group percent-field-wrapper">
+                                        {% if 'form-control' not in field.field.widget.attrs.class or field.field.widget.attrs.class is None %}
+                                            {{ field|add_class:'form-control percent-field'|attr:'data-percent-field=true' }}
+                                        {% else %}
+                                            {{ field|add_class:'percent-field'|attr:'data-percent-field=true' }}
+                                        {% endif %}
+                                        <div class="input-group-append"><span class="input-group-text">%</span></div>
+                                    </div>
+                                    <small class="form-text text-muted">Ingrese porcentaje (ej: 15 para 15%). Internamente se guardará como fracción (0.15).</small>
+                                {% elif field.field.widget.input_type == 'checkbox' %}
                                     <br>
                                     {% if 'form-control-checkbox' not in field.field.widget.attrs.class %}
                                         {{ field|add_class:'form-control-checkbox' }}
@@ -92,11 +103,35 @@
     <!-- Script para validación de cuotas -->
     <script>
         $(document).ready(function() {
-            {% if quota_info and not quota_info.can_create %}
-                // Deshabilitar el botón de guardar si se alcanzó el límite
-                $('button[type="submit"]').prop('disabled', true).addClass('disabled');
-                $('button[type="submit"]').html('<i class="fas fa-ban"></i> Límite alcanzado');
-            {% endif %}
+            var quotaCanCreate = $('#frmForm').data('quota-can-create') === 1;
+            if(!quotaCanCreate){
+                $('button[type="submit"]').prop('disabled', true).addClass('disabled').html('<i class="fas fa-ban"></i> Límite alcanzado');
+            }
+            // Normalizar visualización de campos porcentaje (mostrar 15 en vez de 0.15)
+            function normalizeDisplayPercent($field){
+                var val = $field.val();
+                if(!val) return;
+                var num = parseFloat(val.replace(',','.'));
+                if(isNaN(num)) return;
+                if(num > 0 && num <= 1){ // viene como fracción
+                    num = num * 100;
+                }
+                var display = (Math.round((num + Number.EPSILON) * 100) / 100).toString();
+                if(display.indexOf('.') !== -1){
+                    display = display.replace(/\.0+$/,'').replace(/(\.[0-9]*?)0+$/,'$1');
+                }
+                $field.data('fraction-value', (num/100).toFixed(6));
+                $field.val(display);
+            }
+            $('[data-percent-field=true]').each(function(){ normalizeDisplayPercent($(this)); });
+            $('#frmForm').on('submit', function(){
+                $('[data-percent-field=true]').each(function(){
+                    var $f = $(this); var val = $f.val(); if(!val) return;
+                    var num = parseFloat(val.replace(',','.')); if(isNaN(num)) return;
+                    if(num > 1){ num = num / 100.0; }
+                    $f.val(num.toFixed(6));
+                });
+            });
         });
     </script>
 {% endblock %}

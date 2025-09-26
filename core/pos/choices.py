@@ -52,6 +52,8 @@ TAX_PERCENTAGE_VALUE_MAP = {
 PAYMENT_TYPE = (
     ('efectivo', 'Efectivo'),
     ('credito', 'Credito'),
+    ('tarjeta', 'Tarjeta'),
+    ('transferencia', 'Transferencia bancaria'),
 )
 
 IDENTIFICATION_TYPE = (

@@ -14,13 +14,26 @@ class CategoryListView(GroupPermissionMixin, ListView):
     template_name = 'category/list.html'
     permission_required = 'view_category'
 
+    def get_queryset(self):
+        qs = super().get_queryset()
+        user = self.request.user
+        # Superuser ve todo; usuarios normales solo sus categorías (o nulas si se usan globales)
+        if not user.is_superuser:
+            company = getattr(user, 'company', None)
+            if company:
+                qs = qs.filter(company=company)
+            else:
+                qs = qs.none()
+        return qs
+
     def post(self, request, *args, **kwargs):
         data = {}
         action = request.POST['action']
         try:
             if action == 'search':
                 data = []
-                for i in self.model.objects.all():
+                queryset = self.get_queryset()
+                for i in queryset:
                     data.append(i.as_dict())
             else:
                 data['error'] = 'No ha seleccionado ninguna opción'
@@ -53,6 +66,10 @@ class CategoryCreateView(AutoAssignCompanyMixin, GroupPermissionMixin, CreateVie
                 filters = Q()
                 if field == 'name':
                     filters &= Q(name__iexact=request.POST['name'])
+                    # Limitar a la compañía del usuario para validar unicidad por compañía
+                    company = getattr(request.user, 'company', None)
+                    if company:
+                        filters &= Q(company=company)
                 data['valid'] = not self.model.objects.filter(filters).exists() if filters.children else True
             else:
                 data['error'] = 'No ha seleccionado ninguna opción'
@@ -90,6 +107,9 @@ class CategoryUpdateView(AutoAssignCompanyMixin, GroupPermissionMixin, UpdateVie
                 filters = Q()
                 if field == 'name':
                     filters &= Q(name__iexact=request.POST['name'])
+                    company = getattr(request.user, 'company', None)
+                    if company:
+                        filters &= Q(company=company)
                 data['valid'] = not self.model.objects.filter(filters).exclude(id=self.object.id).exists() if filters.children else True
             else:
                 data['error'] = 'No ha seleccionado ninguna opción'
