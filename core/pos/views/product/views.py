@@ -143,7 +143,11 @@ class ProductUpdateView(AutoAssignCompanyMixin, GroupPermissionMixin, CompanyQue
         action = request.POST['action']
         try:
             if action == 'edit':
-                data = self.get_form().save()
+                result = self.get_form().save()
+                if isinstance(result, Product):
+                    data = result.as_dict()
+                else:
+                    data = result
             elif action == 'validate_data':
                 field = request.POST['field']
                 filters = Q()
@@ -223,7 +227,7 @@ class ProductStockAdjustmentView(GroupPermissionMixin, CompanyQuerysetMixin, Lis
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['title'] = f'juste de Stock de {self.model._meta.verbose_name_plural}'
+        context['title'] = f'Ajuste de Stock de {self.model._meta.verbose_name_plural}'
         return context
 
 

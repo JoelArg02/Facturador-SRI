@@ -30,9 +30,13 @@ class ActiveCompanyMiddleware(MiddlewareMixin):
 
         if not active_subscription:
             if not hasattr(request, 'company'):
-                company = getattr(user, 'company', None)
-                if company is None and user.is_staff:
-                    company = Company.objects.filter(owner__isnull=True).first() or Company.objects.first()
+                # Super admin nunca debe tener company en request
+                if user.is_superuser:
+                    company = None
+                else:
+                    company = getattr(user, 'company', None)
+                    if company is None and user.is_staff:
+                        company = Company.objects.filter(owner__isnull=True).first() or Company.objects.first()
                 request.company = company
             return None
 
@@ -52,9 +56,13 @@ class ActiveCompanyMiddleware(MiddlewareMixin):
             return redirect(onboarding_url)
 
         if not hasattr(request, 'company'):
-            company = user_company
-            if company is None and user.is_staff:
-                company = Company.objects.filter(owner__isnull=True).first() or Company.objects.first()
-            request.company = company
+            # Super admin nunca debe tener company asociada en el request
+            if user.is_superuser:
+                request.company = None
+            else:
+                company = user_company
+                if company is None and user.is_staff:
+                    company = Company.objects.filter(owner__isnull=True).first() or Company.objects.first()
+                request.company = company
 
         return None

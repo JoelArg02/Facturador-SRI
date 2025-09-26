@@ -13,7 +13,7 @@ from django.views.generic import CreateView, UpdateView, DeleteView, ListView, F
 from config import settings
 from core.login.forms import UpdatePasswordForm
 from core.security.form_handlers.helpers import update_form_fields_attributes
-from core.security.mixins import GroupPermissionMixin, GroupModuleMixin, CompanyQuerysetMixin, AutoAssignCompanyMixin
+from core.security.mixins import GroupPermissionMixin, GroupModuleMixin, CompanyQuerysetMixin
 from core.user.forms import UserForm, ProfileForm, User
 
 
@@ -71,7 +71,7 @@ class UserListView(GroupPermissionMixin, CompanyQuerysetMixin, ListView):
         return context
 
 
-class UserCreateView(AutoAssignCompanyMixin, GroupPermissionMixin, CompanyQuerysetMixin, CreateView):
+class UserCreateView(GroupPermissionMixin, CompanyQuerysetMixin, CreateView):
     model = User
     template_name = 'user/create.html'
     form_class = UserForm

@@ -1,4 +1,6 @@
 from django import forms
+from django.forms import model_to_dict
+from crum import get_current_request
 
 
 class BaseModelForm(forms.ModelForm):
@@ -8,14 +10,31 @@ class BaseModelForm(forms.ModelForm):
         self.fields[first_field].widget.attrs['autofocus'] = True
 
     def save(self, commit=True):
-        # Mantener compatibilidad: si es válido devolver instancia del modelo;
-        # si NO es válido devolver dict con errores (comportamiento previo usado en algunos lugares).
         if self.is_valid():
-            instance = super().save(commit=commit)
-            return instance
-        data = {'error': ''}
-        for field, errors in self.errors.items():
-            data['error'] += errors[0]
-        for error in self.non_field_errors():
-            data['error'] += error
-        return data
+            instance = super().save(commit=False)
+
+            if hasattr(instance, 'company') and getattr(instance, 'company', None) is None:
+                try:
+                    request = get_current_request()
+                    if request is not None:
+                        company = getattr(request, 'company', None) or getattr(getattr(request, 'user', None), 'company', None)
+                        if company is not None and not getattr(getattr(request, 'user', None), 'is_superuser', False):
+                            setattr(instance, 'company', company)
+                except Exception:
+                    pass
+
+            if commit:
+                instance.save()
+
+            if hasattr(instance, 'as_dict') and callable(getattr(instance, 'as_dict')):
+                try:
+                    return instance.as_dict()
+                except Exception:
+                    pass
+
+            try:
+                return model_to_dict(instance)
+            except Exception:
+                return {'id': getattr(instance, 'pk', None)}
+
+        return {'error': self.errors}

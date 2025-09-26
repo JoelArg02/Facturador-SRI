@@ -31,6 +31,13 @@ class UserForm(forms.ModelForm):
                 .exclude(name__iregex=r'admin|administrador')
             )
 
+        # Si el request.user es superusuario, garantizar que el campo company no esté presente/visible
+        # dado que super admin nunca debe asignar empresa al crear usuarios.
+        if request and request.user.is_superuser:
+            if 'company' in self.fields:
+                self.fields['company'].widget = self.fields['company'].hidden_widget()
+                self.fields['company'].required = False
+
     class Meta:
         model = User
         fields = ('names', 'username', 'password', 'email', 'group', 'image', 'is_active')
@@ -82,9 +89,15 @@ class UserForm(forms.ModelForm):
                 data['error'] = 'No tienes permisos para crear un superadministrador.'
                 return data
 
-            # Asignar compañía automáticamente si el creador no es superusuario
-            if request and not request.user.is_superuser and getattr(request.user, 'company_id', None):
-                user_form.company_id = request.user.company_id
+            # Reglas de compañía:
+            # 1) Si el grupo seleccionado es Super Administrador -> company debe ser siempre None
+            super_admin_names = ['super administrador', 'superadmin', 'super administrador del sistema']
+            if selected_group.name.strip().lower() in super_admin_names:
+                user_form.company = None
+            else:
+                # 2) Si quien crea NO es superusuario y tiene company, heredar esa company
+                if request and not request.user.is_superuser and getattr(request.user, 'company_id', None):
+                    user_form.company_id = request.user.company_id
 
             # Guardar usuario (marcar staff si corresponde)
             user_form.is_staff = is_admin_group or user_form.is_staff
