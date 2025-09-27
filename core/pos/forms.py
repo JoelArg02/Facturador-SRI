@@ -1,4 +1,5 @@
 from django import forms
+from crum import get_current_request
 
 from .models import *
 from core.user.models import User  # Import explícito para evitar NameError en CustomerUserForm
@@ -211,13 +212,30 @@ class ProviderForm(forms.ModelForm):
         fields = '__all__'
 
     def save(self, commit=True):
+        """Guarda y asegura que la compañía sea la del usuario logueado si no se envía en el form.
+
+        Retorna siempre un dict JSON-serializable.
+        """
         data = {}
-        if self.is_valid():
-            instance = super().save()
-            data = instance.as_dict()
-        else:
+        if not self.is_valid():
             data['error'] = self.errors
-        return data
+            return data
+
+        instance = super().save(commit=False)
+
+        # Autoasignar compañía desde el request si no viene en el formulario
+        try:
+            request = get_current_request()
+            if hasattr(instance, 'company') and getattr(instance, 'company', None) is None and request is not None:
+                company = getattr(request, 'company', None) or getattr(getattr(request, 'user', None), 'company', None)
+                if company is not None:
+                    instance.company = company
+        except Exception:
+            pass
+
+        if commit:
+            instance.save()
+        return instance.as_dict()
 
 
 class CategoryForm(BaseModelForm):

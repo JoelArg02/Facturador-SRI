@@ -21,7 +21,8 @@ class ProviderListView(GroupPermissionMixin, CompanyQuerysetMixin, ListView):
         try:
             if action == 'search':
                 data = []
-                for i in self.model.objects.all():
+                # Usar el queryset filtrado por compañía del usuario (CompanyQuerysetMixin)
+                for i in self.get_queryset():
                     data.append(i.as_dict())
             else:
                 data['error'] = 'No ha seleccionado ninguna opción'
@@ -60,6 +61,10 @@ class ProviderCreateView(AutoAssignCompanyMixin, GroupPermissionMixin, CompanyQu
                     filters &= Q(mobile__iexact=request.POST['mobile'])
                 elif field == 'email':
                     filters &= Q(email__iexact=request.POST['email'])
+                # Limitar validación a la compañía del request
+                company = getattr(request, 'company', None) or getattr(request.user, 'company', None)
+                if company:
+                    filters &= Q(company=company)
                 data['valid'] = not self.model.objects.filter(filters).exists() if filters.children else True
             elif action == 'search_ruc_in_sri':
                 data = SRI().search_ruc_in_sri(ruc=request.POST['ruc'])
@@ -105,6 +110,9 @@ class ProviderUpdateView(AutoAssignCompanyMixin, GroupPermissionMixin, CompanyQu
                     filters &= Q(mobile__iexact=request.POST['mobile'])
                 elif field == 'email':
                     filters &= Q(email__iexact=request.POST['email'])
+                company = getattr(request, 'company', None) or getattr(request.user, 'company', None)
+                if company:
+                    filters &= Q(company=company)
                 data['valid'] = not self.model.objects.filter(filters).exclude(id=self.object.id).exists() if filters.children else True
             elif action == 'search_ruc_in_sri':
                 data = SRI().search_ruc_in_sri(ruc=request.POST['ruc'])
