@@ -28,7 +28,8 @@ class PurchaseListView(GroupPermissionMixin, CompanyQuerysetMixin, ListView):
                 filters = Q()
                 if len(start_date) and len(end_date):
                     filters &= Q(date_joined__range=[start_date, end_date])
-                for i in self.model.objects.filter(filters):
+                queryset = self.get_queryset().filter(filters)
+                for i in queryset:
                     data.append(i.as_dict())
             elif action == 'search_detail_products':
                 data = []
@@ -61,17 +62,30 @@ class PurchaseCreateView(AutoAssignCompanyMixin, GroupPermissionMixin, CompanyQu
         try:
             if action == 'add':
                 with transaction.atomic():
-                    company = Company.objects.first()
+                    # Determinar compañía actual desde request (middleware o usuario)
+                    current_company = getattr(request, 'company', None) or getattr(getattr(request, 'user', None), 'company', None)
+                    if current_company is None:
+                        raise Exception('No se pudo determinar la compañía actual para la compra.')
+                    # Validar proveedor pertenece a la compañía
+                    provider_id = int(request.POST['provider'])
+                    provider = Provider.objects.filter(id=provider_id, company=current_company).first()
+                    if provider is None:
+                        raise Exception('El proveedor seleccionado no pertenece a su compañía.')
                     purchase = Purchase.objects.create(
+                        company=current_company,
                         number=request.POST['number'],
                         date_joined=request.POST['date_joined'],
-                        provider_id=int(request.POST['provider']),
+                        provider=provider,
                         payment_type=request.POST['payment_type'],
-                        tax=float(company.tax) / 100,
+                        tax=float(current_company.tax) / 100,
                     )
                     for i in json.loads(request.POST['products']):
-                        product = Product.objects.get(pk=i['id'])
+                        # Validar producto pertenece a la compañía
+                        product = Product.objects.filter(pk=i['id'], company=current_company).first()
+                        if product is None:
+                            raise Exception('Uno de los productos no pertenece a su compañía.')
                         detail = PurchaseDetail.objects.create(
+                            company=current_company,
                             purchase_id=purchase.id,
                             product_id=product.id,
                             quantity=int(i['quantity']),
@@ -93,17 +107,29 @@ class PurchaseCreateView(AutoAssignCompanyMixin, GroupPermissionMixin, CompanyQu
                 filters = Q(is_inventoried=True)
                 if len(term):
                     filters &= Q(Q(name__icontains=term) | Q(code__icontains=term))
-                queryset = Product.objects.filter(filters).exclude(id__in=product_id).order_by('name')
+                # Filtrar por compañía actual
+                current_company = getattr(request, 'company', None) or getattr(getattr(request, 'user', None), 'company', None)
+                queryset = Product.objects.filter(filters)
+                if current_company is not None:
+                    queryset = queryset.filter(company=current_company)
+                queryset = queryset.exclude(id__in=product_id).order_by('name')
                 if filters.children and len(term):
                     queryset = queryset[0:10]
                 for i in queryset:
                     data.append(i.as_dict())
             elif action == 'search_provider':
                 data = []
-                for i in Provider.objects.filter(name__icontains=request.POST['term']).order_by('name')[0:10]:
+                term = request.POST['term']
+                current_company = getattr(request, 'company', None) or getattr(getattr(request, 'user', None), 'company', None)
+                qs = Provider.objects.all()
+                if current_company is not None:
+                    qs = qs.filter(company=current_company)
+                if term:
+                    qs = qs.filter(name__icontains=term)
+                for i in qs.order_by('name')[0:10]:
                     data.append(i.as_dict())
             elif action == 'validate_data':
-                data['valid'] = not self.model.objects.filter(number=request.POST['number']).exists()
+                data['valid'] = not self.get_queryset().filter(number=request.POST['number']).exists()
             else:
                 data['error'] = 'No ha seleccionado ninguna opción'
         except Exception as e:
