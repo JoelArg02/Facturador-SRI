@@ -205,7 +205,14 @@ class InvoiceCreateView(AutoAssignCompanyMixin, GroupPermissionMixin, CompanyQue
                         data = {'print_url': str(reverse_lazy('invoice_print', kwargs={'pk': invoice.id, 'code': invoice.receipt.voucher_type}))}
                         if invoice.create_electronic_invoice and not invoice.is_draft_invoice:
                             data = invoice.generate_electronic_invoice_document()
-                            if not data['resp']:
+                            if data.get('resp'):
+                                # Enviar por correo automáticamente al autorizar
+                                try:
+                                    email_resp = SRI().send_receipt_by_email(instance=invoice)
+                                    data['email'] = email_resp
+                                except Exception as e:
+                                    data['email_error'] = str(e)
+                            else:
                                 transaction.set_rollback(True)
                 if 'error' in data:
                     invoice.create_receipt_error(errors=data, change_status=False)

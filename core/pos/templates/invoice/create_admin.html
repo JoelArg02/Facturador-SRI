@@ -11,6 +11,14 @@
     <script src="{% static 'lib/tempusdominus-bootstrap-4.5.37.0/js/tempusdominus-bootstrap.js' %}"></script>
     <link rel="stylesheet" href="{% static 'lib/tempusdominus-bootstrap-4.5.37.0/css/tempusdominus-bootstrap.css' %}"/>
     <script src="{% static 'invoice/js/form_admin.js' %}"></script>
+    <style>
+        .card-invoice { border: 1px solid #e9ecef; border-radius: .5rem; }
+        .card-invoice .card-header { background: #f8f9fa; font-weight: 600; }
+        .sticky-summary { position: sticky; top: 1rem; }
+        .badge-soft { background: #eef2ff; color: #2745eb; border: 1px solid #cdd7ff; }
+        .form-label { margin-bottom: .25rem; }
+        #tblProducts th, #tblProducts td { vertical-align: middle; }
+    </style>
     <script type="application/javascript">
         var end_consumer = {{ end_consumer|safe }};
         invoice.detail.tax = {{ company.tax|safe }};
@@ -27,7 +35,7 @@
 {% endblock %}
 
 {% block form_fields %}
-    <div class="row">
+    <div class="row mb-2">
         <div class="col-lg-2">
             <div class="form-group">
                 <label for="{{ form.date_joined.name }}" class="form-label fw-bold">{{ form.date_joined.label }}:</label>
@@ -43,6 +51,7 @@
                         <i class="fas fa-plus"></i>
                     </a>
                 </div>
+                <small class="text-muted">Busca por nombre o identificación; usa el botón + para crear uno nuevo.</small>
             </div>
         </div>
         <div class="col-lg-2">
@@ -63,6 +72,7 @@
             <div class="form-group">
                 <label for="{{ form.create_electronic_invoice.name }}" class="form-label fw-bold">{{ form.create_electronic_invoice.label }}:</label><br>
                 {{ form.create_electronic_invoice }}
+                <span class="badge badge-soft ml-2">XML & PDF</span>
             </div>
         </div>
         <div class="col-lg-2">
@@ -115,7 +125,7 @@
                     <div class="form-group">
                         <label for="{{ form.search.name }}" class="form-label fw-bold">{{ form.search.label }}:</label>
                         <div class="input-group">
-                            {{ form.search }}
+                            {{ form.search|attr:"placeholder:Ingrese un nombre o código" }}
                             <div class="input-group-append">
                                 <button class="btn btn-secondary dropdown-toggle" type="button" data-toggle="dropdown" aria-expanded="false">
                                     <i class="fas fa-wrench"></i>
@@ -136,7 +146,7 @@
                     </div>
                 </div>
                 <div class="col-lg-12">
-                    <table style="width:100%;" class="table table-bordered" id="tblProducts">
+                    <table style="width:100%;" class="table table-hover table-striped" id="tblProducts">
                         <thead>
                         <tr>
                             <th style="width: 5%;">Eliminar</th>
@@ -156,7 +166,10 @@
             </div>
             <div class="row flex-row-reverse">
                 <div class="col-lg-5">
-                    <table class="table table-bordered table-sm">
+                    <div class="card card-invoice sticky-summary">
+                        <div class="card-header">Resumen</div>
+                        <div class="card-body p-2">
+                    <table class="table table-bordered table-sm mb-0">
                         <tbody>
                         <tr>
                             <td><b>{{ form.subtotal_without_tax.label|upper }}</b></td>
@@ -184,6 +197,8 @@
                         </tr>
                         </tbody>
                     </table>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -196,7 +211,7 @@
                     <i class="fas fa-trash"></i>
                 </a>
             </div>
-            <table style="width:100%;" class="table table-bordered table-sm mt-3" id="tblAdditionalInfo">
+            <table style="width:100%;" class="table table-hover table-bordered table-sm mt-3" id="tblAdditionalInfo">
                 <thead>
                 <tr>
                     <th style="width: 10%;">Eliminar</th>

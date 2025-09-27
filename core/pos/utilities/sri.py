@@ -167,7 +167,11 @@ class SRI:
                         file_temp.flush()
                         instance.authorized_xml.save(name=xml_path, content=File(file_temp))
                         instance.authorized_date = receipt.fechaAutorizacion
-                        # instance.create_authorized_pdf()
+                        # Generar y adjuntar PDF autorizado inmediatamente
+                        try:
+                            instance.create_authorized_pdf()
+                        except Exception:
+                            pass
                         instance.status = INVOICE_STATUS[1][0]
                         instance.save()
                         response['resp'] = True
