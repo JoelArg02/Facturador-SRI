@@ -3,86 +3,19 @@
 {% endblock %}
 
 {% block content %}
-    <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-lg-8 mt-3">
-                <div class="card card-widget widget-user">
-                    <div class="widget-user-header bg-gradient-blue" style="height: auto;">
-                        <h3 class="widget-user-username">
-                            {{ company.company_name }}<br>
-                            {{ company.commercial_name }}<br>
-                            Ruc: {{ company.ruc }}
-                        </h3>
-                        <br>
-                        <h5 class="widget-user-desc" style="font-weight: normal;">
-                            <b>Bienvenido {{ request.user.names }}</b><br>
-                            Tu último acceso fue {{ request.user.last_login }}
-                        </h5>
-                    </div>
-                    <img class="img-fluid d-block mx-auto p-3" style="width: 100px; height: 100px;"
-                         src="{{ company.get_image }}" alt="User Avatar">
-                    <div class="card-footer">
-                        <div class="row">
-                            <div class="col-sm-6 border-right">
-                                <div class="description-block">
-                                    <i class="fas fa-phone-volume fa-3x p-3"></i>
-                                    <h5 class="description-header font-weight-bold mb-2">
-                                        Teléfono
-                                    </h5>
-                                    <span class="description-text">
-                                       {{ company.mobile }} / {{ company.phone }}
-                                    </span>
-                                </div>
-                            </div>
-                            <div class="col-sm-6">
-                                <div class="description-block">
-                                    <i class="fas fa-envelope fa-3x p-3"></i>
-                                    <h5 class="description-header font-weight-bold mb-2">
-                                        Email
-                                    </h5>
-                                    <span class="description-text">
-                                        {{ company.email }}
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                        <hr>
-                        <div class="row">
-                            <div class="col-sm-6 border-right">
-                                <div class="description-block">
-                                    <i class="fas fa-location-arrow fa-3x p-3"></i>
-                                    <h5 class="description-header font-weight-bold mb-2">
-                                        Dirección
-                                    </h5>
-                                    <span class="description-text">
-                                        {{ company.main_address }}
-                                    </span>
-                                </div>
-                            </div>
-                            <div class="col-sm-6">
-                                <div class="description-block">
-                                    <i class="fab fa-internet-explorer fa-3x p-3"></i>
-                                    <h5 class="description-header font-weight-bold mb-2">
-                                        Pagina Web
-                                    </h5>
-                                    <span class="description-text">
-                                        {{ company.website }}
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+    
     {% if customer_invoice_groups %}
         <div class="row mt-4">
             <div class="col-12">
                 <div class="card shadow-sm">
-                    <div class="card-header bg-white">
-                        <h4 class="card-title mb-0">Tus facturas e interacciones por comercio</h4>
-                        <p class="mb-0 text-muted" style="font-size: 0.9rem;">Si tienes documentos con distintos comercios verás cada sección identificada por el nombre de la empresa emisora.</p>
+                    <div class="card-header bg-white d-flex flex-column flex-md-row align-items-md-center justify-content-between">
+                        <div>
+                            <h4 class="card-title mb-1">Tus facturas por comercio</h4>
+                            <p class="mb-0 text-muted" style="font-size: 0.9rem;">Organizamos tus documentos por la empresa emisora. Desde aquí puedes ver, imprimir o descargar tus comprobantes.</p>
+                        </div>
+                        <div class="mt-2 mt-md-0">
+                            <span class="badge badge-light border"><span class="text-muted">Total comercios:</span> {{ customer_invoice_groups|length }}</span>
+                        </div>
                     </div>
                     <div class="card-body">
                         {% for group in customer_invoice_groups %}
@@ -95,17 +28,19 @@
                                     <span class="badge badge-primary px-3 py-2">{{ group.invoices|length }} documento{{ group.invoices|length|pluralize }}</span>
                                 </div>
                                 <div class="table-responsive mt-3">
-                                    <table class="table table-sm table-hover mb-0">
+                                    <table class="table table-sm table-hover mb-0 align-middle">
                                         <thead class="thead-light">
                                             <tr>
                                                 <th>Comprobante</th>
                                                 <th class="text-center">Fecha</th>
                                                 <th class="text-center">Estado</th>
                                                 <th class="text-right">Total</th>
+                                                <th class="text-center" style="width: 270px;">Acciones</th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             {% for invoice in group.invoices %}
+                                                {% with sc=invoice.status %}
                                                 <tr>
                                                     <td>
                                                         <span class="font-weight-bold">{{ invoice.receipt.name }}</span><br>
@@ -113,13 +48,47 @@
                                                     </td>
                                                     <td class="text-center">{{ invoice.formatted_date_joined }}</td>
                                                     <td class="text-center">
-                                                        <span class="badge badge-secondary">{{ invoice.get_status_display }}</span>
+                                                        {% if sc == 'authorized' or sc == 'authorized_and_sent_by_email' %}
+                                                            <span class="badge badge-success">{{ invoice.get_status_display }}</span>
+                                                        {% elif sc == 'canceled' %}
+                                                            <span class="badge badge-danger">{{ invoice.get_status_display }}</span>
+                                                        {% elif sc == 'sequential_registered_error' %}
+                                                            <span class="badge badge-warning">{{ invoice.get_status_display }}</span>
+                                                        {% else %}
+                                                            <span class="badge badge-secondary">{{ invoice.get_status_display }}</span>
+                                                        {% endif %}
                                                     </td>
                                                     <td class="text-right">${{ invoice.total_amount|floatformat:2 }}</td>
+                                                    <td class="text-center">
+                                                        <div class="btn-group btn-group-sm" role="group" aria-label="Acciones">
+                                                            <!-- Ver/Imprimir PDF (Factura) -->
+                                                            <a class="btn btn-outline-primary" href="{% url 'invoice_print' code='01' pk=invoice.id %}" target="_blank" rel="noopener" title="Ver/Imprimir PDF">
+                                                                Ver PDF
+                                                            </a>
+                                                            <!-- Ticket (opcional) -->
+                                                            <a class="btn btn-outline-secondary" href="{% url 'invoice_print' code='08' pk=invoice.id %}" target="_blank" rel="noopener" title="Ver ticket">
+                                                                Ticket
+                                                            </a>
+                                                            {% if invoice.authorized_pdf %}
+                                                                <a class="btn btn-outline-success" href="{{ invoice.authorized_pdf.url }}" target="_blank" rel="noopener" title="Descargar PDF autorizado">
+                                                                    PDF Autorizado
+                                                                </a>
+                                                            {% endif %}
+                                                            {% if invoice.authorized_xml %}
+                                                                <a class="btn btn-outline-dark" href="{{ invoice.authorized_xml.url }}" target="_blank" rel="noopener" title="Descargar XML autorizado">
+                                                                    XML
+                                                                </a>
+                                                            {% endif %}
+                                                        </div>
+                                                        {% if invoice.access_code %}
+                                                            <div class="mt-1 small text-muted">Clave de acceso: <span class="font-monospace">{{ invoice.access_code }}</span></div>
+                                                        {% endif %}
+                                                    </td>
                                                 </tr>
+                                                {% endwith %}
                                             {% empty %}
                                                 <tr>
-                                                    <td colspan="4" class="text-center text-muted">Sin documentos registrados para este comercio.</td>
+                                                    <td colspan="5" class="text-center text-muted">Sin documentos registrados para este comercio.</td>
                                                 </tr>
                                             {% endfor %}
                                         </tbody>
