@@ -5,28 +5,23 @@ from core.security.form_handlers.helpers import update_form_fields_attributes
 
 
 class ProductForm(BaseModelForm):
-    """Formulario de Producto sin exponer el campo company al usuario.
-
-    La asignación de company se realiza en la vista/mixin. Este form evita
-    validaciones prematuras sobre company (puede venir null hasta form_valid).
-    """
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         update_form_fields_attributes(self, exclude_fields=['price', 'pvp', 'description'])
-        # Company ahora es obligatorio a nivel de negocio
+        # Ocultamos el campo company en el formulario (se asigna en la vista)
         if 'company' in self.fields:
-            self.fields['company'].required = True
+            self.fields['company'].widget = self.fields['company'].hidden_widget()
+            self.fields['company'].required = False
 
     class Meta:
         model = Product
-        fields = '__all__'
+        exclude = ['stock', 'barcode', 'company']
         widgets = {
             'description': forms.Textarea(attrs={'placeholder': 'Ingrese una descripción', 'rows': 3, 'cols': 3}),
             'price': forms.TextInput(),
             'pvp': forms.TextInput(),
         }
-        exclude = ['stock', 'barcode']
 
     def clean_code(self):
         code = self.cleaned_data.get('code')
@@ -35,10 +30,9 @@ class ProductForm(BaseModelForm):
         return code
 
     def save(self, commit=True):
-        # Saltamos BaseModelForm.save (que devuelve dict) y usamos directamente ModelForm
+        """Devuelve siempre la instancia del modelo (o None si inválido)."""
         if not self.is_valid():
-            # Imitar comportamiento estándar: lanzar excepción o devolver errores
-            raise ValueError('El formulario de producto no es válido antes de guardar.')
+            return None
         instance = forms.ModelForm.save(self, commit=False)
         if commit:
             instance.save()

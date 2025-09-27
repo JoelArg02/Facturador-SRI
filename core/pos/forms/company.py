@@ -47,13 +47,71 @@ class CompanyOnboardingForm(forms.ModelForm):
 
     def clean(self):
         cleaned_data = super().clean()
+        # Validación de RUC básico
+        ruc = cleaned_data.get('ruc')
+        if ruc and len(ruc) not in (10, 13):
+            raise forms.ValidationError('El RUC debe tener 10 o 13 dígitos')
+
+        # Mapear IVA desde porcentaje seleccionado
         tax_percentage = cleaned_data.get('tax_percentage')
         mapped_tax = TAX_PERCENTAGE_VALUE_MAP.get(tax_percentage)
         if mapped_tax is not None:
             cleaned_data['tax'] = Decimal(str(mapped_tax))
         else:
-            cleaned_data['tax'] = Decimal(str(cleaned_data.get('tax') or 0))
+            # Default 15% si no viene
+            cleaned_data['tax'] = Decimal(str(cleaned_data.get('tax') or 15))
+            cleaned_data['tax_percentage'] = cleaned_data.get('tax_percentage') or 15
+
+        # Defaults de entorno
+        cleaned_data['environment_type'] = 2  # Producción
+        cleaned_data['emission_type'] = 1     # Normal
+
+        # Dirección de establecimiento por defecto igual a la principal
+        if not cleaned_data.get('establishment_address'):
+            cleaned_data['establishment_address'] = cleaned_data.get('main_address', '')
+
+        # Contribuyente especial opcional (vacío por defecto)
+        if not cleaned_data.get('special_taxpayer'):
+            cleaned_data['special_taxpayer'] = ''
+
         return cleaned_data
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        # Asegurar valores por defecto de negocio
+        instance.environment_type = 2
+        instance.emission_type = 1
+
+        # Sincronizar tax con tax_percentage
+        if hasattr(instance, 'tax_percentage') and instance.tax_percentage:
+            instance.tax = Decimal(str(instance.tax_percentage))
+        else:
+            instance.tax = Decimal('15')
+            if hasattr(instance, 'tax_percentage'):
+                instance.tax_percentage = 15
+
+        # Códigos por defecto
+        if not getattr(instance, 'establishment_code', None):
+            instance.establishment_code = '001'
+        if not getattr(instance, 'issuing_point_code', None):
+            instance.issuing_point_code = '001'
+
+        # Dirección de establecimiento fallback
+        if not getattr(instance, 'establishment_address', None):
+            instance.establishment_address = getattr(instance, 'main_address', '')
+
+        # Contribuyente especial vacío por defecto
+        instance.special_taxpayer = instance.special_taxpayer or ''
+
+        # Campos opcionales
+        if not getattr(instance, 'website', None):
+            instance.website = ''
+        if hasattr(instance, 'electronic_signature_key') and not instance.electronic_signature_key:
+            instance.electronic_signature_key = ''
+
+        if commit:
+            instance.save()
+        return instance
 
     class Meta:
         model = Company
