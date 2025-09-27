@@ -110,9 +110,13 @@ class AutoAssignCompanyMixin:
         company = self.get_company()
         field_name = self.company_field
         if field_name in form.fields:
-            # Ocultar y limpiar required: se setea en form_valid
-            form.fields[field_name].widget = form.fields[field_name].hidden_widget()
-            form.fields[field_name].required = False
+            # Para superusuarios: mostrar campo y hacerlo requerido para evitar company nulo
+            if getattr(self.request.user, 'is_superuser', False):
+                form.fields[field_name].required = True
+            else:
+                # Usuarios normales: ocultar y no requerir, se autoasigna
+                form.fields[field_name].widget = form.fields[field_name].hidden_widget()
+                form.fields[field_name].required = False
         # Asignación temprana (por si se usa form.save(commit=False) fuera de form_valid)
         if company and hasattr(form.instance, field_name) and getattr(form.instance, field_name) is None:
             setattr(form.instance, field_name, company)

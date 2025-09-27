@@ -211,6 +211,25 @@ class ProviderForm(forms.ModelForm):
         model = Provider
         fields = '__all__'
 
+    def clean(self):
+        cleaned = super().clean()
+        company = cleaned.get('company')
+        try:
+            request = get_current_request()
+        except Exception:
+            request = None
+
+        # Si no hay compañía en el form, intentar tomarla del request para usuarios no superadmin
+        if company is None and request is not None and not getattr(getattr(request, 'user', None), 'is_superuser', False):
+            company = getattr(request, 'company', None) or getattr(getattr(request, 'user', None), 'company', None)
+            if company is not None:
+                cleaned['company'] = company
+
+        # Si sigue sin compañía, exigir selección (especialmente para super admin)
+        if cleaned.get('company') is None:
+            self.add_error('company', 'Debe seleccionar la compañía.')
+        return cleaned
+
     def save(self, commit=True):
         """Guarda y asegura que la compañía sea la del usuario logueado si no se envía en el form.
 
@@ -232,6 +251,11 @@ class ProviderForm(forms.ModelForm):
                     instance.company = company
         except Exception:
             pass
+
+        # Validación final: no permitir guardar un proveedor sin compañía
+        if getattr(instance, 'company', None) is None:
+            data['error'] = {'company': ['Debe seleccionar la compañía.']}
+            return data
 
         if commit:
             instance.save()
