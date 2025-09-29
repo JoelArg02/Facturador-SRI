@@ -15,6 +15,11 @@ class UserAccessListView(GroupPermissionMixin, ListView):
     template_name = 'user_access/list.html'
     permission_required = 'view_user_access'
 
+    def get_queryset(self):
+        # Aunque la tabla se carga por AJAX (post), restringimos también el queryset de GET
+        # para mantener consistencia y seguridad.
+        return super().get_queryset().filter(user=self.request.user)
+
     def post(self, request, *args, **kwargs):
         data = {}
         action = request.POST['action']
@@ -23,7 +28,8 @@ class UserAccessListView(GroupPermissionMixin, ListView):
                 data = []
                 start_date = request.POST['start_date']
                 end_date = request.POST['end_date']
-                filters = Q()
+                # Siempre filtrar por el usuario autenticado
+                filters = Q(user=request.user)
                 if len(start_date) and len(end_date):
                     filters &= Q(date_joined__range=[start_date, end_date])
                 for i in self.model.objects.filter(filters):
@@ -46,6 +52,10 @@ class UserAccessDeleteView(GroupPermissionMixin, DeleteView):
     template_name = 'delete.html'
     success_url = reverse_lazy('user_access_list')
     permission_required = 'delete_user_access'
+
+    def get_queryset(self):
+        # Solo permitir eliminar accesos propios
+        return super().get_queryset().filter(user=self.request.user)
 
     def post(self, request, *args, **kwargs):
         data = {}
