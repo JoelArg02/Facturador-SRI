@@ -16,6 +16,7 @@ from .steps import (
     seed_default_plans,
     ensure_owner_subscription,
     backfill_company_relations,
+    prune_modules_after_seed,
     maybe_start_dev_server,
 )
 
@@ -35,5 +36,6 @@ __all__ = [
     "seed_default_plans",
     "ensure_owner_subscription",
     "backfill_company_relations",
+    "prune_modules_after_seed",
     "maybe_start_dev_server",
 ]

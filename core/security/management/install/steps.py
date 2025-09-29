@@ -395,3 +395,66 @@ def maybe_start_dev_server(ctx: InstallationContext) -> None:
         call_command('runserver', f'{host}:{port}')
     except Exception as exc:  # pragma: no cover - output útil
         ctx.stdout.write(ctx.style.ERROR(f'No se pudo iniciar el servidor: {exc}'))
+
+
+def prune_modules_after_seed(ctx: InstallationContext) -> None:
+    """Remueve módulos no deseados de los grupos (excepto Super Administrador).
+
+    - Quita TODO el módulo tipo "Administrativo" de todos los grupos que no sean Super Administrador.
+    - Quita explícitamente los módulos "Cuentas por cobrar" y "Cuentas por pagar" (y sus reportes homónimos)
+      de todos los grupos que no sean Super Administrador, por si estuvieran fuera del tipo Administrativo.
+
+    Nota: No borra los módulos de la BD; solo los desasigna de los grupos y retira sus permisos del grupo.
+    Si quieres eliminarlos por completo, puedes extender este paso para `module.delete()`.
+    """
+    try:
+        super_admin_name = 'Super Administrador'
+
+        # Identificar grupos
+        all_groups = list(Group.objects.all())
+        super_admin_group = next((g for g in all_groups if g.name == super_admin_name), None)
+        target_groups = [g for g in all_groups if g != super_admin_group]
+
+        # Identificar módulos a podar
+        admin_type = ModuleType.objects.filter(name='Administrativo').first()
+        modules_to_prune = set()
+
+        # Todo tipo Administrativo
+        if admin_type:
+            for m in Module.objects.filter(module_type=admin_type):
+                modules_to_prune.add(m)
+
+        # Módulos específicos (en cualquier tipo), incluyendo reportes
+        explicit_names = {
+            'Cuentas por cobrar',
+            'Cuentas por pagar',
+            'Cuentas por Cobrar',
+            'Cuentas por Pagar',
+        }
+        for m in Module.objects.filter(name__in=explicit_names):
+            modules_to_prune.add(m)
+
+        if not modules_to_prune:
+            ctx.stdout.write('No se encontraron módulos para podar (Administrativo / CxC / CxP).')
+            return
+
+        # Desasociar de grupos objetivo y retirar permisos
+        removed_links = 0
+        removed_perms = 0
+        for group in target_groups:
+            for module in modules_to_prune:
+                # Quitar relación GroupModule
+                removed_links += GroupModule.objects.filter(group=group, module=module).delete()[0]
+                # Quitar permisos de ese módulo del grupo
+                perms = list(module.permissions.all())
+                if perms:
+                    for perm in perms:
+                        if group.permissions.filter(id=perm.id).exists():
+                            group.permissions.remove(perm)
+                            removed_perms += 1
+
+        ctx.stdout.write(ctx.style.SUCCESS(
+            f'Poda de módulos completada: relaciones removidas={removed_links}, permisos retirados={removed_perms}'
+        ))
+    except Exception as exc:  # pragma: no cover - salida útil en instalación
+        ctx.stdout.write(ctx.style.WARNING(f'Poda de módulos omitida por error: {exc}'))

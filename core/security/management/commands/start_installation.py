@@ -20,6 +20,7 @@ from core.security.management.install import (
     ensure_company_admin_module,
     generate_initial_migrations,
     maybe_start_dev_server,
+    prune_modules_after_seed,
     reset_database,
     seed_default_plans,
     seed_modules_from_json,
@@ -142,6 +143,9 @@ class Command(BaseCommand):
         seed_default_plans(ctx)
         ensure_owner_subscription(ctx)
         backfill_company_relations(ctx)
+
+        # Podar módulos no deseados para usuarios que no son Super Administrador
+        prune_modules_after_seed(ctx)
 
         self.stdout.write(self.style.SUCCESS('Instalación completa (reinicio + migraciones + seed).'))
 
