@@ -11,6 +11,7 @@ class SubscriptionRequiredMiddleware(MiddlewareMixin):
 
     EXEMPT_PREFIXES = (
         '/static', '/media', '/admin', '/login', '/logout', '/subscription/logout',
+        '/subscription/plan',  # listar planes debe ser accesible
         '/pos/company/onboarding',
     )
     EXEMPT_URL_NAMES = {
@@ -59,7 +60,15 @@ class SubscriptionRequiredMiddleware(MiddlewareMixin):
         except Exception:
             pass
 
-        active_subscription = get_active_subscription(user)
+        # Determinar suscripción activa a nivel de compañía si aplica
+        try:
+            company = getattr(user, 'company', None)
+        except Exception:
+            company = None
+
+        # Si el usuario pertenece a una compañía, validar la suscripción del propietario
+        # de esa compañía (admin/owner). Caso contrario, validar directamente la del usuario.
+        active_subscription = get_active_subscription(company or user)
 
         if not active_subscription:
             try:
