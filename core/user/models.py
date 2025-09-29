@@ -53,7 +53,30 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     @property
     def is_customer(self):
-        return hasattr(self, 'customer')
+        # Ahora el usuario puede tener varios Customer por compañía
+        return self.customers.exists()
+
+    @property
+    def customer(self):
+        """Compatibilidad con código previo que asumía una relación OneToOne.
+        Devuelve el Customer asociado a la compañía del request actual o, si no hay request,
+        intenta con el campo company del usuario. Si hay múltiples resultados, retorna el primero.
+        """
+        try:
+            request = get_current_request()
+        except Exception:
+            request = None
+
+        company = None
+        if request is not None:
+            company = getattr(request, 'company', None)
+        if company is None:
+            company = getattr(self, 'company', None)
+
+        qs = self.customers.all()
+        if company is not None:
+            qs = qs.filter(company=company)
+        return qs.first()
 
     def get_full_name(self):
         return self.names

@@ -1,9 +1,22 @@
 from django import forms
+from django.db.models import Q
 from core.pos.models import Customer
 from core.user.models import User
 from core.security.form_handlers.helpers import update_form_fields_attributes
 
 class CustomerForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        # Permitir pasar la compañía para validaciones de unicidad por tenant
+        self.company = kwargs.pop('company', None)
+        super().__init__(*args, **kwargs)
+        update_form_fields_attributes(self)
+        if self.instance and self.instance.pk:
+            if self.instance.ruc:
+                self.fields['dni'].initial = self.instance.ruc
+            elif self.instance.dni:
+                self.fields['dni'].initial = self.instance.dni
+        if 'credit_limit' in self.fields:
+            self.fields['credit_limit'].widget.attrs['step'] = '0.01'
     dni = forms.CharField(label='Identificación', required=True, widget=forms.TextInput(attrs={
         'placeholder': 'Ingrese Cédula (10) o RUC (13)',
         'maxlength': '13'
@@ -20,16 +33,7 @@ class CustomerForm(forms.ModelForm):
             'address': forms.Textarea(attrs={'rows': 2}),
         }
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        update_form_fields_attributes(self)
-        if self.instance and self.instance.pk:
-            if self.instance.ruc:
-                self.fields['dni'].initial = self.instance.ruc
-            elif self.instance.dni:
-                self.fields['dni'].initial = self.instance.dni
-        if 'credit_limit' in self.fields:
-            self.fields['credit_limit'].widget.attrs['step'] = '0.01'
+    
 
     def clean_dni(self):
         value = (self.cleaned_data.get('dni') or '').strip()
@@ -44,14 +48,18 @@ class CustomerForm(forms.ModelForm):
         value = cleaned.get('dni')
         if not value:
             return cleaned
+        # Restringir por compañía si está disponible
+        company_filter = Q()
+        if self.company is not None:
+            company_filter &= Q(company=self.company)
         if len(value) == 10:
-            qs = Customer.objects.filter(dni=value)
+            qs = Customer.objects.filter(company_filter, dni=value)
             if self.instance.pk:
                 qs = qs.exclude(pk=self.instance.pk)
             if qs.exists():
                 self.add_error('dni', 'Ya existe un cliente con esa cédula.')
         elif len(value) == 13:
-            qs = Customer.objects.filter(ruc=value)
+            qs = Customer.objects.filter(company_filter, ruc=value)
             if self.instance.pk:
                 qs = qs.exclude(pk=self.instance.pk)
             if qs.exists():

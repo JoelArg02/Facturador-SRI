@@ -195,13 +195,39 @@ class CustomerCreateView(GroupPermissionMixin, CreateView):
                 else:
                     with transaction.atomic():
                         form1 = self.get_form_user()
-                        form2 = self.get_form()
+                        # Pasar compañía al formulario para validación de unicidad por tenant
+                        form2 = self.get_form(form_class=None)
+                        form2 = self.form_class(self.request.POST, company=getattr(request, 'company', None))
                         if form1.is_valid() and form2.is_valid():
-                            try:
-                                user, raw_password = self.create_customer_user(form1, form2.cleaned_data['dni'])
-                            except Exception as e:
-                                data['error'] = f'Error creando usuario cliente: {e}'
-                                raise
+                            raw_password = None
+                            # Reutilizar usuario si ya existe por username (dni/ruc)
+                            from core.user.models import User
+                            username = form2.cleaned_data['dni']
+                            user = User.objects.filter(username=username).first()
+                            user_is_new = False
+                            if not user:
+                                try:
+                                    user, raw_password = self.create_customer_user(form1, username)
+                                    user_is_new = True
+                                except Exception as e:
+                                    data['error'] = f'Error creando usuario cliente: {e}'
+                                    raise
+                            else:
+                                # Actualizar nombres e imagen si se proporcionan, pero no cambiar contraseña ni privilegios
+                                temp_user = form1.save(commit=False)
+                                if temp_user.names:
+                                    user.names = temp_user.names
+                                if temp_user.image:
+                                    user.image = temp_user.image
+                                if temp_user.email:
+                                    user.email = temp_user.email
+                                user.is_superuser = False
+                                user.is_staff = False
+                                user.save(update_fields=['names', 'image', 'email', 'is_superuser', 'is_staff'])
+                                try:
+                                    user.groups.set([get_customer_group()])
+                                except Exception:
+                                    pass
                             # Crear Customer
                             form_customer = form2.save(commit=False)
                             form_customer.user = user
@@ -212,8 +238,9 @@ class CustomerCreateView(GroupPermissionMixin, CreateView):
                                 raise Exception('No company associated')
                             form_customer.save()
                             data = form_customer.as_dict()
-                            # Enviar email
-                            self.send_credentials_email(user, raw_password)
+                            # Enviar email solo si es un usuario recién creado
+                            if user_is_new and raw_password:
+                                self.send_credentials_email(user, raw_password)
                         else:
                             invalids = {}
                             if not form1.is_valid():
@@ -224,8 +251,17 @@ class CustomerCreateView(GroupPermissionMixin, CreateView):
             elif action == 'validate_data':
                 field = request.POST['field']
                 filters = Q()
+                # Restringir por compañía actual
+                filters &= Q(company=getattr(request, 'company', None))
                 if field == 'dni':
-                    filters &= Q(dni__iexact=request.POST['dni'])
+                    ident = request.POST['dni']
+                    if len(ident) == 10:
+                        filters &= Q(dni__iexact=ident)
+                    elif len(ident) == 13:
+                        filters &= Q(ruc__iexact=ident)
+                    else:
+                        data['valid'] = False
+                        return HttpResponse(json.dumps(data), content_type='application/json')
                 data['valid'] = not self.model.objects.filter(filters).exists() if filters.children else True
             elif action == 'search_ruc_in_sri':
                 data = SRI().search_ruc_in_sri(ruc=request.POST['dni'])
@@ -277,7 +313,7 @@ class CustomerUpdateView(GroupPermissionMixin, UpdateView):
             if action == 'edit':
                 with transaction.atomic():
                     form1 = self.get_form_user()
-                    form2 = self.get_form()
+                    form2 = self.form_class(self.request.POST, instance=self.get_object(), company=getattr(request, 'company', None))
                     if form1.is_valid() and form2.is_valid():
                         user = form1.save(commit=False)
                         # Asegurar que no se eleve privilegios por edición
@@ -300,8 +336,16 @@ class CustomerUpdateView(GroupPermissionMixin, UpdateView):
             elif action == 'validate_data':
                 field = request.POST['field']
                 filters = Q()
+                filters &= Q(company=getattr(request, 'company', None))
                 if field == 'dni':
-                    filters &= Q(dni__iexact=request.POST['dni'])
+                    ident = request.POST['dni']
+                    if len(ident) == 10:
+                        filters &= Q(dni__iexact=ident)
+                    elif len(ident) == 13:
+                        filters &= Q(ruc__iexact=ident)
+                    else:
+                        data['valid'] = False
+                        return HttpResponse(json.dumps(data), content_type='application/json')
                 data['valid'] = not self.model.objects.filter(filters).exclude(id=self.object.id).exists() if filters.children else True
             elif action == 'search_ruc_in_sri':
                 data = SRI().search_ruc_in_sri(ruc=request.POST['dni'])
@@ -355,7 +399,8 @@ class CustomerUpdateProfileView(GroupModuleMixin, UpdateView):
         return self.request.user.customer
 
     def get_form(self, form_class=None):
-        form = super().get_form(form_class)
+        # Pasar compañía al formulario para validaciones
+        form = self.form_class(instance=self.get_object(), company=getattr(self.request, 'company', None))
         # Campos deshabilitados únicamente: dni (identificador principal)
         for field in ['dni']:
             if field in form.fields:
@@ -379,7 +424,7 @@ class CustomerUpdateProfileView(GroupModuleMixin, UpdateView):
             if action == 'edit':
                 with transaction.atomic():
                     form1 = self.get_form_user()
-                    form2 = self.get_form()
+                    form2 = self.form_class(self.request.POST, instance=self.get_object(), company=getattr(request, 'company', None))
                     if form1.is_valid() and form2.is_valid():
                         user = form1.save(commit=False)
                         user.save()
@@ -394,8 +439,16 @@ class CustomerUpdateProfileView(GroupModuleMixin, UpdateView):
             elif action == 'validate_data':
                 field = request.POST['field']
                 filters = Q()
+                filters &= Q(company=getattr(request, 'company', None))
                 if field == 'dni':
-                    filters &= Q(dni__iexact=request.POST['dni'])
+                    ident = request.POST['dni']
+                    if len(ident) == 10:
+                        filters &= Q(dni__iexact=ident)
+                    elif len(ident) == 13:
+                        filters &= Q(ruc__iexact=ident)
+                    else:
+                        data['valid'] = False
+                        return HttpResponse(json.dumps(data), content_type='application/json')
                 data['valid'] = not self.model.objects.filter(filters).exclude(id=self.object.id).exists() if filters.children else True
             else:
                 data['error'] = 'No ha seleccionado ninguna opción'

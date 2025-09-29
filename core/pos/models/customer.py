@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models import Q, UniqueConstraint
 from django.forms import model_to_dict
 
 from core.pos.choices import IDENTIFICATION_TYPE
@@ -7,9 +8,11 @@ from core.user.models import User
 
 class Customer(models.Model):
     company = models.ForeignKey('pos.Company', null=True, blank=True, related_name='customers', on_delete=models.CASCADE, verbose_name='Compañía')
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
-    dni = models.CharField(max_length=10, null=True, blank=True, unique=True, verbose_name='Cédula')
-    ruc = models.CharField(max_length=13, null=True, blank=True, unique=True, verbose_name='RUC')
+    # Permitir que un mismo usuario sea cliente de múltiples compañías
+    user = models.ForeignKey(User, related_name='customers', on_delete=models.CASCADE)
+    # La unicidad se manejará a nivel de (company, dni) y (company, ruc)
+    dni = models.CharField(max_length=10, null=True, blank=True, verbose_name='Cédula')
+    ruc = models.CharField(max_length=13, null=True, blank=True, verbose_name='RUC')
     mobile = models.CharField(max_length=10, null=True, blank=True, help_text='Ingrese un teléfono', verbose_name='Teléfono')
     address = models.CharField(max_length=500, null=True, blank=True, help_text='Ingrese una dirección', verbose_name='Dirección')
     business_name = models.CharField(max_length=250, null=True, blank=True, verbose_name='Razón Social')
@@ -65,3 +68,15 @@ class Customer(models.Model):
     class Meta:
         verbose_name = 'Cliente'
         verbose_name_plural = 'Clientes'
+        constraints = [
+            UniqueConstraint(
+                fields=['company', 'dni'],
+                name='unique_customer_dni_per_company',
+                condition=Q(dni__isnull=False) & ~Q(dni='')
+            ),
+            UniqueConstraint(
+                fields=['company', 'ruc'],
+                name='unique_customer_ruc_per_company',
+                condition=Q(ruc__isnull=False) & ~Q(ruc='')
+            ),
+        ]
