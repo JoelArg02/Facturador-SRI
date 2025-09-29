@@ -1,5 +1,6 @@
 from django import forms
-from core.pos.models import Product
+from crum import get_current_request
+from core.pos.models import Product, Category
 from core.security.form_handlers.base import BaseModelForm
 from core.security.form_handlers.helpers import update_form_fields_attributes
 
@@ -9,7 +10,25 @@ class ProductForm(BaseModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         update_form_fields_attributes(self, exclude_fields=['price', 'pvp', 'description'])
-        # Ocultamos el campo company en el formulario (se asigna en la vista)
+        try:
+            request = get_current_request()
+            user = getattr(request, 'user', None)
+            is_superuser = getattr(user, 'is_superuser', False)
+            current_company = (
+                getattr(request, 'company', None)
+                or getattr(getattr(request, 'user', None), 'company', None)
+                or getattr(self.instance, 'company', None)
+            )
+            if 'category' in self.fields:
+                if not is_superuser:
+                    if current_company:
+                        self.fields['category'].queryset = Category.objects.filter(company=current_company)
+                    else:
+                        self.fields['category'].queryset = Category.objects.none()
+                else:
+                    self.fields['category'].queryset = Category.objects.all()
+        except Exception:
+            pass
         if 'company' in self.fields:
             self.fields['company'].widget = self.fields['company'].hidden_widget()
             self.fields['company'].required = False
