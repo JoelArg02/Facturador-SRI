@@ -44,6 +44,11 @@ class ActiveCompanyMiddleware(MiddlewareMixin):
             onboarding_url = reverse('company_onboarding')
         except Exception:
             onboarding_url = None
+        # Permitir explícitamente la edición propia de empresa sin forzar onboarding
+        try:
+            my_company_url = reverse('my_company_edit')
+        except Exception:
+            my_company_url = None
 
         user_company = getattr(user, 'company', None)
         needs_onboarding = (
@@ -52,7 +57,7 @@ class ActiveCompanyMiddleware(MiddlewareMixin):
             and not user_company
         )
 
-        if needs_onboarding and request.path != onboarding_url:
+        if needs_onboarding and request.path not in (onboarding_url, my_company_url):
             return redirect(onboarding_url)
 
         if not hasattr(request, 'company'):

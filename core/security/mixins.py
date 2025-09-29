@@ -37,36 +37,46 @@ class GroupPermissionMixin(BaseGroupMixin):
         return list(self.permission_required or [])
 
     def get(self, request, *args, **kwargs):
+        print('[GroupPermissionMixin] START get')
         group = self.get_user_group(request)
         if not group:
+            print('[GroupPermissionMixin] No group in session → redirect LOGIN_REDIRECT_URL')
             return HttpResponseRedirect(settings.LOGIN_REDIRECT_URL)
 
         permissions = self.get_permissions()
         if not permissions:
+            print('[GroupPermissionMixin] No permissions required → allow')
             return super().get(request, *args, **kwargs)
 
+        print(f"[GroupPermissionMixin] required={permissions}")
         group_permissions = group.permissions.filter(codename__in=permissions)
         if group_permissions.count() == len(permissions):
             group_module = group.groupmodule_set.filter(module__permissions__codename=permissions[0]).first()
             self.set_module_in_session(request, group_module)
+            print('[GroupPermissionMixin] Permission granted')
             return super().get(request, *args, **kwargs)
 
         messages.error(request, 'No tienes los permisos necesarios para acceder a esta sección')
+        print('[GroupPermissionMixin] Permission denied → redirect last_url')
         return HttpResponseRedirect(self.get_last_url())
 
 
 class GroupModuleMixin(BaseGroupMixin):
     def get(self, request, *args, **kwargs):
+        print('[GroupModuleMixin] START get')
         group = self.get_user_group(request)
         if not group:
+            print('[GroupModuleMixin] No group in session → redirect LOGIN_REDIRECT_URL')
             return HttpResponseRedirect(settings.LOGIN_REDIRECT_URL)
 
         group_module = group.groupmodule_set.filter(module__url=request.path).first()
         if group_module:
             self.set_module_in_session(request, group_module)
+            print('[GroupModuleMixin] Module allowed')
             return super().get(request, *args, **kwargs)
 
         messages.error(request, 'No tienes los permisos necesarios para acceder a esta sección')
+        print('[GroupModuleMixin] Module denied → redirect last_url')
         return HttpResponseRedirect(self.get_last_url())
 
 

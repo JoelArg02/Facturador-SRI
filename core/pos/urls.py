@@ -21,6 +21,8 @@ urlpatterns = [
     # company
     path('company/onboarding/', CompanyOnboardingView.as_view(), name='company_onboarding'),
     path('company/update/', CompanyUpdateView.as_view(), name='company_update'),
+    path('company/self/', CompanySelfUpdateView.as_view(), name='company_self_update'),
+    path('company/owner/edit/', CompanyOwnerEditView.as_view(), name='company_owner_edit'),
     # provider
     path('provider/', ProviderListView.as_view(), name='provider_list'),
     path('provider/add/', ProviderCreateView.as_view(), name='provider_create'),

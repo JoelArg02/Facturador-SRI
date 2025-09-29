@@ -1,0 +1,104 @@
+{% extends 'form.html' %}
+{% load static %}
+{% block assets_form %}
+    <script src="{% static 'lib/select2-4.0.13/js/select2.min.js' %}"></script>
+    <script src="{% static 'lib/select2-4.0.13/js/i18n/es.js' %}"></script>
+    <link rel="stylesheet" href="{% static 'lib/select2-4.0.13/css/select2.min.css' %}">
+    <link rel="stylesheet" href="{% static 'lib/select2-4.0.13/css/select2-bootstrap4.min.css' %}">
+{% endblock %}
+
+{% block form_fields %}
+    <div class="row">
+        <div class="col-md-6">
+            {{ form.ruc.label_tag }}{{ form.ruc }}
+        </div>
+        <div class="col-md-6">
+            {{ form.company_name.label_tag }}{{ form.company_name }}
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-6">
+            {{ form.commercial_name.label_tag }}{{ form.commercial_name }}
+        </div>
+        <div class="col-md-6">
+            {{ form.image.label_tag }}{{ form.image }}
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-6">
+            {{ form.main_address.label_tag }}{{ form.main_address }}
+        </div>
+        <div class="col-md-6">
+            {{ form.establishment_address.label_tag }}{{ form.establishment_address }}
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-6">
+            {{ form.establishment_code.label_tag }}{{ form.establishment_code }}
+        </div>
+        <div class="col-md-6">
+            {{ form.issuing_point_code.label_tag }}{{ form.issuing_point_code }}
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-6">
+            {{ form.special_taxpayer.label_tag }}{{ form.special_taxpayer }}
+        </div>
+        <div class="col-md-6">
+            {{ form.obligated_accounting.label_tag }}{{ form.obligated_accounting }}
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-6">
+            {{ form.environment_type.label_tag }}{{ form.environment_type }}
+        </div>
+        <div class="col-md-6">
+            {{ form.emission_type.label_tag }}{{ form.emission_type }}
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-6">
+            {{ form.retention_agent.label_tag }}{{ form.retention_agent }}
+        </div>
+        <div class="col-md-6">
+            {{ form.regimen_rimpe.label_tag }}{{ form.regimen_rimpe }}
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-6">
+            {{ form.mobile.label_tag }}{{ form.mobile }}
+        </div>
+        <div class="col-md-6">
+            {{ form.phone.label_tag }}{{ form.phone }}
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-6">
+            {{ form.email.label_tag }}{{ form.email }}
+        </div>
+        <div class="col-md-6">
+            {{ form.website.label_tag }}{{ form.website }}
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            {{ form.description.label_tag }}{{ form.description }}
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-6">
+            {{ form.tax_percentage.label_tag }}{{ form.tax_percentage }}
+        </div>
+        <div class="col-md-6">
+            {{ form.tax.label_tag }}{{ form.tax }}
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-6">
+            {{ form.electronic_signature.label_tag }}{{ form.electronic_signature }}
+        </div>
+        <div class="col-md-6">
+            {{ form.electronic_signature_key.label_tag }}{{ form.electronic_signature_key }}
+        </div>
+    </div>
+{% endblock %}

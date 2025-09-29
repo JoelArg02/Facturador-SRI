@@ -82,6 +82,14 @@
                         <p class="text-sm">Último acceso</p>
                         <p class="text-sm text-muted">{{ request.user.last_login }}</p>
                     </a>
+                
+                        {% if request.user.owned_company %}
+                            <div class="dropdown-divider"></div>
+                            <a class="dropdown-item" href="/user/mi-empresa/">
+                                <i class="fas fa-building"></i> Mi empresa
+                            </a>
+                        {% endif %}
+                
                 </div>
             </li>
             {% if request.user.has_at_least_one_group %}
