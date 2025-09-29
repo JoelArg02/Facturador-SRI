@@ -9,4 +9,5 @@ urlpatterns = [
     path('update/password/', UserUpdatePasswordView.as_view(), name='user_update_password'),
     path('update/profile/', UserUpdateProfileView.as_view(), name='user_update_profile'),
     path('choose/profile/<int:pk>/', UserChooseProfileView.as_view(), name='user_choose_profile'),
+    path('ui/toggle-layout/', toggle_layout, name='ui_toggle_layout'),
 ]

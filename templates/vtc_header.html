@@ -9,6 +9,19 @@
         </li>
     </ul>
     <ul class="navbar-nav ml-auto">
+        <li class="nav-item">
+            <form method="post" action="{% url 'ui_toggle_layout' %}" class="d-inline">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ request.get_full_path }}"/>
+                <button type="submit" class="btn btn-sm btn-outline-light" title="Cambiar layout (vertical/horizontal)">
+                    {% if request.user.is_authenticated and request.user.layout == 1 %}
+                        <i class="fas fa-arrows-left-right"></i> Horizontal
+                    {% else %}
+                        <i class="fas fa-arrows-up-down"></i> Vertical
+                    {% endif %}
+                </button>
+            </form>
+        </li>
         <li class="nav-item dropdown">
             <a class="nav-link" data-toggle="dropdown" aria-expanded="false">
                 <i class="far fa-user"></i> Usuario: {{ request.user.username }}

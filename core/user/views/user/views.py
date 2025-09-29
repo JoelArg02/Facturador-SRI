@@ -9,6 +9,10 @@ from django.forms import model_to_dict
 from django.http import HttpResponseRedirect, HttpResponse
 from django.urls import reverse_lazy
 from django.views.generic import CreateView, UpdateView, DeleteView, ListView, FormView, View
+from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import require_POST
+from django.shortcuts import redirect
+from core.security.choices import LAYOUT_OPTIONS
 
 from config import settings
 from core.login.forms import UpdatePasswordForm
@@ -252,3 +256,24 @@ class UserChooseProfileView(LoginRequiredMixin, View):
         except:
             pass
         return HttpResponseRedirect(settings.LOGIN_REDIRECT_URL)
+
+
+@login_required
+@require_POST
+def toggle_layout(request):
+    """Alterna el layout del usuario entre Vertical (1) y Horizontal (2) y lo persiste en BD.
+
+    Además, mantiene una señal en sesión opcional 'layout_mode' para clases CSS adicionales si fuese necesario.
+    """
+    user = request.user
+    try:
+        current = getattr(user, 'layout', LAYOUT_OPTIONS[0][0])
+        vertical = LAYOUT_OPTIONS[0][0]
+        horizontal = LAYOUT_OPTIONS[1][0]
+        user.layout = horizontal if current == vertical else vertical
+        user.save(update_fields=['layout'])
+        request.session['layout_mode'] = 'horizontal' if user.layout == horizontal else 'vertical'
+    except Exception:
+        pass
+    next_url = request.POST.get('next') or request.META.get('HTTP_REFERER') or settings.LOGIN_REDIRECT_URL
+    return redirect(next_url)
