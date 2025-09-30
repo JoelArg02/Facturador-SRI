@@ -165,8 +165,10 @@ class CustomerCreateView(GroupPermissionMixin, CreateView):
             pass
 
     def create_customer_user(self, form_user, customer_dni):
-        raw_password = self.generate_password()
+        # Usar como contraseña inicial la misma cédula/RUC (username).
+        # Si por alguna razón viniera vacío, usar un fallback aleatorio.
         temp_user = form_user.save(commit=False)
+        raw_password = (customer_dni or '').strip() or self.generate_password()
         from core.user.models import User  # import local para evitar ciclos
         user = User.objects.create_user(username=customer_dni, email=temp_user.email, password=raw_password)
         user.names = temp_user.names

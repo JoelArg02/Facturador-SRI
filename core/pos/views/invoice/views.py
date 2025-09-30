@@ -121,7 +121,11 @@ class InvoiceListView(GroupPermissionMixin, CompanyQuerysetMixin, ListView):
         context = super().get_context_data(**kwargs)
         context['title'] = f'Listado de {self.model._meta.verbose_name_plural}'
         context['create_url'] = reverse_lazy('invoice_create_admin')
-        context['form'] = ReportForm()
+        # Pasar company para que los filtros de comprobantes/productos se limiten a la empresa actual
+        try:
+            context['form'] = ReportForm(company=self.get_company())
+        except Exception:
+            context['form'] = ReportForm()
         return context
 
 

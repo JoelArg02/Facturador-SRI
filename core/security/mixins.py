@@ -85,7 +85,12 @@ class CompanyQuerysetMixin:
     company_field = 'company'
 
     def get_company(self):
-        return getattr(self.request, 'company', None)
+        company = getattr(self.request, 'company', None)
+        if company is None:
+            user = getattr(self.request, 'user', None)
+            if user is not None:
+                company = getattr(user, 'company', None)
+        return company
 
     def get_queryset(self):
         qs = super().get_queryset()

@@ -19,6 +19,7 @@ class ReceiptListView(GroupPermissionMixin, CompanyQuerysetMixin, ListView):
         try:
             if action == 'search':
                 data = []
+                # CompanyQuerysetMixin.get_queryset() ya filtra por company
                 for i in self.get_queryset():
                     data.append(i.as_dict())
             else:
