@@ -226,11 +226,17 @@ class InvoiceCreateView(AutoAssignCompanyMixin, GroupPermissionMixin, CompanyQue
                 product_id = json.loads(request.POST['product_id'])
                 data = []
                 term = request.POST['term']
-                filters = Q(Q(stock__gt=0) | Q(is_inventoried=False))
+                # Filtrar por compañía del request si existe
+                company = getattr(request, 'company', None)
+                base_qs = Product.objects.all()
+                if company:
+                    base_qs = base_qs.filter(company=company)
+                # No limitar por stock aquí; la UI ya evita agregar con stock 0 si es inventariado
+                filters = Q()
                 if len(term):
                     filters &= Q(Q(name__icontains=term) | Q(code__icontains=term))
-                queryset = Product.objects.filter(filters).exclude(id__in=product_id).order_by('name')
-                if not filters.children:
+                queryset = base_qs.filter(filters).exclude(id__in=product_id).order_by('name')
+                if not len(term):
                     queryset = queryset[0:10]
                 for i in queryset:
                     item = i.as_dict()
@@ -240,7 +246,11 @@ class InvoiceCreateView(AutoAssignCompanyMixin, GroupPermissionMixin, CompanyQue
             elif action == 'search_product_code':
                 code = request.POST['code']
                 if len(code):
-                    product = Product.objects.filter(code=code).first()
+                    company = getattr(request, 'company', None)
+                    base_qs = Product.objects.all()
+                    if company:
+                        base_qs = base_qs.filter(company=company)
+                    product = base_qs.filter(code=code).first()
                     if product:
                         data = product.as_dict()
                         data['discount'] = 0.00
@@ -374,11 +384,15 @@ class InvoiceUpdateView(AutoAssignCompanyMixin, GroupPermissionMixin, CompanyQue
                 product_id = json.loads(request.POST['product_id'])
                 data = []
                 term = request.POST['term']
-                filters = Q(Q(stock__gt=0) | Q(is_inventoried=False))
+                company = getattr(request, 'company', None)
+                base_qs = Product.objects.all()
+                if company:
+                    base_qs = base_qs.filter(company=company)
+                filters = Q()
                 if len(term):
                     filters &= Q(Q(name__icontains=term) | Q(code__icontains=term))
-                queryset = Product.objects.filter(filters).exclude(id__in=product_id).order_by('name')
-                if not filters.children:
+                queryset = base_qs.filter(filters).exclude(id__in=product_id).order_by('name')
+                if not len(term):
                     queryset = queryset[0:10]
                 for i in queryset:
                     item = i.as_dict()
@@ -388,7 +402,11 @@ class InvoiceUpdateView(AutoAssignCompanyMixin, GroupPermissionMixin, CompanyQue
             elif action == 'search_product_code':
                 code = request.POST['code']
                 if len(code):
-                    product = Product.objects.filter(code=code).first()
+                    company = getattr(request, 'company', None)
+                    base_qs = Product.objects.all()
+                    if company:
+                        base_qs = base_qs.filter(company=company)
+                    product = base_qs.filter(code=code).first()
                     if product:
                         data = product.as_dict()
                         data['discount'] = 0.00

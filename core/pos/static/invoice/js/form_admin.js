@@ -387,7 +387,8 @@ document.addEventListener('DOMContentLoaded', function (e) {
 $(function () {
     select_customer = $('select[name="customer"]');
     select_receipt = $('select[name="receipt"]');
-    select_payment_type = $('select[name="payment_type');
+    // Fix: selector roto (faltaba "]"). Esto rompía el JS e impedía inicializar el buscador de productos
+    select_payment_type = $('select[name="payment_type"]');
     input_search_product = $('input[name="search"]');
     input_date_joined = $('input[name="date_joined"]');
     input_end_credit = $('input[name="end_credit"]');
@@ -564,7 +565,8 @@ $(function () {
                 }
             });
         },
-        min_length: 3,
+        // Fix: opción correcta es minLength (jQuery UI), no min_length
+        minLength: 1,
         delay: 300,
         select: function (event, ui) {
             event.preventDefault();
