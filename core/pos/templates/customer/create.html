@@ -1,55 +1,122 @@
 {% extends 'form.html' %}
 {% load static %}
+
 {% block assets_form %}
-    <script src="{% static 'lib/select2-4.0.13/js/select2.min.js' %}"></script>
-    <script src="{% static 'lib/select2-4.0.13/js/i18n/es.js' %}"></script>
-    <link rel="stylesheet" href="{% static 'lib/select2-4.0.13/css/select2.min.css' %}">
-    <link rel="stylesheet" href="{% static 'lib/select2-4.0.13/css/select2-bootstrap4.min.css' %}">
-    <script src="{% static 'lib/tempusdominus-bootstrap-4.5.37.0/js/tempusdominus-bootstrap.js' %}"></script>
-    <link rel="stylesheet" href="{% static 'lib/tempusdominus-bootstrap-4.5.37.0/css/tempusdominus-bootstrap.css' %}"/>
-    <script src="{% static 'customer/js/form.js' %}"></script>
+<script src="{% static 'lib/select2-4.0.13/js/select2.min.js' %}"></script>
+<script src="{% static 'lib/select2-4.0.13/js/i18n/es.js' %}"></script>
+<link rel="stylesheet" href="{% static 'lib/select2-4.0.13/css/select2.min.css' %}">
+<link rel="stylesheet" href="{% static 'lib/select2-4.0.13/css/select2-bootstrap4.min.css' %}">
+<script src="{% static 'lib/tempusdominus-bootstrap-4.5.37.0/js/tempusdominus-bootstrap.js' %}"></script>
+<link rel="stylesheet" href="{% static 'lib/tempusdominus-bootstrap-4.5.37.0/css/tempusdominus-bootstrap.css' %}" />
+<script src="{% static 'customer/js/form.js' %}"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const inputDni = document.querySelector('input[name="dni"]');
+    const empresaFields = document.querySelectorAll('.empresa-fields');
+    const isBusiness = document.querySelector('input[name="is_business"]');
+    const btnSearch = document.querySelector('.btnSearchDNI');
+
+    function toggleEmpresaFields() {
+        const val = inputDni.value.trim();
+        if (val.length === 10) {
+            // Cédula
+            empresaFields.forEach(el => el.classList.add('d-none'));
+            if (isBusiness) isBusiness.checked = false;
+            btnSearch.disabled = false;
+        } else if (val.length === 13) {
+            // RUC
+            empresaFields.forEach(el => el.classList.remove('d-none'));
+            if (isBusiness) isBusiness.checked = true;
+            btnSearch.disabled = false;
+        } else {
+            empresaFields.forEach(el => el.classList.add('d-none'));
+            if (isBusiness) isBusiness.checked = false;
+            btnSearch.disabled = true;
+        }
+    }
+
+    if (inputDni) {
+        inputDni.addEventListener('keyup', toggleEmpresaFields);
+        toggleEmpresaFields(); // inicial
+    }
+});
+</script>
 {% endblock %}
 
 {% block form_fields %}
-    {% for field in frmUser.visible_fields %}
-        <div class="form-group">
-            <label>{{ field.label }}:</label>
-            {{ field }}
+{# Campos del usuario asociado (frmUser) #}
+{# 1) Mostrar primero el campo Nombres del usuario #}
+{% for field in frmUser.visible_fields %}
+    {% if field.name == 'names' %}
+    <div class="form-group">
+        <label>{{ field.label }}:</label>
+        {{ field }}
+    </div>
+    {% endif %}
+{% endfor %}
+
+{# 2) Mostrar segundo el campo Identificación (dni) con su botón de búsqueda #}
+{% if form.dni %}
+<div class="form-group">
+    <label>{{ form.dni.label }}:</label>
+    <div class="input-group mb-3">
+        {{ form.dni }}
+        <div class="input-group-append">
+            <button class="btn btn-secondary btnSearchDNI" type="button" disabled>
+                <i class="fas fa-search"></i> Buscar en SRI
+            </button>
         </div>
-    {% endfor %}
-    {% for field in form.visible_fields %}
-        {% if field.name == 'dni' %}
-            <div class="form-group">
-                <label>{{ field.label }}:</label>
-                <div class="input-group mb-3">
-                    {{ field }}
-                    <div class="input-group-append">
-                        <button class="btn btn-secondary btnSearchDNI" disabled type="button"><i class="fas fa-search"></i> Buscar RUC con el SRI</button>
-                    </div>
-                </div>
+    </div>
+    {% if form.dni.errors %}
+        <div class="text-danger small">{{ form.dni.errors }}</div>
+    {% endif %}
+</div>
+{% endif %}
+
+{# 3) Mostrar los demás campos del usuario (excepto names) #}
+{% for field in frmUser.visible_fields %}
+    {% if field.name != 'names' %}
+    <div class="form-group">
+        <label>{{ field.label }}:</label>
+        {{ field }}
+    </div>
+    {% endif %}
+{% endfor %}
+
+{# 4) Campos propios del cliente (excluyendo dni, ya mostrado) #}
+{% for field in form.visible_fields %}
+    {% if field.name == 'dni' %}
+        {# omitido porque ya se mostró arriba #}
+    {% elif field.name == 'business_name' or field.name == 'commercial_name' or field.name == 'tradename' or field.name == 'is_business' %}
+    <div class="form-group empresa-fields d-none">
+        <label>{{ field.label }}:</label>
+        {{ field }}
+    </div>
+    {% else %}
+    <div class="form-group">
+        <label>{{ field.label }}:</label>
+        {{ field }}
+    </div>
+    {% endif %}
+{% endfor %}
+
+{# Modal para mostrar detalles cuando se consulte el SRI (si se usa) #}
+<div class="modal fade" id="myModalSearchDNI" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title font-weight-bold">
+                    <i class="fas fa-search"></i> Consulta de RUC en el SRI
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
             </div>
-        {% else %}
-            <div class="form-group">
-                <label>{{ field.label }}:</label>
-                {{ field }}
-            </div>
-        {% endif %}
-    {% endfor %}
-    <div class="modal fade" id="myModalSearchDNI" tabindex="-1" role="dialog" aria-hidden="true">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title font-weight-bold">
-                        <i class="fas fa-search"></i> Consulta de RUC en el SRI
-                    </h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <p id="details"></p>
-                </div>
+            <div class="modal-body">
+                <p id="details"></p>
             </div>
         </div>
     </div>
+</div>
 {% endblock %}

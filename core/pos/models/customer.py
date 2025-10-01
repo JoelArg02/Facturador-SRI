@@ -8,9 +8,9 @@ from core.user.models import User
 
 class Customer(models.Model):
     company = models.ForeignKey('pos.Company', null=True, blank=True, related_name='customers', on_delete=models.CASCADE, verbose_name='Compañía')
-    # Permitir que un mismo usuario sea cliente de múltiples compañías
+
     user = models.ForeignKey(User, related_name='customers', on_delete=models.CASCADE)
-    # La unicidad se manejará a nivel de (company, dni) y (company, ruc)
+
     dni = models.CharField(max_length=10, null=True, blank=True, verbose_name='Cédula')
     ruc = models.CharField(max_length=13, null=True, blank=True, verbose_name='RUC')
     mobile = models.CharField(max_length=10, null=True, blank=True, help_text='Ingrese un teléfono', verbose_name='Teléfono')

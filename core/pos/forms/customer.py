@@ -6,7 +6,7 @@ from core.security.form_handlers.helpers import update_form_fields_attributes
 
 class CustomerForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
-        # Permitir pasar la compañía para validaciones de unicidad por tenant
+
         self.company = kwargs.pop('company', None)
         super().__init__(*args, **kwargs)
         update_form_fields_attributes(self)
@@ -26,7 +26,9 @@ class CustomerForm(forms.ModelForm):
         model = Customer
         fields = [
             # 'user' removido: se asigna automáticamente en la vista de creación
-            'dni', 'mobile', 'address', 'business_name', 'commercial_name', 'tradename',
+            # Nota: El campo de formulario 'dni' NO debe estar en Meta.fields para evitar
+            # que ModelForm intente asignarlo al modelo antes de normalizarlo (10 -> dni, 13 -> ruc).
+            'mobile', 'address', 'business_name', 'commercial_name', 'tradename',
             'is_business', 'is_credit_authorized', 'credit_limit'
         ]
         widgets = {

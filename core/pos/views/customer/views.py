@@ -161,12 +161,9 @@ class CustomerCreateView(GroupPermissionMixin, CreateView):
             server.quit()
 
         except Exception:
-            # Se silencian errores; puedes manejar logging si lo necesitas
             pass
 
     def create_customer_user(self, form_user, customer_dni):
-        # Usar como contraseña inicial la misma cédula/RUC (username).
-        # Si por alguna razón viniera vacío, usar un fallback aleatorio.
         temp_user = form_user.save(commit=False)
         raw_password = (customer_dni or '').strip() or self.generate_password()
         from core.user.models import User  # import local para evitar ciclos
@@ -266,9 +263,24 @@ class CustomerCreateView(GroupPermissionMixin, CreateView):
                         return HttpResponse(json.dumps(data), content_type='application/json')
                 data['valid'] = not self.model.objects.filter(filters).exists() if filters.children else True
             elif action == 'search_ruc_in_sri':
-                data = SRI().search_ruc_in_sri(ruc=request.POST['dni'])
+                
+                ruc = request.POST['dni']
+                print(ruc)
+                data = SRI().search_ruc_in_sri(ruc=ruc)
+                print(data)
+                if not data.get('razonSocial'):
+                    data['error'] = 'No se encontró información en SRI.'
+                    return HttpResponse(json.dumps(data), content_type='application/json')
+                data.update({
+                    'business_name': data.get('razonSocial', ''),
+                    'commercial_name': data.get('razonSocial', ''),
+                    'tradename': data.get('razonSocial', ''),
+                    'is_business': True,
+                })
+                return HttpResponse(json.dumps(data), content_type="application/json")
+
             elif action == 'check_quota':
-                # Nueva acción para verificar cuotas
+                
                 quota_check = check_quota_limits(request.user, 'customer')
                 data = quota_check
             else:

@@ -1,5 +1,6 @@
 var customer = {
     list: function () {
+        
         $('#data').DataTable({
             autoWidth: false,
             destroy: true,
@@ -13,13 +14,25 @@ var customer = {
                 data: {
                     'action': 'search'
                 },
-                dataSrc: ""
+                dataSrc: function(json) {
+                    try {
+                        console.log('[Customer List] Respuesta AJAX:', json);
+                    } catch (e) {}
+                    return json;
+                }
             },
             columns: [
                 {data: "id"},
                 {data: "user.names"},
                 {data: "identification_type.name"},
-                {data: "dni"},
+                {data: "identification", render: function(data, type, row) {
+                    try {
+                        if (type === 'display' || type === 'filter') {
+                            console.log('[Customer Row] id=', row.id, 'identification=', data, 'dni=', row.dni, 'ruc=', row.ruc);
+                        }
+                    } catch (e) {}
+                    return data || row.dni || row.ruc || '';
+                }},
                 {data: "mobile"},
                 {data: "user.email"},
                 {data: "id"},
@@ -43,6 +56,7 @@ var customer = {
             initComplete: function (settings, json) {
                 $('[data-toggle="tooltip"]').tooltip();
                 $(this).wrap('<div class="dataTables_scroll"><div/>');
+                try { console.log('[Customer List] initComplete json:', json); } catch (e) {}
             }
         });
     }

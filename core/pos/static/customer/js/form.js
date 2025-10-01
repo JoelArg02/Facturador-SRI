@@ -33,116 +33,116 @@ var client = {
 
 document.addEventListener('DOMContentLoaded', function (e) {
     fv = FormValidation.formValidation(document.getElementById('frmForm'), {
-            locale: 'es_ES',
-            localization: FormValidation.locales.es_ES,
-            plugins: {
-                trigger: new FormValidation.plugins.Trigger(),
-                submitButton: new FormValidation.plugins.SubmitButton(),
-                bootstrap: new FormValidation.plugins.Bootstrap(),
-                icon: new FormValidation.plugins.Icon({
-                    valid: 'fa fa-check',
-                    invalid: 'fa fa-times',
-                    validating: 'fa fa-refresh',
-                }),
-            },
-            fields: {
-                names: {
-                    validators: {
-                        notEmpty: {},
-                        stringLength: {
-                            min: 2,
-                        },
-                    }
-                },
-                dni: {
-                    validators: {
-                        notEmpty: {},
-                        stringLength: {
-                            min: 10
-                        },
-                        digits: {},
-                        callback: {
-                            message: 'El número de cedula o ruc es incorrecto',
-                            callback: function (input) {
-                                return validate_dni_ruc(input.value);
-                            },
-                        },
-                        remote: {
-                            url: pathname,
-                            data: function () {
-                                return {
-                                    dni: fv.form.querySelector('[name="dni"]').value,
-                                    field: 'dni',
-                                    action: 'validate_data'
-                                };
-                            },
-                            message: 'El número de cédula ya se encuentra registrado',
-                            method: 'POST',
-                            headers: {
-                                'X-CSRFToken': csrftoken
-                            },
-                        }
-                    }
-                },
-                mobile: {
-                    validators: {
-                        notEmpty: {},
-                        stringLength: {
-                            min: 7
-                        },
-                        digits: {}
-                    }
-                },
-                email: {
-                    validators: {
-                        notEmpty: {},
-                        stringLength: {
-                            min: 5
-                        },
-                        regexp: {
-                            regexp: /^([a-z0-9_\.-]+)@([\da-z\.-]+)\.([a-z\.]{2,6})$/i,
-                            message: 'El formato email no es correcto'
-                        }
-                    }
-                },
-                address: {
-                    validators: {
-                        notEmpty: {},
-                        stringLength: {
-                            min: 4,
-                        }
-                    }
-                },
-                birthdate: {
-                    validators: {
-                        notEmpty: {
-                            message: 'La fecha es obligatoria'
-                        },
-                        date: {
-                            format: 'YYYY-MM-DD',
-                            message: 'La fecha no es válida'
-                        }
+        locale: 'es_ES',
+        localization: FormValidation.locales.es_ES,
+        plugins: {
+            trigger: new FormValidation.plugins.Trigger(),
+            submitButton: new FormValidation.plugins.SubmitButton(),
+            bootstrap: new FormValidation.plugins.Bootstrap(),
+            icon: new FormValidation.plugins.Icon({
+                valid: 'fa fa-check',
+                invalid: 'fa fa-times',
+                validating: 'fa fa-refresh',
+            }),
+        },
+        fields: {
+            names: {
+                validators: {
+                    notEmpty: {},
+                    stringLength: {
+                        min: 2,
                     },
-                },
-                image: {
-                    validators: {
-                        file: {
-                            extension: 'jpeg,jpg,png',
-                            type: 'image/jpeg,image/png',
-                            maxFiles: 1,
-                            message: 'Introduce una imagen válida'
-                        }
+                }
+            },
+            dni: {
+                validators: {
+                    notEmpty: {},
+                    stringLength: {
+                        min: 10
+                    },
+                    digits: {},
+                    callback: {
+                        message: 'El número de cedula o ruc es incorrecto',
+                        callback: function (input) {
+                            return validate_dni_ruc(input.value);
+                        },
+                    },
+                    remote: {
+                        url: pathname,
+                        data: function () {
+                            return {
+                                dni: fv.form.querySelector('[name="dni"]').value,
+                                field: 'dni',
+                                action: 'validate_data'
+                            };
+                        },
+                        message: 'El número de cédula ya se encuentra registrado',
+                        method: 'POST',
+                        headers: {
+                            'X-CSRFToken': csrftoken
+                        },
                     }
-                },
-                identification_type: {
-                    validators: {
-                        notEmpty: {
-                            message: 'Seleccione un item'
-                        }
+                }
+            },
+            mobile: {
+                validators: {
+                    notEmpty: {},
+                    stringLength: {
+                        min: 7
+                    },
+                    digits: {}
+                }
+            },
+            email: {
+                validators: {
+                    notEmpty: {},
+                    stringLength: {
+                        min: 5
+                    },
+                    regexp: {
+                        regexp: /^([a-z0-9_\.-]+)@([\da-z\.-]+)\.([a-z\.]{2,6})$/i,
+                        message: 'El formato email no es correcto'
+                    }
+                }
+            },
+            address: {
+                validators: {
+                    notEmpty: {},
+                    stringLength: {
+                        min: 4,
+                    }
+                }
+            },
+            birthdate: {
+                validators: {
+                    notEmpty: {
+                        message: 'La fecha es obligatoria'
+                    },
+                    date: {
+                        format: 'YYYY-MM-DD',
+                        message: 'La fecha no es válida'
                     }
                 },
             },
-        }
+            image: {
+                validators: {
+                    file: {
+                        extension: 'jpeg,jpg,png',
+                        type: 'image/jpeg,image/png',
+                        maxFiles: 1,
+                        message: 'Introduce una imagen válida'
+                    }
+                }
+            },
+            identification_type: {
+                validators: {
+                    notEmpty: {
+                        message: 'Seleccione un item'
+                    }
+                }
+            },
+        },
+    }
     )
         .on('core.element.validated', function (e) {
             if (e.valid) {
@@ -209,28 +209,83 @@ $(function () {
     });
 
     $('input[name="names"]').on('keypress', function (e) {
-        return validate_text_box({'event': e, 'type': 'letters'});
+        return validate_text_box({ 'event': e, 'type': 'letters' });
     });
 
     input_dni
         .on('keyup', function () {
-            var val = $(this).val();
+            var val = $(this).val().trim();
+
+            if (val.length === 10) {
+
+                $('.empresa-fields').addClass('d-none');
+                $('input[name="is_business"]').prop('checked', false);
+            } else if (val.length === 13) {
+
+                $('.empresa-fields').removeClass('d-none');
+                $('input[name="is_business"]').prop('checked', true);
+            } else {
+                $('.empresa-fields').addClass('d-none');
+                $('input[name="is_business"]').prop('checked', false);
+            }
+
+
             btnSearchDNI.prop('disabled', val.length < 10);
-            // Nada más que hacer: ahora un solo campo controla todo.
         })
         .on('keypress', function (e) {
-            return validate_text_box({'event': e, 'type': 'numbers'});
+            return validate_text_box({ 'event': e, 'type': 'numbers' });
         });
+
 
     // Eliminar lógica antigua de ruc e identification_type; ya no aplican.
     $('input[name="ruc"]').closest('.form-group').remove(); // Por si el template aún lo renderiza
     $('input[name="identification_type"]').closest('.form-group').remove();
 
     $('input[name="mobile"]').on('keypress', function (e) {
-        return validate_text_box({'event': e, 'type': 'numbers'});
+        return validate_text_box({ 'event': e, 'type': 'numbers' });
     });
 
     btnSearchDNI.on('click', function () {
-        client.searchDNI();
+        $.post(window.location.pathname, {
+            action: "search_ruc_in_sri",
+            dni: $("#id_dni").val().trim(),
+            csrfmiddlewaretoken: $("[name=csrfmiddlewaretoken]").val()
+        }, function (response) {
+            if (response.error) {
+                // Mostrar el error en el modal o en un alert
+                $("#details").html(`<div class="alert alert-danger">${response.error}</div>`);
+                $("#myModalSearchDNI").modal("show");
+                return;
+            }
+
+            // Autocompletar campos si no hubo error
+            if (response.business_name) {
+                $("#id_business_name").val(response.business_name);
+            }
+            if (response.commercial_name) {
+                $("#id_commercial_name").val(response.commercial_name);
+            }
+            if (response.tradename) {
+                $("#id_tradename").val(response.tradename);
+            }
+            if (response.is_business) {
+                $("#id_is_business").prop("checked", true);
+            }
+
+            // Mostrar detalles en el modal
+            $("#details").html(`
+            <dl>
+                <dt>RUC</dt><dd>${response.ruc}</dd>
+                <dt>Razón Social</dt><dd>${response.razonSocial}</dd>
+                <dt>Estado</dt><dd>${response.descripcion}</dd>
+                <dt>Clase Contribuyente</dt><dd>${response.claseContribuyente}</dd>
+            </dl>
+        `);
+            $("#myModalSearchDNI").modal("show");
+        }, "json").fail(function (xhr) {
+            console.error("Error del servidor:", xhr.responseText);
+        });
     });
+
+
 });

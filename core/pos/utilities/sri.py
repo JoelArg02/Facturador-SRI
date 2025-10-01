@@ -187,7 +187,6 @@ class SRI:
         try:
             instance.status = INVOICE_STATUS[2][0]
             customer = instance.get_client_from_model()
-            # Campo send_email_invoice eliminado del modelo; por ahora siempre se envía.
             response = instance.send_invoice_files_to_customer()
             if response['resp']:
                 instance.save()
@@ -199,9 +198,19 @@ class SRI:
     def search_ruc_in_sri(self, ruc):
         response = {'error': 'El número de ruc es inválido'}
         url = f'https://srienlinea.sri.gob.ec/movil-servicios/api/v1.0/estadoTributario/{ruc}'
-        r = requests.get(url)
-        if r.status_code == requests.codes.ok:
-            response = r.json()
-        else:
-            response['error'] = r.json()['mensaje']
+        try:
+            r = requests.get(url, timeout=10)
+            print(r.status_code, r.text[:200])
+            if r.status_code == requests.codes.ok:
+                response = r.json()
+            elif r.status_code == 503:
+                response = {'error': 'El servicio del SRI no está disponible en este momento. Intente más tarde.'}
+            else:
+                try:
+                    response['error'] = r.json().get('mensaje', 'Error inesperado en el servicio del SRI')
+                except Exception:
+                    response['error'] = f'Error del servicio SRI (HTTP {r.status_code})'
+        except requests.exceptions.RequestException as e:
+            response = {'error': f'No se pudo conectar con el SRI: {e}'}
         return response
+
