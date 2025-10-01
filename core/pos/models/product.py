@@ -4,6 +4,7 @@ import barcode
 from barcode import writer
 from django.core.files.base import ContentFile
 from django.db import models
+from django.db.models import UniqueConstraint
 from django.forms import model_to_dict
 
 from config import settings
@@ -12,7 +13,7 @@ from config import settings
 class Product(models.Model):
     company = models.ForeignKey('pos.Company', null=True, blank=True, related_name='products', on_delete=models.CASCADE, verbose_name='Compañía')
     name = models.CharField(max_length=150, help_text='Ingrese un nombre', verbose_name='Nombre')
-    code = models.CharField(max_length=50, unique=True, help_text='Ingrese un código', verbose_name='Código')
+    code = models.CharField(max_length=50, help_text='Ingrese un código', verbose_name='Código')
     description = models.CharField(max_length=500, null=True, blank=True, help_text='Ingrese una descripción', verbose_name='Descripción')
     category = models.ForeignKey('pos.Category', on_delete=models.PROTECT, verbose_name='Categoría')
     price = models.DecimalField(max_digits=9, decimal_places=4, default=0.00, verbose_name='Precio de Compra')
@@ -93,3 +94,6 @@ class Product(models.Model):
             ('delete_product', 'Can delete Producto'),
             ('adjust_product_stock', 'Can adjust_product_stock Producto'),
         )
+        constraints = [
+            UniqueConstraint(fields=['company', 'code'], name='unique_product_code_per_company')
+        ]

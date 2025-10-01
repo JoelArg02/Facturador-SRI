@@ -141,6 +141,7 @@ class ElecBillingBase(TransactionSummary):
             from core.pos.models.receipt import Receipt
 
             self.receipt = Receipt.objects.get(
+                company=self.company,
                 voucher_type=self.voucher_type_code,
                 establishment_code=self.company.establishment_code,
                 issuing_point_code=self.company.issuing_point_code,

@@ -70,12 +70,12 @@ class CreditNoteCreateView(AutoAssignCompanyMixin, GroupPermissionMixin, Company
         company = getattr(self.request, 'company', None)
         if company:
             return company
-        return Company.objects.first() or Company()
+        return getattr(self.request, 'company', None) or getattr(self.request.user, 'company', None) or Company()
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         company = self.get_company()
-        receipt = Receipt.objects.filter(voucher_type=VOUCHER_TYPE[1][0], establishment_code=company.establishment_code, issuing_point_code=company.issuing_point_code).first()
+        receipt = Receipt.objects.filter(company=company, voucher_type=VOUCHER_TYPE[1][0], establishment_code=company.establishment_code, issuing_point_code=company.issuing_point_code).first()
         kwargs['initial'] = {
             'receipt_number': f'{receipt.sequence + 1:09d}' if receipt else ''
         }
@@ -92,7 +92,7 @@ class CreditNoteCreateView(AutoAssignCompanyMixin, GroupPermissionMixin, Company
                     credit_note.motive = request.POST['motive']
                     credit_note.company = self.get_company()
                     credit_note.environment_type = credit_note.company.environment_type
-                    credit_note.receipt = Receipt.objects.get(voucher_type=VOUCHER_TYPE[1][0], establishment_code=credit_note.company.establishment_code, issuing_point_code=credit_note.company.issuing_point_code)
+                    credit_note.receipt = Receipt.objects.get(company=credit_note.company, voucher_type=VOUCHER_TYPE[1][0], establishment_code=credit_note.company.establishment_code, issuing_point_code=credit_note.company.issuing_point_code)
                     credit_note.receipt_number = credit_note.generate_receipt_number()
                     credit_note.receipt_number_full = credit_note.get_receipt_number_full()
                     credit_note.tax = credit_note.company.tax_rate

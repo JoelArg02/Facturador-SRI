@@ -30,7 +30,7 @@ class InvoiceListView(GroupPermissionMixin, CompanyQuerysetMixin, ListView):
                 filters = Q()
                 if len(start_date) and len(end_date):
                     filters &= Q(date_joined__range=[start_date, end_date])
-                for i in self.model.objects.filter(filters):
+                for i in self.get_queryset().filter(filters):
                     item = i.as_dict()
                     item['print_pdf'] = str(reverse_lazy('invoice_print', kwargs={'pk': i.id, 'code': VOUCHER_TYPE[0][0]}))
                     item['print_ticket'] = str(reverse_lazy('invoice_print', kwargs={'pk': i.id, 'code': VOUCHER_TYPE[2][0]}))
@@ -121,7 +121,7 @@ class InvoiceListView(GroupPermissionMixin, CompanyQuerysetMixin, ListView):
         context = super().get_context_data(**kwargs)
         context['title'] = f'Listado de {self.model._meta.verbose_name_plural}'
         context['create_url'] = reverse_lazy('invoice_create_admin')
-        context['form'] = ReportForm()
+        context['form'] = ReportForm(company=getattr(self.request, 'company', None) or getattr(self.request.user, 'company', None))
         return context
 
 
@@ -133,12 +133,18 @@ class InvoiceCreateView(AutoAssignCompanyMixin, GroupPermissionMixin, CompanyQue
     permission_required = 'add_invoice_admin'
 
     def get_company(self):
-        return Company.objects.first() or Company()
+        # Usar la compañía del request; como fallback, la del usuario
+        company = getattr(self.request, 'company', None)
+        if company is None:
+            company = getattr(self.request.user, 'company', None)
+        return company
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         company = self.get_company()
-        receipt = Receipt.objects.filter(voucher_type=VOUCHER_TYPE[0][0], establishment_code=company.establishment_code, issuing_point_code=company.issuing_point_code).first()
+        receipt = None
+        if company:
+            receipt = Receipt.objects.filter(company=company, voucher_type=VOUCHER_TYPE[0][0], establishment_code=company.establishment_code, issuing_point_code=company.issuing_point_code).first()
         kwargs['initial'] = {
             'receipt_number': f'{receipt.sequence + 1:09d}' if receipt else ''
         }
@@ -165,13 +171,11 @@ class InvoiceCreateView(AutoAssignCompanyMixin, GroupPermissionMixin, CompanyQue
                         
                         # Debug: verificar qué tipo de objeto es company
                         company = self.get_company()
-                        print(f"[InvoiceCreateView.add] Company obtenida: {company}")
-                        print(f"[InvoiceCreateView.add] Tipo de company: {type(company)}")
-                        print(f"[InvoiceCreateView.add] Es instancia de Company: {isinstance(company, Company)}")
-                        
+                        if company is None:
+                            raise Exception('No se pudo determinar la compañía actual.')
                         invoice.company = company
                         invoice.environment_type = invoice.company.environment_type
-                        invoice.receipt = Receipt.objects.get(voucher_type=request.POST['receipt'], establishment_code=invoice.company.establishment_code, issuing_point_code=invoice.company.issuing_point_code)
+                        invoice.receipt = Receipt.objects.get(company=company, voucher_type=request.POST['receipt'], establishment_code=invoice.company.establishment_code, issuing_point_code=invoice.company.issuing_point_code)
                         invoice.receipt_number = invoice.generate_receipt_number()
                         invoice.receipt_number_full = invoice.get_receipt_number_full()
                         invoice.employee_id = request.user.id
@@ -219,19 +223,27 @@ class InvoiceCreateView(AutoAssignCompanyMixin, GroupPermissionMixin, CompanyQue
             elif action == 'get_receipt_number':
                 company = self.get_company()
                 data['receipt_number'] = ''
-                receipt = Receipt.objects.filter(voucher_type=request.POST['receipt'], establishment_code=company.establishment_code, issuing_point_code=company.issuing_point_code).first()
+                receipt = None
+                if company:
+                    receipt = Receipt.objects.filter(company=company, voucher_type=request.POST['receipt'], establishment_code=company.establishment_code, issuing_point_code=company.issuing_point_code).first()
                 if receipt:
                     data['receipt_number'] = f'{receipt.sequence + 1:09d}'
             elif action == 'search_product':
-                product_id = json.loads(request.POST['product_id'])
+                try:
+                    product_id = json.loads(request.POST.get('product_id', '[]'))
+                except Exception:
+                    product_id = []
                 data = []
-                term = request.POST['term']
+                term = request.POST.get('term', '').strip()
                 filters = Q(Q(stock__gt=0) | Q(is_inventoried=False))
-                if len(term):
+                if term:
                     filters &= Q(Q(name__icontains=term) | Q(code__icontains=term))
-                queryset = Product.objects.filter(filters).exclude(id__in=product_id).order_by('name')
-                if not filters.children:
-                    queryset = queryset[0:10]
+                # Filtrar por compañía actual
+                company = self.get_company()
+                queryset = Product.objects.filter(filters)
+                if company:
+                    queryset = queryset.filter(company=company)
+                queryset = queryset.exclude(id__in=product_id).order_by('name')[:20]
                 for i in queryset:
                     item = i.as_dict()
                     item['discount'] = 0.00
@@ -240,7 +252,11 @@ class InvoiceCreateView(AutoAssignCompanyMixin, GroupPermissionMixin, CompanyQue
             elif action == 'search_product_code':
                 code = request.POST['code']
                 if len(code):
-                    product = Product.objects.filter(code=code).first()
+                    company = self.get_company()
+                    qs = Product.objects
+                    if company:
+                        qs = qs.filter(company=company)
+                    product = qs.filter(code=code).first()
                     if product:
                         data = product.as_dict()
                         data['discount'] = 0.00
@@ -311,7 +327,10 @@ class InvoiceUpdateView(AutoAssignCompanyMixin, GroupPermissionMixin, CompanyQue
     permission_required = 'change_invoice_admin'
 
     def get_company(self):
-        return Company.objects.first() or Company()
+        company = getattr(self.request, 'company', None)
+        if company is None:
+            company = getattr(self.request.user, 'company', None)
+        return company
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -367,19 +386,26 @@ class InvoiceUpdateView(AutoAssignCompanyMixin, GroupPermissionMixin, CompanyQue
             elif action == 'get_receipt_number':
                 company = self.get_company()
                 data['receipt_number'] = ''
-                receipt = Receipt.objects.filter(voucher_type=request.POST['receipt'], establishment_code=company.establishment_code, issuing_point_code=company.issuing_point_code).first()
+                receipt = None
+                if company:
+                    receipt = Receipt.objects.filter(company=company, voucher_type=request.POST['receipt'], establishment_code=company.establishment_code, issuing_point_code=company.issuing_point_code).first()
                 if receipt:
                     data['receipt_number'] = f'{receipt.sequence + 1:09d}'
             elif action == 'search_product':
-                product_id = json.loads(request.POST['product_id'])
+                try:
+                    product_id = json.loads(request.POST.get('product_id', '[]'))
+                except Exception:
+                    product_id = []
                 data = []
-                term = request.POST['term']
+                term = request.POST.get('term', '').strip()
                 filters = Q(Q(stock__gt=0) | Q(is_inventoried=False))
-                if len(term):
+                if term:
                     filters &= Q(Q(name__icontains=term) | Q(code__icontains=term))
-                queryset = Product.objects.filter(filters).exclude(id__in=product_id).order_by('name')
-                if not filters.children:
-                    queryset = queryset[0:10]
+                company = self.get_company()
+                queryset = Product.objects.filter(filters)
+                if company:
+                    queryset = queryset.filter(company=company)
+                queryset = queryset.exclude(id__in=product_id).order_by('name')[:20]
                 for i in queryset:
                     item = i.as_dict()
                     item['discount'] = 0.00
@@ -388,7 +414,11 @@ class InvoiceUpdateView(AutoAssignCompanyMixin, GroupPermissionMixin, CompanyQue
             elif action == 'search_product_code':
                 code = request.POST['code']
                 if len(code):
-                    product = Product.objects.filter(code=code).first()
+                    company = self.get_company()
+                    qs = Product.objects
+                    if company:
+                        qs = qs.filter(company=company)
+                    product = qs.filter(code=code).first()
                     if product:
                         data = product.as_dict()
                         data['discount'] = 0.00
@@ -480,7 +510,7 @@ class InvoicePrintView(GroupPermissionMixin, ListView):
         return self.template_name
 
     def get(self, request, *args, **kwargs):
-        invoice = self.model.objects.filter(id=self.kwargs['pk']).first()
+        invoice = self.get_queryset().filter(id=self.kwargs['pk']).first()
         if invoice:
             context = {'object': invoice, 'height': 450 + invoice.invoicedetail_set.all().count() * 10}
             pdf_file = PDFCreator(template_name=self.get_template_names()).create(context=context)
