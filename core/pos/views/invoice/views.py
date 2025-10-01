@@ -434,13 +434,10 @@ class InvoiceUpdateView(AutoAssignCompanyMixin, GroupPermissionMixin, CompanyQue
                 data = []
                 term = request.POST['term']
                 
-                # Obtener la company del request
                 company = getattr(request, 'company', None)
                 
-                # Construir el filtro base
                 base_filter = Q(user__names__icontains=term) | Q(dni__icontains=term)
                 
-                # Agregar filtro por company si existe
                 if company:
                     customers_qs = Customer.objects.filter(base_filter, company=company)
                 else:
