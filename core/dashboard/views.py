@@ -27,21 +27,32 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         data = {}
         action = request.POST['action']
         try:
+            # Determinar la company del usuario logueado
+            company = getattr(request, 'company', None) or getattr(getattr(request, 'user', None), 'company', None)
             if action == 'get_top_stock_products':
                 data = []
-                for i in Product.objects.filter(stock__gt=0).order_by('-stock')[0:10]:
+                qs = Product.objects.filter(stock__gt=0)
+                if company is not None:
+                    qs = qs.filter(company=company)
+                for i in qs.order_by('-stock')[0:10]:
                     data.append([i.name, i.stock])
             elif action == 'get_monthly_sales_and_purchases':
                 data = []
                 year = datetime.now().year
                 rows = []
                 for month in range(1, 13):
-                    result = Invoice.objects.filter(date_joined__month=month, date_joined__year=year).aggregate(result=Coalesce(Sum('total_amount'), 0.00, output_field=FloatField()))['result']
+                    inv_qs = Invoice.objects.filter(date_joined__month=month, date_joined__year=year)
+                    if company is not None:
+                        inv_qs = inv_qs.filter(company=company)
+                    result = inv_qs.aggregate(result=Coalesce(Sum('total_amount'), 0.00, output_field=FloatField()))['result']
                     rows.append(float(result))
                 data.append({'name': 'Ventas', 'data': rows})
                 rows = []
                 for month in range(1, 13):
-                    result = Purchase.objects.filter(date_joined__month=month, date_joined__year=year).aggregate(result=Coalesce(Sum('total_amount'), 0.00, output_field=FloatField()))['result']
+                    pur_qs = Purchase.objects.filter(date_joined__month=month, date_joined__year=year)
+                    if company is not None:
+                        pur_qs = pur_qs.filter(company=company)
+                    result = pur_qs.aggregate(result=Coalesce(Sum('total_amount'), 0.00, output_field=FloatField()))['result']
                     rows.append(float(result))
                 data.append({'name': 'Compras', 'data': rows})
             else:
@@ -54,11 +65,23 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         context['title'] = 'Panel de administración'
         if not self.request.user.is_customer:
-            context['customers'] = Customer.objects.all().count()
-            context['providers'] = Provider.objects.all().count()
-            context['categories'] = Category.objects.filter().count()
-            context['products'] = Product.objects.all().count()
-            context['invoices'] = Invoice.objects.filter().order_by('-id')[0:10]
+            company = getattr(self.request, 'company', None) or getattr(getattr(self.request, 'user', None), 'company', None)
+            cust_qs = Customer.objects.all()
+            prov_qs = Provider.objects.all()
+            cat_qs = Category.objects.all()
+            prod_qs = Product.objects.all()
+            inv_qs = Invoice.objects.all()
+            if company is not None:
+                cust_qs = cust_qs.filter(company=company)
+                prov_qs = prov_qs.filter(company=company)
+                cat_qs = cat_qs.filter(company=company)
+                prod_qs = prod_qs.filter(company=company)
+                inv_qs = inv_qs.filter(company=company)
+            context['customers'] = cust_qs.count()
+            context['providers'] = prov_qs.count()
+            context['categories'] = cat_qs.count()
+            context['products'] = prod_qs.count()
+            context['invoices'] = inv_qs.order_by('-id')[0:10]
         else:
             invoices = Invoice.objects.filter(customer__user=self.request.user).select_related('company', 'receipt').order_by('-date_joined', '-id')
             grouped_invoices = OrderedDict()

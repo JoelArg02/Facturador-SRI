@@ -30,3 +30,17 @@ class ReportForm(forms.Form):
             self.fields['receipt'].queryset = Receipt.objects.all()
             self.fields['product'].queryset = Product.objects.all()
 
+    def __init__(self, *args, **kwargs):
+        # Permitir pasar company desde la vista para limitar datos
+        company = kwargs.pop('company', None)
+        super().__init__(*args, **kwargs)
+        if company is not None:
+            try:
+                self.fields['receipt'].queryset = Receipt.objects.filter(company=company)
+            except Exception:
+                pass
+            try:
+                self.fields['product'].queryset = Product.objects.filter(company=company)
+            except Exception:
+                pass
+

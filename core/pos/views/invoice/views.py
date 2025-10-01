@@ -121,7 +121,10 @@ class InvoiceListView(GroupPermissionMixin, CompanyQuerysetMixin, ListView):
         context = super().get_context_data(**kwargs)
         context['title'] = f'Listado de {self.model._meta.verbose_name_plural}'
         context['create_url'] = reverse_lazy('invoice_create_admin')
-        context['form'] = ReportForm(company=getattr(self.request, 'company', None) or getattr(self.request.user, 'company', None))
+        try:
+            context['form'] = ReportForm(company=self.get_company())
+        except Exception:
+            context['form'] = ReportForm()
         return context
 
 
@@ -133,7 +136,6 @@ class InvoiceCreateView(AutoAssignCompanyMixin, GroupPermissionMixin, CompanyQue
     permission_required = 'add_invoice_admin'
 
     def get_company(self):
-        # Usar la compañía del request; como fallback, la del usuario
         company = getattr(self.request, 'company', None)
         if company is None:
             company = getattr(self.request.user, 'company', None)
@@ -234,16 +236,19 @@ class InvoiceCreateView(AutoAssignCompanyMixin, GroupPermissionMixin, CompanyQue
                 except Exception:
                     product_id = []
                 data = []
-                term = request.POST.get('term', '').strip()
-                filters = Q(Q(stock__gt=0) | Q(is_inventoried=False))
-                if term:
-                    filters &= Q(Q(name__icontains=term) | Q(code__icontains=term))
-                # Filtrar por compañía actual
-                company = self.get_company()
-                queryset = Product.objects.filter(filters)
+                term = request.POST['term']
+                # Filtrar por compañía del request si existe
+                company = getattr(request, 'company', None)
+                base_qs = Product.objects.all()
                 if company:
-                    queryset = queryset.filter(company=company)
-                queryset = queryset.exclude(id__in=product_id).order_by('name')[:20]
+                    base_qs = base_qs.filter(company=company)
+                # No limitar por stock aquí; la UI ya evita agregar con stock 0 si es inventariado
+                filters = Q()
+                if len(term):
+                    filters &= Q(Q(name__icontains=term) | Q(code__icontains=term))
+                queryset = base_qs.filter(filters).exclude(id__in=product_id).order_by('name')
+                if not len(term):
+                    queryset = queryset[0:10]
                 for i in queryset:
                     item = i.as_dict()
                     item['discount'] = 0.00
@@ -252,11 +257,11 @@ class InvoiceCreateView(AutoAssignCompanyMixin, GroupPermissionMixin, CompanyQue
             elif action == 'search_product_code':
                 code = request.POST['code']
                 if len(code):
-                    company = self.get_company()
-                    qs = Product.objects
+                    company = getattr(request, 'company', None)
+                    base_qs = Product.objects.all()
                     if company:
-                        qs = qs.filter(company=company)
-                    product = qs.filter(code=code).first()
+                        base_qs = base_qs.filter(company=company)
+                    product = base_qs.filter(code=code).first()
                     if product:
                         data = product.as_dict()
                         data['discount'] = 0.00
@@ -397,15 +402,17 @@ class InvoiceUpdateView(AutoAssignCompanyMixin, GroupPermissionMixin, CompanyQue
                 except Exception:
                     product_id = []
                 data = []
-                term = request.POST.get('term', '').strip()
-                filters = Q(Q(stock__gt=0) | Q(is_inventoried=False))
-                if term:
-                    filters &= Q(Q(name__icontains=term) | Q(code__icontains=term))
-                company = self.get_company()
-                queryset = Product.objects.filter(filters)
+                term = request.POST['term']
+                company = getattr(request, 'company', None)
+                base_qs = Product.objects.all()
                 if company:
-                    queryset = queryset.filter(company=company)
-                queryset = queryset.exclude(id__in=product_id).order_by('name')[:20]
+                    base_qs = base_qs.filter(company=company)
+                filters = Q()
+                if len(term):
+                    filters &= Q(Q(name__icontains=term) | Q(code__icontains=term))
+                queryset = base_qs.filter(filters).exclude(id__in=product_id).order_by('name')
+                if not len(term):
+                    queryset = queryset[0:10]
                 for i in queryset:
                     item = i.as_dict()
                     item['discount'] = 0.00
@@ -414,11 +421,11 @@ class InvoiceUpdateView(AutoAssignCompanyMixin, GroupPermissionMixin, CompanyQue
             elif action == 'search_product_code':
                 code = request.POST['code']
                 if len(code):
-                    company = self.get_company()
-                    qs = Product.objects
+                    company = getattr(request, 'company', None)
+                    base_qs = Product.objects.all()
                     if company:
-                        qs = qs.filter(company=company)
-                    product = qs.filter(code=code).first()
+                        base_qs = base_qs.filter(company=company)
+                    product = base_qs.filter(code=code).first()
                     if product:
                         data = product.as_dict()
                         data['discount'] = 0.00

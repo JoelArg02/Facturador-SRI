@@ -39,14 +39,14 @@ var invoice = {
             searching: false,
             paginate: false,
             columns: [
-                {data: "id"},
-                {data: "code"},
-                {data: "name"},
-                {data: "stock"},
-                {data: "quantity"},
-                {data: "current_price"},
-                {data: "total_discount"},
-                {data: "total_amount"},
+                { data: "id" },
+                { data: "code" },
+                { data: "name" },
+                { data: "stock" },
+                { data: "quantity" },
+                { data: "current_price" },
+                { data: "total_discount" },
+                { data: "total_amount" },
             ],
             columnDefs: [
                 {
@@ -108,7 +108,7 @@ var invoice = {
                         max: data.is_inventoried ? data.stock : 1000000
                     })
                     .on('keypress', function (e) {
-                        return validate_text_box({'event': e, 'type': 'numbers'});
+                        return validate_text_box({ 'event': e, 'type': 'numbers' });
                     });
 
                 tr.find('input[name="current_price"]')
@@ -121,7 +121,7 @@ var invoice = {
                         maxboostedstep: 10
                     })
                     .on('keypress', function (e) {
-                        return validate_text_box({'event': e, 'type': 'decimals'});
+                        return validate_text_box({ 'event': e, 'type': 'decimals' });
                     });
 
                 tr.find('input[name="discount"]')
@@ -135,7 +135,7 @@ var invoice = {
                         postfix: "0.00"
                     })
                     .on('keypress', function (e) {
-                        return validate_text_box({'event': e, 'type': 'decimals'});
+                        return validate_text_box({ 'event': e, 'type': 'decimals' });
                     });
             },
             initComplete: function (settings, json) {
@@ -154,9 +154,9 @@ var invoice = {
             paginate: false,
             info: false,
             columns: [
-                {data: "name"},
-                {data: "name"},
-                {data: "value"},
+                { data: "name" },
+                { data: "name" },
+                { data: "value" },
             ],
             columnDefs: [
                 {
@@ -226,102 +226,102 @@ var invoice = {
     validateChange: function () {
         var is_draft_invoice = $('input[name="is_draft_invoice"]').is(':checked');
         if (is_draft_invoice && select_receipt.val() === '01') {
-            return {valid: true};
+            return { valid: true };
         }
         var cash = parseFloat(input_cash.val());
         var totalAmount = invoice.detail.total_amount;
 
         if (isNaN(cash) || cash < 0) {
             input_change.val('0.00');
-            return {valid: false, message: 'Ingrese un monto válido en efectivo'};
+            return { valid: false, message: 'Ingrese un monto válido en efectivo' };
         }
 
         if (select_payment_type.val() === 'efectivo' && cash < totalAmount) {
             input_change.val('0.00');
-            return {valid: false, message: 'El efectivo debe ser mayor o igual al total a pagar'};
+            return { valid: false, message: 'El efectivo debe ser mayor o igual al total a pagar' };
         }
 
         var change = cash - totalAmount;
         input_change.val(change.toFixed(2));
-        return {valid: true};
+        return { valid: true };
     }
 };
 
 document.addEventListener('DOMContentLoaded', function (e) {
     fv = FormValidation.formValidation(document.getElementById('frmForm'), {
-            locale: 'es_ES',
-            localization: FormValidation.locales.es_ES,
-            plugins: {
-                trigger: new FormValidation.plugins.Trigger(),
-                submitButton: new FormValidation.plugins.SubmitButton(),
-                bootstrap: new FormValidation.plugins.Bootstrap(),
-                // excluded: new FormValidation.plugins.Excluded(),
-                icon: new FormValidation.plugins.Icon({
-                    valid: 'fa fa-check',
-                    invalid: 'fa fa-times',
-                    validating: 'fa fa-refresh',
-                }),
+        locale: 'es_ES',
+        localization: FormValidation.locales.es_ES,
+        plugins: {
+            trigger: new FormValidation.plugins.Trigger(),
+            submitButton: new FormValidation.plugins.SubmitButton(),
+            bootstrap: new FormValidation.plugins.Bootstrap(),
+            // excluded: new FormValidation.plugins.Excluded(),
+            icon: new FormValidation.plugins.Icon({
+                valid: 'fa fa-check',
+                invalid: 'fa fa-times',
+                validating: 'fa fa-refresh',
+            }),
+        },
+        fields: {
+            customer: {
+                validators: {
+                    notEmpty: {
+                        message: 'Seleccione un cliente'
+                    }
+                }
             },
-            fields: {
-                customer: {
-                    validators: {
-                        notEmpty: {
-                            message: 'Seleccione un cliente'
-                        }
+            date_joined: {
+                validators: {
+                    notEmpty: {
+                        enabled: false,
+                        message: 'La fecha es obligatoria'
+                    },
+                    date: {
+                        format: 'YYYY-MM-DD',
+                        message: 'La fecha no es válida'
                     }
-                },
-                date_joined: {
-                    validators: {
-                        notEmpty: {
-                            enabled: false,
-                            message: 'La fecha es obligatoria'
-                        },
-                        date: {
-                            format: 'YYYY-MM-DD',
-                            message: 'La fecha no es válida'
-                        }
-                    }
-                },
-                end_credit: {
-                    validators: {
-                        notEmpty: {
-                            enabled: false,
-                            message: 'La fecha es obligatoria'
-                        },
-                        date: {
-                            format: 'YYYY-MM-DD',
-                            message: 'La fecha no es válida'
-                        }
-                    }
-                },
-                receipt_number: {
-                    validators: {
-                        notEmpty: {}
-                    }
-                },
-                cash: {
-                    validators: {
-                        notEmpty: {},
-                        numeric: {
-                            message: 'El valor no es un número',
-                            thousandsSeparator: '',
-                            decimalSeparator: '.'
-                        }
-                    }
-                },
-                change: {
-                    validators: {
-                        notEmpty: {},
-                        callback: {
-                            message: 'El cambio no puede ser negativo',
-                            callback: function (input) {
-                                return invoice.validateChange();
-                            }
-                        }
-                    }
-                },
+                }
             },
-        }
+            end_credit: {
+                validators: {
+                    notEmpty: {
+                        enabled: false,
+                        message: 'La fecha es obligatoria'
+                    },
+                    date: {
+                        format: 'YYYY-MM-DD',
+                        message: 'La fecha no es válida'
+                    }
+                }
+            },
+            receipt_number: {
+                validators: {
+                    notEmpty: {}
+                }
+            },
+            cash: {
+                validators: {
+                    notEmpty: {},
+                    numeric: {
+                        message: 'El valor no es un número',
+                        thousandsSeparator: '',
+                        decimalSeparator: '.'
+                    }
+                }
+            },
+            change: {
+                validators: {
+                    notEmpty: {},
+                    callback: {
+                        message: 'El cambio no puede ser negativo',
+                        callback: function (input) {
+                            return invoice.validateChange();
+                        }
+                    }
+                }
+            },
+        },
+    }
     )
         .on('core.element.validated', function (e) {
             if (e.valid) {
@@ -501,14 +501,14 @@ $(function () {
             fv.revalidateField('change');
         })
         .on('keypress', function (e) {
-            return validate_text_box({'event': e, 'type': 'decimals'});
+            return validate_text_box({ 'event': e, 'type': 'decimals' });
         });
 
     select_payment_type
         .on('change', function () {
             switch (this.value) {
                 case "efectivo":
-                    invoice.toggleInputVisibility([{'index': 0, 'enable': true}, {'index': 1, 'enable': true}, {'index': 2, 'enable': false}]);
+                    invoice.toggleInputVisibility([{ 'index': 0, 'enable': true }, { 'index': 1, 'enable': true }, { 'index': 2, 'enable': false }]);
                     fv.enableValidator('cash');
                     fv.enableValidator('change');
                     fv.disableValidator('end_credit');
@@ -517,7 +517,7 @@ $(function () {
                     fv.disableValidator('cash');
                     fv.disableValidator('change');
                     fv.enableValidator('end_credit');
-                    invoice.toggleInputVisibility([{'index': 0, 'enable': false}, {'index': 1, 'enable': false}, {'index': 2, 'enable': true}]);
+                    invoice.toggleInputVisibility([{ 'index': 0, 'enable': false }, { 'index': 1, 'enable': false }, { 'index': 2, 'enable': true }]);
                     break;
             }
         });
@@ -564,7 +564,7 @@ $(function () {
                 }
             });
         },
-    minLength: 3,
+        minLength: 3,
         delay: 300,
         select: function (event, ui) {
             event.preventDefault();
@@ -629,12 +629,12 @@ $(function () {
                 dataSrc: ""
             },
             columns: [
-                {data: "code"},
-                {data: "short_name"},
-                {data: "pvp"},
-                {data: "price_promotion"},
-                {data: "stock"},
-                {data: "id"},
+                { data: "code" },
+                { data: "short_name" },
+                { data: "pvp" },
+                { data: "price_promotion" },
+                { data: "stock" },
+                { data: "id" },
             ],
             columnDefs: [
                 {
@@ -725,7 +725,7 @@ $(function () {
     // Additional Info
 
     $('.btnCreateAdditionalInfo').on('click', function () {
-        invoice.detail.additional_info.push({'name': '', 'value': ''});
+        invoice.detail.additional_info.push({ 'name': '', 'value': '' });
         invoice.listAdditionalInfo();
     });
 
