@@ -3,3 +3,7 @@ venv
 *.pyc
 *.pyo
 **/migrations/
+.env
+.\config\settings.py
+
+db.sqlite3
