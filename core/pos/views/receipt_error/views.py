@@ -15,6 +15,17 @@ class ReceiptErrorListView(GroupPermissionMixin, CompanyQuerysetMixin, ListView)
     template_name = 'receipt_error/list.html'
     permission_required = 'view_receipt_error'
 
+    def get_queryset(self):
+        """Filtra los errores por la empresa del usuario a través de receipt.company"""
+        qs = super().get_queryset()
+        company = self.get_company()
+        
+        # Si hay empresa y el usuario no es superusuario, filtrar por empresa
+        if company and not getattr(self.request.user, 'is_superuser', False):
+            return qs.filter(receipt__company=company)
+        
+        return qs
+
     def post(self, request, *args, **kwargs):
         data = {}
         action = request.POST['action']
@@ -49,6 +60,17 @@ class ReceiptErrorDeleteView(GroupPermissionMixin, CompanyQuerysetMixin, DeleteV
     template_name = 'delete.html'
     success_url = reverse_lazy('receipt_error_list')
     permission_required = 'delete_receipt_error'
+
+    def get_queryset(self):
+        """Filtra los errores por la empresa del usuario a través de receipt.company"""
+        qs = super().get_queryset()
+        company = self.get_company()
+        
+        # Si hay empresa y el usuario no es superusuario, filtrar por empresa
+        if company and not getattr(self.request.user, 'is_superuser', False):
+            return qs.filter(receipt__company=company)
+        
+        return qs
 
     def post(self, request, *args, **kwargs):
         data = {}
