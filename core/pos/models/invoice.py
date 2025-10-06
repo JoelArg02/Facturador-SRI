@@ -84,9 +84,34 @@ class Invoice(ElecBillingBase):
         ElementTree.SubElement(xml_info_invoice, 'fechaEmision').text = datetime.now().strftime('%d/%m/%Y')
         ElementTree.SubElement(xml_info_invoice, 'dirEstablecimiento').text = self.company.establishment_address
         ElementTree.SubElement(xml_info_invoice, 'obligadoContabilidad').text = self.company.obligated_accounting
-        ElementTree.SubElement(xml_info_invoice, 'tipoIdentificacionComprador').text = self.customer.identification_type
-        ElementTree.SubElement(xml_info_invoice, 'razonSocialComprador').text = self.customer.user.names
-        ElementTree.SubElement(xml_info_invoice, 'identificacionComprador').text = self.customer.dni
+        # --- Identificación del comprador ---
+        # Reglas SRI:
+        #   04 -> RUC (13 dígitos, los 10 primeros deben ser cédula válida y terminar en 001 normalmente)
+        #   05 -> Cédula (10 dígitos)
+        #   07 -> Consumidor Final (usar 9999999999999 cuando no hay identificación válida)
+        raw_ruc = (self.customer.ruc or '').strip()
+        raw_dni = (self.customer.dni or '').strip()
+
+        identification_value = ''
+        identification_type = ''
+
+        # Preferir RUC válido
+        if raw_ruc and len(raw_ruc) == 13 and raw_ruc.isdigit():
+            identification_value = raw_ruc
+            identification_type = '04'
+        # Caso Cédula
+        elif raw_dni and len(raw_dni) == 10 and raw_dni.isdigit():
+            identification_value = raw_dni
+            identification_type = '05'
+        else:
+            # Consumidor final
+            identification_value = '9999999999999'
+            identification_type = '07'
+
+        # Asignar al XML
+        ElementTree.SubElement(xml_info_invoice, 'tipoIdentificacionComprador').text = identification_type
+        ElementTree.SubElement(xml_info_invoice, 'razonSocialComprador').text = self.customer.user.names[:300]
+        ElementTree.SubElement(xml_info_invoice, 'identificacionComprador').text = identification_value
         ElementTree.SubElement(xml_info_invoice, 'direccionComprador').text = self.customer.address
         ElementTree.SubElement(xml_info_invoice, 'totalSinImpuestos').text = f'{self.subtotal:.2f}'
         ElementTree.SubElement(xml_info_invoice, 'totalDescuento').text = f'{self.total_discount:.2f}'

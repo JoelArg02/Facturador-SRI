@@ -211,16 +211,54 @@ class InvoiceCreateView(AutoAssignCompanyMixin, GroupPermissionMixin, CompanyQue
                         data = {'print_url': str(reverse_lazy('invoice_print', kwargs={'pk': invoice.id, 'code': invoice.receipt.voucher_type}))}
                         if invoice.create_electronic_invoice and not invoice.is_draft_invoice:
                             data = invoice.generate_electronic_invoice_document()
-                            if data.get('resp'):
-                                # Enviar por correo automáticamente al autorizar
+                            
+                            if not data.get('resp') and 'error' in data:
+                                if invoice.check_sequential_error(errors=data):
+                                    invoice.create_receipt_error(errors=data, change_status=False)
+                                    
+                                    max_retry_attempts = 120
+                                    retry_count = 0
+                                    success = False
+                                    
+                                    while retry_count < max_retry_attempts and not success:
+                                        if invoice.find_next_available_sequential():
+                                            invoice.access_code = None
+                                            invoice.edit()
+                                            
+                                            data = invoice.generate_electronic_invoice_document()
+                                            
+                                            if data.get('resp'):
+                                                invoice.create_electronic_invoice = True
+                                                invoice.save_sequence_number()
+                                                success = True
+                                                try:
+                                                    email_resp = SRI().send_receipt_by_email(instance=invoice)
+                                                    data['email'] = email_resp
+                                                except Exception as e:
+                                                    data['email_error'] = str(e)
+                                            elif invoice.check_sequential_error(errors=data):
+                                                invoice.create_receipt_error(errors=data, change_status=False)
+                                                retry_count += 1
+                                            else:
+                                                break
+                                        else:
+                                            break
+                                    
+                                    if not success:
+                                        if retry_count >= max_retry_attempts:
+                                            data['error'] = f'No se pudo encontrar un secuencial disponible después de {max_retry_attempts} intentos'
+                                        else:
+                                            data['error'] = 'Error al procesar la factura electrónica'
+                                        transaction.set_rollback(True)
+                                else:
+                                    transaction.set_rollback(True)
+                            elif data.get('resp'):
                                 try:
                                     email_resp = SRI().send_receipt_by_email(instance=invoice)
                                     data['email'] = email_resp
                                 except Exception as e:
                                     data['email_error'] = str(e)
-                            else:
-                                transaction.set_rollback(True)
-                if 'error' in data:
+                if 'error' in data and not data.get('resp'):
                     invoice.create_receipt_error(errors=data, change_status=False)
             elif action == 'get_receipt_number':
                 company = self.get_company()
@@ -384,9 +422,45 @@ class InvoiceUpdateView(AutoAssignCompanyMixin, GroupPermissionMixin, CompanyQue
                     data = {'print_url': str(reverse_lazy('invoice_print', kwargs={'pk': invoice.id, 'code': invoice.receipt.voucher_type}))}
                     if invoice.create_electronic_invoice and not invoice.is_draft_invoice:
                         data = invoice.generate_electronic_invoice_document()
-                        if not data['resp']:
+                        
+                        if not data.get('resp') and 'error' in data:
+                            if invoice.check_sequential_error(errors=data):
+                                invoice.create_receipt_error(errors=data, change_status=False)
+                                
+                                max_retry_attempts = 120
+                                retry_count = 0
+                                success = False
+                                
+                                while retry_count < max_retry_attempts and not success:
+                                    if invoice.find_next_available_sequential():
+                                        invoice.access_code = None
+                                        invoice.edit()
+                                        
+                                        data = invoice.generate_electronic_invoice_document()
+                                        
+                                        if data.get('resp'):
+                                            invoice.create_electronic_invoice = True
+                                            invoice.save_sequence_number()
+                                            success = True
+                                        elif invoice.check_sequential_error(errors=data):
+                                            invoice.create_receipt_error(errors=data, change_status=False)
+                                            retry_count += 1
+                                        else:
+                                            break
+                                    else:
+                                        break
+                                
+                                if not success:
+                                    if retry_count >= max_retry_attempts:
+                                        data['error'] = f'No se pudo encontrar un secuencial disponible después de {max_retry_attempts} intentos'
+                                    else:
+                                        data['error'] = 'Error al procesar la factura electrónica'
+                                    transaction.set_rollback(True)
+                            else:
+                                transaction.set_rollback(True)
+                        elif not data.get('resp'):
                             transaction.set_rollback(True)
-                if 'error' in data:
+                if 'error' in data and not data.get('resp'):
                     invoice.create_receipt_error(errors=data, change_status=False)
             elif action == 'get_receipt_number':
                 company = self.get_company()

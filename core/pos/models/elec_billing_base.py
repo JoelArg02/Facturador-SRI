@@ -330,6 +330,33 @@ class ElecBillingBase(TransactionSummary):
         self.receipt.sequence = int(self.receipt_number)
         self.receipt.save()
 
+    def find_next_available_sequential(self, max_attempts=50):
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        for attempt in range(max_attempts):
+            self.receipt.sequence = int(self.receipt.sequence) + 1
+            self.receipt.save()
+
+            self.receipt_number = f'{self.receipt.sequence:09d}'
+            self.receipt_number_full = self.get_receipt_number_full()
+            
+            logger.warning(f'[Sequential Search] Attempt {attempt + 1}/{max_attempts}: Testing sequential {self.receipt_number_full}')
+
+            collision = self.__class__.objects.filter(
+                receipt=self.receipt,
+                receipt_number=self.receipt_number
+            ).exists()
+
+            if not collision:
+                logger.warning(f'[Sequential Search] SUCCESS: Found available sequential {self.receipt_number_full} after {attempt + 1} attempts')
+                return True
+            
+            logger.warning(f'[Sequential Search] Collision detected for {self.receipt_number_full}, continuing...')
+
+        logger.error(f'[Sequential Search] FAILED: Could not find available sequential after {max_attempts} attempts')
+        return False
+
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
         if self.pk is None and not self.receipt_number_is_null():
             self.save_sequence_number()

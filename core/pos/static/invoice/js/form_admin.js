@@ -368,16 +368,14 @@ document.addEventListener('DOMContentLoaded', function (e) {
             var args = {
                 'params': params,
                 'success': function (request) {
-                    dialog_action({
-                        'content': '¿Desea Imprimir el Comprobante?',
-                        'success': function () {
-                            window.open(request.print_url, '_blank');
-                            location.href = href_url;
-                        },
-                        'cancel': function () {
-                            location.href = href_url;
-                        }
-                    });
+                    // Flujo simplificado: ya no se ofrece imprimir automáticamente.
+                    // Mostrar mensaje de éxito (si existe función) y redirigir.
+                    if (typeof message_success === 'function') {
+                        message_success('Comprobante generado exitosamente.');
+                        setTimeout(function(){ location.href = href_url; }, 800);
+                    } else {
+                        location.href = href_url;
+                    }
                 }
             };
             submit_with_formdata(args);
