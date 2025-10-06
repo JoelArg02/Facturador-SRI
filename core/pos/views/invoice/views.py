@@ -208,7 +208,7 @@ class InvoiceCreateView(AutoAssignCompanyMixin, GroupPermissionMixin, CompanyQue
                                 end_date=invoice.end_credit,
                                 debt=invoice.total_amount
                             )
-                        data = {'print_url': str(reverse_lazy('invoice_print', kwargs={'pk': invoice.id, 'code': invoice.receipt.voucher_type}))}
+                        # Generar factura electrónica si está habilitado
                         if invoice.create_electronic_invoice and not invoice.is_draft_invoice:
                             data = invoice.generate_electronic_invoice_document()
                             
@@ -221,7 +221,8 @@ class InvoiceCreateView(AutoAssignCompanyMixin, GroupPermissionMixin, CompanyQue
                                     success = False
                                     
                                     while retry_count < max_retry_attempts and not success:
-                                        if invoice.find_next_available_sequential():
+                                        # Buscar el SIGUIENTE secuencial (solo 1 intento por iteración)
+                                        if invoice.find_next_available_sequential(max_attempts=1):
                                             invoice.access_code = None
                                             invoice.edit()
                                             
@@ -239,9 +240,12 @@ class InvoiceCreateView(AutoAssignCompanyMixin, GroupPermissionMixin, CompanyQue
                                             elif invoice.check_sequential_error(errors=data):
                                                 invoice.create_receipt_error(errors=data, change_status=False)
                                                 retry_count += 1
+                                                # Continúa al siguiente secuencial en la próxima iteración
                                             else:
+                                                # Error diferente al secuencial, detener
                                                 break
                                         else:
+                                            # No se pudo incrementar el secuencial
                                             break
                                     
                                     if not success:
@@ -258,6 +262,9 @@ class InvoiceCreateView(AutoAssignCompanyMixin, GroupPermissionMixin, CompanyQue
                                     data['email'] = email_resp
                                 except Exception as e:
                                     data['email_error'] = str(e)
+                        else:
+                            # Factura creada exitosamente sin generar electrónica
+                            data = {'resp': True}
                 if 'error' in data and not data.get('resp'):
                     invoice.create_receipt_error(errors=data, change_status=False)
             elif action == 'get_receipt_number':

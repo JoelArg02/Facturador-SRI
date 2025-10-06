@@ -62,23 +62,51 @@ class MyCompanyEditView(LoginRequiredMixin, UpdateView):
         return redirect(self.get_success_url())
 
     def post(self, request, *args, **kwargs):
-        """Mismo contrato AJAX que el UpdateView de POS: maneja create_or_edit y load_certificate."""
+        """Replica el flujo AJAX del sistema POS para compatibilidad."""
         data = {}
         action = request.POST.get('action')
+        
+        # Asignar self.object para que UpdateView funcione correctamente
+        self.object = self.get_object()
+        
         try:
             if action == 'create_or_edit':
-                instance = self.get_object()
-                form = self.form_class(request.POST, request.FILES, instance=instance if instance.pk else None)
+                # Si el objeto tiene pk, es edición; si no, es creación
+                form = self.form_class(
+                    request.POST, 
+                    request.FILES, 
+                    instance=self.object if self.object.pk else None
+                )
+                
                 if form.is_valid():
-                    # Reutiliza form_valid para aplicar owner y vínculos
-                    response = self.form_valid(form)
-                    # Devolver datos mínimos; el BaseModelForm de onboarding no retorna as_dict
-                    data = {'success': True, 'redirect': self.get_success_url()}
+                    # Guardar la instancia
+                    instance = form.save(commit=False)
+                    
+                    # Asegurar que el owner sea el usuario actual (no superuser)
+                    if not getattr(request.user, 'is_superuser', False):
+                        instance.owner = request.user
+                    
+                    instance.save()
+
+                    # Asegurar relación inversa user.company si el modelo User la tiene
+                    user = request.user
+                    if hasattr(user, 'company_id') and not user.company_id:
+                        user.company = instance
+                        user.save(update_fields=['company'])
+                    
+                    # Retornar datos como diccionario (compatible con BaseModelForm)
+                    if hasattr(instance, 'as_dict') and callable(getattr(instance, 'as_dict')):
+                        data = instance.as_dict()
+                    else:
+                        # Fallback: crear diccionario básico
+                        data = {'id': instance.pk}
                 else:
+                    # Hay errores en el formulario
                     data['error'] = form.errors
             else:
-                # Degradar a comportamiento normal
+                # Degradar a comportamiento normal del UpdateView
                 return super().post(request, *args, **kwargs)
         except Exception as e:
             data['error'] = str(e)
+        
         return HttpResponse(json.dumps(data), content_type='application/json')

@@ -365,20 +365,39 @@ document.addEventListener('DOMContentLoaded', function (e) {
             var params = new FormData(fv.form);
             params.append('products', JSON.stringify(invoice.detail.products));
             params.append('additional_info', JSON.stringify(invoice.detail.additional_info.filter(value => !$.isEmptyObject(value.name) && !$.isEmptyObject(value.value))));
-            var args = {
-                'params': params,
-                'success': function (request) {
-                    // Flujo simplificado: ya no se ofrece imprimir automáticamente.
-                    // Mostrar mensaje de éxito (si existe función) y redirigir.
-                    if (typeof message_success === 'function') {
-                        message_success('Comprobante generado exitosamente.');
-                        setTimeout(function(){ location.href = href_url; }, 800);
+            
+            // Enviar directamente sin diálogo de confirmación
+            $.ajax({
+                url: pathname,
+                data: params,
+                type: 'POST',
+                dataType: 'json',
+                headers: {
+                    'X-CSRFToken': csrftoken
+                },
+                processData: false,
+                contentType: false,
+                beforeSend: function () {
+                    loading({'text': 'Procesando factura...'});
+                },
+                success: function (request) {
+                    if (!request.hasOwnProperty('error')) {
+                        if (request.hasOwnProperty('resp') && request.resp === false) {
+                            message_error(request.msg);
+                        } else {
+                            message_success('Comprobante generado exitosamente.');
+                            setTimeout(function(){ location.href = href_url; }, 800);
+                        }
                     } else {
-                        location.href = href_url;
+                        message_error(request.error);
+                        setTimeout(function(){ location.href = href_url; }, 1500);
                     }
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    message_error('Error al procesar la solicitud: ' + textStatus);
+                    setTimeout(function(){ location.href = href_url; }, 1500);
                 }
-            };
-            submit_with_formdata(args);
+            });
         });
 });
 
