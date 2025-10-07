@@ -208,7 +208,7 @@ class InvoiceCreateView(AutoAssignCompanyMixin, GroupPermissionMixin, CompanyQue
                                 end_date=invoice.end_credit,
                                 debt=invoice.total_amount
                             )
-                        # Generar factura electrónica si está habilitado
+                        
                         if invoice.create_electronic_invoice and not invoice.is_draft_invoice:
                             data = invoice.generate_electronic_invoice_document()
                             

@@ -21,7 +21,7 @@ class MyCompanyEditView(LoginRequiredMixin, UpdateView):
     - Protege el owner para que siempre sea el usuario autenticado (no superuser).
     """
 
-    template_name = 'company/owner_edit.html'
+    template_name = 'company/my_company_edit.html'
     model = Company
     form_class = CompanyOnboardingForm
     success_url = settings.LOGIN_REDIRECT_URL
@@ -30,7 +30,8 @@ class MyCompanyEditView(LoginRequiredMixin, UpdateView):
         context = super().get_context_data(**kwargs)
         context['title'] = 'Mi empresa'
         context['list_url'] = self.success_url
-        context['action'] = 'create_or_edit'
+        # Cambiar a 'add' o 'edit' según la convención del sistema
+        context['action'] = 'add' if not self.object.pk else 'edit'
         return context
 
     def get_object(self, queryset=None):
@@ -41,9 +42,6 @@ class MyCompanyEditView(LoginRequiredMixin, UpdateView):
         return company
 
     def dispatch(self, request, *args, **kwargs):
-        print('[MyCompanyEditView] START dispatch')
-        owned = getattr(request.user, 'owned_company', None)
-        print(f"[MyCompanyEditView] owned_company.id={getattr(owned,'id',None)} owner_id={getattr(owned,'owner_id',None)} user.id={getattr(request.user,'id',None)}")
         return super().dispatch(request, *args, **kwargs)
 
     def form_valid(self, form):
@@ -62,51 +60,35 @@ class MyCompanyEditView(LoginRequiredMixin, UpdateView):
         return redirect(self.get_success_url())
 
     def post(self, request, *args, **kwargs):
-        """Replica el flujo AJAX del sistema POS para compatibilidad."""
         data = {}
-        action = request.POST.get('action')
+        action = request.POST.get('action', '')
         
-        # Asignar self.object para que UpdateView funcione correctamente
         self.object = self.get_object()
         
         try:
-            if action == 'create_or_edit':
-                # Si el objeto tiene pk, es edición; si no, es creación
+            if action in ['add', 'edit', 'create_or_edit']:
                 form = self.form_class(
                     request.POST, 
                     request.FILES, 
                     instance=self.object if self.object.pk else None
                 )
                 
-                if form.is_valid():
-                    # Guardar la instancia
-                    instance = form.save(commit=False)
-                    
-                    # Asegurar que el owner sea el usuario actual (no superuser)
-                    if not getattr(request.user, 'is_superuser', False):
-                        instance.owner = request.user
-                    
-                    instance.save()
-
-                    # Asegurar relación inversa user.company si el modelo User la tiene
+                if not getattr(request.user, 'is_superuser', False):
+                    if not self.object.pk:
+                        form.instance.owner = request.user
+                
+                data = form.save()
+                
+                if 'error' not in data:
                     user = request.user
                     if hasattr(user, 'company_id') and not user.company_id:
-                        user.company = instance
+                        user.company = form.instance
                         user.save(update_fields=['company'])
-                    
-                    # Retornar datos como diccionario (compatible con BaseModelForm)
-                    if hasattr(instance, 'as_dict') and callable(getattr(instance, 'as_dict')):
-                        data = instance.as_dict()
-                    else:
-                        # Fallback: crear diccionario básico
-                        data = {'id': instance.pk}
-                else:
-                    # Hay errores en el formulario
-                    data['error'] = form.errors
             else:
-                # Degradar a comportamiento normal del UpdateView
                 return super().post(request, *args, **kwargs)
         except Exception as e:
+            import traceback
+            traceback.print_exc()
             data['error'] = str(e)
         
         return HttpResponse(json.dumps(data), content_type='application/json')

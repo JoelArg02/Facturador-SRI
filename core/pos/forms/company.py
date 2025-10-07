@@ -14,7 +14,7 @@ class CompanyForm(BaseModelForm):
         model = Company
         fields = '__all__'
 
-class CompanyOnboardingForm(forms.ModelForm):
+class CompanyOnboardingForm(BaseModelForm):
     """Formulario reducido para creación inicial obligatoria de la Compañía (sin campos SMTP)."""
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -44,74 +44,94 @@ class CompanyOnboardingForm(forms.ModelForm):
             self.fields['description'].widget.attrs['rows'] = 2
         if 'tax' in self.fields:
             self.fields['tax'].widget.attrs['step'] = '0.01'
+        
+        # Si ya existe una firma electrónica guardada, hacerla opcional
+        if self.instance and self.instance.pk and self.instance.electronic_signature:
+            if 'electronic_signature' in self.fields:
+                self.fields['electronic_signature'].required = False
+                self.fields['electronic_signature'].help_text = 'Opcional: Solo si desea cambiar el certificado actual'
+            if 'electronic_signature_key' in self.fields:
+                self.fields['electronic_signature_key'].required = False
+                self.fields['electronic_signature_key'].help_text = 'Solo necesario si cambia el certificado'
 
     def clean(self):
         cleaned_data = super().clean()
-        # Validación de RUC básico
+        
         ruc = cleaned_data.get('ruc')
         if ruc and len(ruc) not in (10, 13):
             raise forms.ValidationError('El RUC debe tener 10 o 13 dígitos')
 
-        # Mapear IVA desde porcentaje seleccionado
         tax_percentage = cleaned_data.get('tax_percentage')
         mapped_tax = TAX_PERCENTAGE_VALUE_MAP.get(tax_percentage)
         if mapped_tax is not None:
             cleaned_data['tax'] = Decimal(str(mapped_tax))
         else:
-            # Default 15% si no viene
             cleaned_data['tax'] = Decimal(str(cleaned_data.get('tax') or 15))
             cleaned_data['tax_percentage'] = cleaned_data.get('tax_percentage') or 15
 
-        # Defaults de entorno
-        cleaned_data['environment_type'] = 2  # Producción
-        cleaned_data['emission_type'] = 1     # Normal
+        if not cleaned_data.get('environment_type'):
+            cleaned_data['environment_type'] = 2
+            
+        if not cleaned_data.get('emission_type'):
+            cleaned_data['emission_type'] = 1
 
-        # Dirección de establecimiento por defecto igual a la principal
         if not cleaned_data.get('establishment_address'):
             cleaned_data['establishment_address'] = cleaned_data.get('main_address', '')
 
-        # Contribuyente especial opcional (vacío por defecto)
         if not cleaned_data.get('special_taxpayer'):
             cleaned_data['special_taxpayer'] = ''
-
+        
         return cleaned_data
 
     def save(self, commit=True):
-        instance = super().save(commit=False)
-        # Asegurar valores por defecto de negocio
-        instance.environment_type = 2
-        instance.emission_type = 1
+        data = {}
+        try:
+            if not self.is_valid():
+                data['error'] = self.errors
+                return data
+            
+            instance = super(BaseModelForm, self).save(commit=False)
+            
+            if not getattr(instance, 'environment_type', None):
+                instance.environment_type = 2
+                
+            if not getattr(instance, 'emission_type', None):
+                instance.emission_type = 1
 
-        # Sincronizar tax con tax_percentage
-        if hasattr(instance, 'tax_percentage') and instance.tax_percentage:
-            instance.tax = Decimal(str(instance.tax_percentage))
-        else:
-            instance.tax = Decimal('15')
-            if hasattr(instance, 'tax_percentage'):
-                instance.tax_percentage = 15
+            if hasattr(instance, 'tax_percentage') and instance.tax_percentage:
+                instance.tax = Decimal(str(instance.tax_percentage))
+            else:
+                instance.tax = Decimal('15')
+                if hasattr(instance, 'tax_percentage'):
+                    instance.tax_percentage = 15
 
-        # Códigos por defecto
-        if not getattr(instance, 'establishment_code', None):
-            instance.establishment_code = '001'
-        if not getattr(instance, 'issuing_point_code', None):
-            instance.issuing_point_code = '001'
+            if not getattr(instance, 'establishment_code', None):
+                instance.establishment_code = '001'
+            if not getattr(instance, 'issuing_point_code', None):
+                instance.issuing_point_code = '001'
 
-        # Dirección de establecimiento fallback
-        if not getattr(instance, 'establishment_address', None):
-            instance.establishment_address = getattr(instance, 'main_address', '')
+            if not getattr(instance, 'establishment_address', None):
+                instance.establishment_address = getattr(instance, 'main_address', '')
 
-        # Contribuyente especial vacío por defecto
-        instance.special_taxpayer = instance.special_taxpayer or ''
+            instance.special_taxpayer = instance.special_taxpayer or ''
 
-        # Campos opcionales
-        if not getattr(instance, 'website', None):
-            instance.website = ''
-        if hasattr(instance, 'electronic_signature_key') and not instance.electronic_signature_key:
-            instance.electronic_signature_key = ''
+            if not getattr(instance, 'website', None):
+                instance.website = ''
+            if hasattr(instance, 'electronic_signature_key') and not instance.electronic_signature_key:
+                instance.electronic_signature_key = ''
 
-        if commit:
-            instance.save()
-        return instance
+            if commit:
+                instance.save()
+            
+            # Retornar el diccionario de datos del objeto guardado
+            if hasattr(instance, 'as_dict') and callable(getattr(instance, 'as_dict')):
+                data = instance.as_dict()
+            else:
+                data = {'id': instance.pk}
+        except Exception as e:
+            data['error'] = str(e)
+        
+        return data
 
     class Meta:
         model = Company

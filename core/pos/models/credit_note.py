@@ -146,6 +146,12 @@ class CreditNote(ElecBillingBase):
         item = super().as_dict()
         item['invoice'] = self.invoice.as_dict()
         item['motive'] = self.motive
+        
+        status_name = self.get_status_display()
+        if self.environment_type == 1:
+            status_name = f"{status_name} [AMBIENTE PRUEBAS]"
+        item['status'] = {'id': self.status, 'name': status_name}
+        
         return item
 
     class Meta:

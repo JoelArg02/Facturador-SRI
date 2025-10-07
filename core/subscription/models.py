@@ -165,30 +165,23 @@ def check_quota_limits(user, resource_type='product'):
         'message': ''
     }
     
-    # Obtener suscripción activa
     subscription = get_active_subscription(user)
-    print(f"DEBUG check_quota_limits - subscription: {subscription}")
     if not subscription:
         result.update({
             'can_create': False,
             'message': 'No tienes una suscripción activa. Contacta al administrador.'
         })
-        print(f"DEBUG check_quota_limits - no subscription, returning: {result}")
         return result
     
-    # Importaciones lazy para evitar dependencias circulares
     from core.pos.models import Product, Customer, Invoice
     
-    # Obtener la compañía del usuario (exactamente como funciona en las vistas)
-    print(f"DEBUG check_quota_limits - hasattr(user, 'company'): {hasattr(user, 'company')}")
     company = getattr(user, 'company', None)
-    print(f"DEBUG check_quota_limits - company: {company}")
+
     if not company:
         result.update({
             'can_create': False,
             'message': 'No tienes una compañía asociada. Contacta al administrador.'
         })
-        print(f"DEBUG check_quota_limits - no company, returning: {result}")
         return result
     
     # Verificar según el tipo de recurso

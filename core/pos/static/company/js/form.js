@@ -1,350 +1,243 @@
-var fv;
-var input_electronic_signature, input_tax;
-var select_tax_percentage;
+$(function () {
+    console.log('[Company Form] Inicializando...');
+    
+    // Verificar si ya existe una firma electrónica guardada
+    var hasExistingSignature = $('.alert-success').length > 0 && $('.alert-success').text().indexOf('Firma electrónica actual') !== -1;
+    console.log('[Company Form] ¿Tiene firma guardada?', hasExistingSignature);
+    
+    // Inicializar Select2 en campos select
+    $('select').each(function() {
+        $(this).select2({
+            theme: 'bootstrap4',
+            language: 'es',
+            width: '100%'
+        });
+    });
 
-var company = {
-    loadCertificate: function () {
-        var params = new FormData();
-        params.append('action', 'load_certificate');
-        params.append('certificate', input_electronic_signature[0].files[0]);
-        params.append('electronic_signature_key', $('input[name="electronic_signature_key"]').val());
-        execute_ajax_request({
-            'params': params,
-            'success': function (request) {
-                var content = '<p>';
-                $.each(request, function (name, value) {
-                    content += '<b>' + name + ':</b><br>' + value + '<br>';
-                });
-                content += '</p>';
-                $('#content-certificate').html(content);
-                $('#myModalCertificate').modal('show');
+    // Sincronización bidireccional tax_percentage ↔ tax
+    var $taxPercentage = $('input[name="tax_percentage"]');
+    var $tax = $('input[name="tax"]');
+    
+    if ($taxPercentage.length && $tax.length) {
+        $taxPercentage.on('change keyup', function() {
+            var val = $(this).val();
+            $tax.val(val);
+        });
+        
+        $tax.on('change keyup', function() {
+            var val = $(this).val();
+            $taxPercentage.val(val);
+        });
+    }
+
+    // Copiar dirección matriz a establecimiento
+    var $mainAddress = $('textarea[name="main_address"]');
+    var $establishmentAddress = $('textarea[name="establishment_address"]');
+    
+    if ($mainAddress.length && $establishmentAddress.length) {
+        $mainAddress.on('blur', function() {
+            if (!$establishmentAddress.val()) {
+                $establishmentAddress.val($(this).val());
             }
         });
-    },
-    validateExtensionP12: function (input) {
-        var extension = input.value.split('.').pop().toLowerCase();
-        return $.inArray(extension, ['p12']) === -1;
     }
-};
 
-document.addEventListener('DOMContentLoaded', function (e) {
-    fv = FormValidation.formValidation(document.getElementById('frmForm'), {
+    // FormValidation
+    console.log('[FormValidation] Configurando validación...');
+    
+    // Configurar campos de validación
+    var validationFields = {
+        ruc: {
+            validators: {
+                notEmpty: {
+                    message: 'El RUC es obligatorio'
+                },
+                stringLength: {
+                    min: 10,
+                    max: 13,
+                    message: 'El RUC debe tener entre 10 y 13 dígitos'
+                }
+            }
+        },
+        company_name: {
+            validators: {
+                notEmpty: {
+                    message: 'La razón social es obligatoria'
+                }
+            }
+        },
+        commercial_name: {
+            validators: {
+                notEmpty: {
+                    message: 'El nombre comercial es obligatorio'
+                }
+            }
+        },
+        main_address: {
+            validators: {
+                notEmpty: {
+                    message: 'La dirección matriz es obligatoria'
+                }
+            }
+        },
+        establishment_address: {
+            validators: {
+                notEmpty: {
+                    message: 'La dirección del establecimiento es obligatoria'
+                }
+            }
+        },
+        establishment_code: {
+            validators: {
+                notEmpty: {
+                    message: 'El código de establecimiento es obligatorio'
+                }
+            }
+        },
+        issuing_point_code: {
+            validators: {
+                notEmpty: {
+                    message: 'El código de punto de emisión es obligatorio'
+                }
+            }
+        },
+        obligated_accounting: {
+            validators: {
+                notEmpty: {
+                    message: 'Debe indicar si está obligado a llevar contabilidad'
+                }
+            }
+        },
+        retention_agent: {
+            validators: {
+                notEmpty: {
+                    message: 'Debe indicar si es agente de retención'
+                }
+            }
+        },
+        regimen_rimpe: {
+            validators: {
+                notEmpty: {
+                    message: 'Debe indicar si pertenece al régimen RIMPE'
+                }
+            }
+        },
+        environment_type: {
+            validators: {
+                notEmpty: {
+                    message: 'El tipo de ambiente es obligatorio'
+                }
+            }
+        },
+        emission_type: {
+            validators: {
+                notEmpty: {
+                    message: 'El tipo de emisión es obligatorio'
+                }
+            }
+        },
+        tax_percentage: {
+            validators: {
+                notEmpty: {
+                    message: 'El porcentaje de IVA es obligatorio'
+                }
+            }
+        },
+        email: {
+            validators: {
+                notEmpty: {
+                    message: 'El email es obligatorio'
+                },
+                emailAddress: {
+                    message: 'El email no es válido'
+                }
+            }
+        },
+        mobile: {
+            validators: {
+                notEmpty: {
+                    message: 'El celular es obligatorio'
+                }
+            }
+        }
+    };
+    
+    // Solo hacer obligatoria la firma electrónica si NO existe una guardada
+    if (!hasExistingSignature) {
+        console.log('[FormValidation] Firma NO guardada, será obligatoria');
+        validationFields.electronic_signature = {
+            validators: {
+                notEmpty: {
+                    message: 'La firma electrónica es obligatoria'
+                },
+                file: {
+                    extension: 'p12',
+                    message: 'El archivo debe tener extensión .p12'
+                }
+            }
+        };
+        validationFields.electronic_signature_key = {
+            validators: {
+                notEmpty: {
+                    message: 'La contraseña de la firma es obligatoria'
+                }
+            }
+        };
+    } else {
+        console.log('[FormValidation] Firma YA guardada, será opcional');
+    }
+    
+    var fv = FormValidation.formValidation(
+        document.getElementById('frmForm'),
+        {
             locale: 'es_ES',
             localization: FormValidation.locales.es_ES,
+            fields: validationFields,
             plugins: {
                 trigger: new FormValidation.plugins.Trigger(),
-                submitButton: new FormValidation.plugins.SubmitButton(),
                 bootstrap: new FormValidation.plugins.Bootstrap(),
+                submitButton: new FormValidation.plugins.SubmitButton(),
                 icon: new FormValidation.plugins.Icon({
                     valid: 'fa fa-check',
                     invalid: 'fa fa-times',
-                    validating: 'fa fa-refresh',
+                    validating: 'fa fa-refresh'
                 }),
             },
-            fields: {
-                ruc: {
-                    validators: {
-                        notEmpty: {},
-                        stringLength: {
-                            min: 13,
-                        },
-                        digits: {},
-                    }
-                },
-                company_name: {
-                    validators: {
-                        notEmpty: {},
-                        stringLength: {
-                            min: 2,
-                        },
-                    }
-                },
-                commercial_name: {
-                    validators: {
-                        notEmpty: {},
-                        stringLength: {
-                            min: 2,
-                        },
-                    }
-                },
-                main_address: {
-                    validators: {
-                        notEmpty: {},
-                        stringLength: {
-                            min: 2,
-                        },
-                    }
-                },
-                establishment_address: {
-                    validators: {
-                        notEmpty: {},
-                        stringLength: {
-                            min: 2,
-                        },
-                    }
-                },
-                establishment_code: {
-                    validators: {
-                        notEmpty: {},
-                        stringLength: {
-                            min: 3,
-                        },
-                        digits: {},
-                    }
-                },
-                issuing_point_code: {
-                    validators: {
-                        notEmpty: {},
-                        stringLength: {
-                            min: 3,
-                        },
-                        digits: {},
-                    }
-                },
-                special_taxpayer: {
-                    validators: {
-                        notEmpty: {},
-                        stringLength: {
-                            min: 3,
-                        },
-                        digits: {},
-                    }
-                },
-                obligated_accounting: {
-                    validators: {
-                        notEmpty: {},
-                    }
-                },
-                image: {
-                    validators: {
-                        file: {
-                            extension: 'jpeg,jpg,png',
-                            type: 'image/jpeg,image/png',
-                            maxFiles: 1,
-                            message: 'Introduce una imagen válida'
-                        }
-                    }
-                },
-                environment_type: {
-                    validators: {
-                        notEmpty: {
-                            message: 'Seleccione un tipo de ambiente de facturación'
-                        },
-                    }
-                },
-                emission_type: {
-                    validators: {
-                        notEmpty: {
-                            message: 'Seleccione un tipo de ambiente de facturación'
-                        },
-                    }
-                },
-                mobile: {
-                    validators: {
-                        notEmpty: {},
-                        stringLength: {
-                            min: 10,
-                        },
-                        digits: {},
-                    }
-                },
-                phone: {
-                    validators: {
-                        notEmpty: {},
-                        stringLength: {
-                            min: 7,
-                        },
-                        digits: {},
-                    }
-                },
-                email: {
-                    validators: {
-                        notEmpty: {},
-                        stringLength: {
-                            min: 5
-                        }
-                    }
-                },
-                website: {
-                    validators: {
-                        notEmpty: {},
-                        stringLength: {
-                            min: 2,
-                        },
-                    }
-                },
-                description: {
-                    validators: {
-                        notEmpty: {},
-                        stringLength: {
-                            min: 2,
-                        },
-                    }
-                },
-                tax: {
-                    validators: {
-                        numeric: {
-                            message: 'El valor no es un número',
-                            thousandsSeparator: '',
-                            decimalSeparator: '.'
-                        }
-                    }
-                },
-                tax_percentage: {
-                    validators: {
-                        notEmpty: {
-                            message: 'Seleccione una categoría'
-                        },
-                    }
-                },
-                electronic_signature: {
-                    validators: {
-                        notEmpty: {},
-                        callback: {
-                            message: 'Introduce un archivo con extensión .p12',
-                            callback: function (input) {
-                                return !company.validateExtensionP12(input);
-                            }
-                        },
-                    }
-                },
-                electronic_signature_key: {
-                    validators: {
-                        notEmpty: {},
-                    }
-                },
-                email_host: {
-                    validators: {
-                        notEmpty: {},
-                    }
-                },
-                email_port: {
-                    validators: {
-                        digits: {},
-                        notEmpty: {},
-                    }
-                },
-                email_host_user: {
-                    validators: {
-                        notEmpty: {},
-                    }
-                },
-                email_host_password: {
-                    validators: {
-                        notEmpty: {},
-                    }
-                },
-            },
         }
-    )
-        .on('core.element.validated', function (e) {
-            if (e.valid) {
-                const groupEle = FormValidation.utils.closest(e.element, '.form-group');
-                if (groupEle) {
-                    FormValidation.utils.classSet(groupEle, {
-                        'has-success': false,
-                    });
-                }
-                FormValidation.utils.classSet(e.element, {
-                    'is-valid': false,
+    ).on('core.form.valid', function() {
+        console.log('[FormValidation] ✅ Formulario válido, enviando...');
+        
+        var formData = new FormData($('#frmForm')[0]);
+        
+        submit_with_formdata({
+            type: 'blue',
+            theme: 'modern',
+            title: 'Confirmación',
+            icon: 'fas fa-info-circle',
+            content: '¿Está seguro de guardar los cambios?',
+            form: '#frmForm',
+            pathname: window.location.href,
+            params: formData,
+            success: function(response) {
+                console.log('[Submit Success] Respuesta:', response);
+                
+                // Mostrar mensaje de éxito con SweetAlert
+                alert_sweetalert({
+                    type: 'success',
+                    title: '¡Éxito!',
+                    message: 'Los datos se guardaron correctamente',
+                    timer: 2000,
+                    callback: function() {
+                        // Recargar para ver los cambios
+                        location.reload();
+                    }
                 });
             }
-            const iconPlugin = fv.getPlugin('icon');
-            const iconElement = iconPlugin && iconPlugin.icons.has(e.element) ? iconPlugin.icons.get(e.element) : null;
-            iconElement && (iconElement.style.display = 'none');
-        })
-        .on('core.validator.validated', function (e) {
-            if (!e.result.valid) {
-                const messages = [].slice.call(fv.form.querySelectorAll('[data-field="' + e.field + '"][data-validator]'));
-                messages.forEach((messageEle) => {
-                    const validator = messageEle.getAttribute('data-validator');
-                    messageEle.style.display = validator === e.validator ? 'block' : 'none';
-                });
-            }
-        })
-        .on('core.form.valid', function () {
-            var args = {
-                'params': new FormData(fv.form),
-                'form': fv.form
-            };
-            submit_with_formdata(args);
         });
-});
-
-$(function () {
-    select_tax_percentage = $('select[name="tax_percentage"]');
-    input_electronic_signature = $('input[name="electronic_signature"]');
-    input_tax = $('input[name="tax"]');
-
-    $('.select2').select2({
-        theme: 'bootstrap4',
-        language: 'es'
+    }).on('core.form.invalid', function() {
+        console.log('[FormValidation] ❌ Formulario inválido');
+        message_error('Por favor corrija los errores en el formulario');
     });
 
-    $('select[name="regimen_rimpe"]').on('change', function () {
-        select_tax_percentage.val(4).trigger('change');
-        input_tax.val(15.00);
-        switch (this.value) {
-            case 'CONTRIBUYENTE NEGOCIO POPULAR - RÉGIMEN RIMPE':
-                select_tax_percentage.val(0).trigger('change');
-                input_tax.val('0.00');
-                break;
-        }
-    });
-
-    $('input[name="ruc"]').on('keypress', function (e) {
-        return validate_text_box({'event': e, 'type': 'numbers'});
-    });
-
-    $('input[name="establishment_code"]').on('keypress', function (e) {
-        return validate_text_box({'event': e, 'type': 'numbers'});
-    });
-
-    $('input[name="issuing_point_code"]').on('keypress', function (e) {
-        return validate_text_box({'event': e, 'type': 'numbers'});
-    });
-
-    $('input[name="special_taxpayer"]').on('keypress', function (e) {
-        return validate_text_box({'event': e, 'type': 'numbers'});
-    });
-
-    $('input[name="mobile"]').on('keypress', function (e) {
-        return validate_text_box({'event': e, 'type': 'numbers'});
-    });
-
-    $('input[name="email_port"]').on('keypress', function (e) {
-        return validate_text_box({'event': e, 'type': 'numbers'});
-    });
-
-    input_tax
-        .TouchSpin({
-            min: 0.00,
-            max: 1000000,
-            step: 0.01,
-            decimals: 2,
-            boostat: 5,
-            maxboostedstep: 10,
-            prefix: '%'
-        })
-        .on('change touchspin.on.min touchspin.on.max', function () {
-            fv.revalidateField('tax');
-        })
-        .on('keypress', function (e) {
-            return validate_text_box({'event': e, 'type': 'decimals'});
-        });
-
-    $('i[data-field="tax"]').hide();
-
-    input_electronic_signature.on('change', function () {
-        $('.btnLoadCertificate').prop('disabled', company.validateExtensionP12(this));
-    });
-
-    if ($('input[name="electronic_signature-clear"]').length) {
-        fv.disableValidator('electronic_signature');
-        $('.btnLoadCertificate').prop('disabled', false);
-    }
-
-    $('.btnLoadCertificate').on('click', function () {
-        company.loadCertificate();
-    });
+    console.log('[Company Form] ✅ Inicialización completa');
 });

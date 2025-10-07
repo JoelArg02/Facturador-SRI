@@ -1,0 +1,230 @@
+{% extends 'form.html' %}
+{% load static %}
+{% block assets_form %}
+    <script src="{% static 'lib/select2-4.0.13/js/select2.min.js' %}"></script>
+    <script src="{% static 'lib/select2-4.0.13/js/i18n/es.js' %}"></script>
+    <link rel="stylesheet" href="{% static 'lib/select2-4.0.13/css/select2.min.css' %}">
+    <link rel="stylesheet" href="{% static 'lib/select2-4.0.13/css/select2-bootstrap4.min.css' %}">
+    <script src="{% static 'company/js/form.js' %}"></script>
+{% endblock %}
+
+{% block form_fields %}
+    <div class="card mb-3">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Información Básica</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        {{ form.ruc.label_tag }}{{ form.ruc }}
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        {{ form.company_name.label_tag }}{{ form.company_name }}
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        {{ form.commercial_name.label_tag }}{{ form.commercial_name }}
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        {{ form.image.label_tag }}{{ form.image }}
+                        <small class="form-text text-muted">Logotipo de la empresa</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-header bg-info text-white">
+            <h5 class="mb-0">Dirección y Establecimiento</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        {{ form.main_address.label_tag }}{{ form.main_address }}
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        {{ form.establishment_address.label_tag }}{{ form.establishment_address }}
+                        <small class="form-text text-muted">Por defecto usa la dirección de la matriz</small>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        {{ form.establishment_code.label_tag }}{{ form.establishment_code }}
+                        <small class="form-text text-muted">Por defecto: 001</small>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        {{ form.issuing_point_code.label_tag }}{{ form.issuing_point_code }}
+                        <small class="form-text text-muted">Por defecto: 001</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-header bg-success text-white">
+            <h5 class="mb-0">Configuración Tributaria</h5>
+        </div>
+        <div class="card-body">
+            <div class="alert alert-info">
+                Estos datos son requeridos por el SRI para la emisión de comprobantes electrónicos
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        {{ form.special_taxpayer.label_tag }}{{ form.special_taxpayer }}
+                        <small class="form-text text-muted">Dejar vacío si no aplica</small>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        {{ form.obligated_accounting.label_tag }}{{ form.obligated_accounting }}
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        {{ form.retention_agent.label_tag }}{{ form.retention_agent }}
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        {{ form.regimen_rimpe.label_tag }}{{ form.regimen_rimpe }}
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        {{ form.environment_type.label_tag }}{{ form.environment_type }}
+                        <small class="form-text text-muted">Pruebas (1) o Producción (2)</small>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        {{ form.emission_type.label_tag }}{{ form.emission_type }}
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        {{ form.tax_percentage.label_tag }}{{ form.tax_percentage }}
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        {{ form.tax.label_tag }}{{ form.tax }}
+                        <small class="form-text text-muted">Se calcula automáticamente del porcentaje</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-header bg-warning text-white">
+            <h5 class="mb-0">Información de Contacto</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        {{ form.mobile.label_tag }}{{ form.mobile }}
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        {{ form.phone.label_tag }}{{ form.phone }}
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        {{ form.email.label_tag }}{{ form.email }}
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        {{ form.website.label_tag }}{{ form.website }}
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="form-group">
+                        {{ form.description.label_tag }}{{ form.description }}
+                        <small class="form-text text-muted">Breve descripción de tu empresa (opcional)</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-header bg-danger text-white">
+            <h5 class="mb-0">Firma Electrónica y Certificado Digital</h5>
+        </div>
+        <div class="card-body">
+            <div class="alert alert-warning">
+                <strong>Importante:</strong> La firma electrónica (.p12) es obligatoria para emitir comprobantes electrónicos. Este archivo debe ser proporcionado por el SRI o una entidad certificadora autorizada.
+            </div>
+            
+            {% if form.instance.electronic_signature %}
+            <div class="alert alert-success">
+                <i class="fas fa-check-circle"></i> <strong>Firma electrónica actual:</strong> 
+                <a href="{{ form.instance.electronic_signature.url }}" target="_blank">
+                    {{ form.instance.electronic_signature.name|default:"certificado.p12" }}
+                </a>
+                <br>
+                <small class="text-muted">Solo seleccione un nuevo archivo si desea reemplazar la firma actual</small>
+            </div>
+            {% endif %}
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        {{ form.electronic_signature.label_tag }}{{ form.electronic_signature }}
+                        <small class="form-text text-muted">
+                            {% if form.instance.electronic_signature %}
+                                Opcional: Solo si desea cambiar el certificado actual
+                            {% else %}
+                                Archivo .p12 del certificado digital (obligatorio)
+                            {% endif %}
+                        </small>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        {{ form.electronic_signature_key.label_tag }}{{ form.electronic_signature_key }}
+                        <small class="form-text text-muted">
+                            {% if form.instance.electronic_signature %}
+                                Solo necesario si cambia el certificado
+                            {% else %}
+                                Contraseña del certificado digital (obligatorio)
+                            {% endif %}
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

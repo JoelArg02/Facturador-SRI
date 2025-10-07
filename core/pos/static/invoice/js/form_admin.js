@@ -228,10 +228,16 @@ var invoice = {
         if (is_draft_invoice && select_receipt.val() === '01') {
             return { valid: true };
         }
-        var cash = parseFloat(input_cash.val());
+        
         var totalAmount = invoice.detail.total_amount;
+        var cash = parseFloat(input_cash.val());
+        
+        if (isNaN(cash) || cash === 0) {
+            input_cash.val(totalAmount.toFixed(2));
+            cash = totalAmount;
+        }
 
-        if (isNaN(cash) || cash < 0) {
+        if (cash < 0) {
             input_change.val('0.00');
             return { valid: false, message: 'Ingrese un monto válido en efectivo' };
         }
@@ -381,21 +387,38 @@ document.addEventListener('DOMContentLoaded', function (e) {
                     loading({'text': 'Procesando factura...'});
                 },
                 success: function (request) {
+                    console.log('[Invoice Submit] Respuesta recibida:', request);
+                    
                     if (!request.hasOwnProperty('error')) {
                         if (request.hasOwnProperty('resp') && request.resp === false) {
+                            console.log('[Invoice Submit] Error en resp:', request.msg);
                             message_error(request.msg);
                         } else {
-                            message_success('Comprobante generado exitosamente.');
-                            setTimeout(function(){ location.href = href_url; }, 800);
+                            console.log('[Invoice Submit] ✅ Factura generada exitosamente');
+                            alert_sweetalert({
+                                type: 'success',
+                                title: '¡Éxito!',
+                                message: 'Comprobante generado exitosamente.',
+                                timer: 1500,
+                                callback: function() {
+                                    location.href = href_url;
+                                }
+                            });
                         }
                     } else {
+                        console.log('[Invoice Submit] ❌ Error:', request.error);
                         message_error(request.error);
                         setTimeout(function(){ location.href = href_url; }, 1500);
                     }
                 },
                 error: function (jqXHR, textStatus, errorThrown) {
+                    console.log('[Invoice Submit] 💥 Error de red:', textStatus, errorThrown);
                     message_error('Error al procesar la solicitud: ' + textStatus);
                     setTimeout(function(){ location.href = href_url; }, 1500);
+                },
+                complete: function() {
+                    console.log('[Invoice Submit] Complete - ocultando loading');
+                    $.LoadingOverlay("hide");
                 }
             });
         });

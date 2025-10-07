@@ -178,6 +178,12 @@ class Invoice(ElecBillingBase):
         item['end_credit'] = self.end_credit.strftime('%Y-%m-%d')
         item['cash'] = float(self.cash)
         item['change'] = float(self.change)
+        
+        status_name = self.get_status_display()
+        if self.environment_type == 1:
+            status_name = f"{status_name} [AMBIENTE PRUEBAS]"
+        item['status'] = {'id': self.status, 'name': status_name}
+        
         return item
 
     class Meta:
