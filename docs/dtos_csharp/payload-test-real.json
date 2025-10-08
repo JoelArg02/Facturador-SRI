@@ -1,0 +1,50 @@
+{
+  "company": {
+    "ruc": "1755231683001",
+    "company_name": "JOEL DANIEL ARGUELLO ESPINOSA",
+    "commercial_name": "MI EMPRESA",
+    "main_address": "Av. Principal 123, Quito, Ecuador",
+    "establishment_address": "Av. Principal 123, Quito, Ecuador",
+    "obligated_accounting": "NO",
+    "environment_type": 1,
+    "emission_type": 1,
+    "retention_agent": "NO",
+    "regimen_rimpe": "CONTRIBUYENTE RÉGIMEN GENERAL",
+    "is_popular_regime": false,
+    "tax_rate": 0.15,
+    "tax_percentage": 4,
+    "electronic_signature_path": "/Users/joelarguello/Documents/GitHub/Facturador-SRI/media/JOEL DANIEL ARGUELLO ESPINOSA 1755231683-250725094851.p12",
+    "electronic_signature_key": "Pcjoel2019"
+  },
+  "customer": {
+    "identification": "1710202449",
+    "name": "Jorge Arguello",
+    "address": "Quito, Ecuador"
+  },
+  "receipt": {
+    "voucher_type": "01",
+    "establishment_code": "001",
+    "issuing_point_code": "001",
+    "receipt_number": "000000001"
+  },
+  "date_joined": "2025-10-07",
+  "payment_type": "contado",
+  "payment_method": "01",
+  "create_electronic_invoice": true,
+  "additional_info": [
+    {
+      "name": "Email",
+      "value": "cliente@example.com"
+    }
+  ],
+  "products": [
+    {
+      "code": "PROD001",
+      "name": "LAPTOP HP",
+      "quantity": 1,
+      "price": 1.00,
+      "discount": 0,
+      "has_tax": true
+    }
+  ]
+}
