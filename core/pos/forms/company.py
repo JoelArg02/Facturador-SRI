@@ -15,7 +15,6 @@ class CompanyForm(BaseModelForm):
         fields = '__all__'
 
 class CompanyOnboardingForm(BaseModelForm):
-    """Formulario reducido para creación inicial obligatoria de la Compañía (sin campos SMTP)."""
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         placeholders = {
@@ -45,7 +44,6 @@ class CompanyOnboardingForm(BaseModelForm):
         if 'tax' in self.fields:
             self.fields['tax'].widget.attrs['step'] = '0.01'
         
-        # Si ya existe una firma electrónica guardada, hacerla opcional
         if self.instance and self.instance.pk and self.instance.electronic_signature:
             if 'electronic_signature' in self.fields:
                 self.fields['electronic_signature'].required = False
@@ -84,17 +82,12 @@ class CompanyOnboardingForm(BaseModelForm):
         return cleaned_data
 
     def save(self, commit=True):
-        data = {}
         try:
-            if not self.is_valid():
-                data['error'] = self.errors
-                return data
-            
-            instance = super(BaseModelForm, self).save(commit=False)
-            
+            instance = forms.ModelForm.save(self, commit=False)
+
             if not getattr(instance, 'environment_type', None):
                 instance.environment_type = 2
-                
+
             if not getattr(instance, 'emission_type', None):
                 instance.emission_type = 1
 
@@ -114,24 +107,16 @@ class CompanyOnboardingForm(BaseModelForm):
                 instance.establishment_address = getattr(instance, 'main_address', '')
 
             instance.special_taxpayer = instance.special_taxpayer or ''
-
-            if not getattr(instance, 'website', None):
-                instance.website = ''
+            instance.website = getattr(instance, 'website', '') or ''
             if hasattr(instance, 'electronic_signature_key') and not instance.electronic_signature_key:
                 instance.electronic_signature_key = ''
 
             if commit:
                 instance.save()
-            
-            # Retornar el diccionario de datos del objeto guardado
-            if hasattr(instance, 'as_dict') and callable(getattr(instance, 'as_dict')):
-                data = instance.as_dict()
-            else:
-                data = {'id': instance.pk}
+
+            return instance
         except Exception as e:
-            data['error'] = str(e)
-        
-        return data
+            raise forms.ValidationError(f"Error al guardar la compañía: {e}")
 
     class Meta:
         model = Company

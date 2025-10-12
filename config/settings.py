@@ -188,5 +188,10 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Constants
 
 GROUPS = {
-    'customer': 2
+    'superadmin': 1,
+    'admin': 2,
+    'warehouse_operator': 3,
+    'sales_operator': 4,
+    'customer': 5,
+    'viewer': 6,
 }

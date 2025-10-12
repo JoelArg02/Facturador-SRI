@@ -15,21 +15,12 @@ from core.security.mixins import GroupPermissionMixin
 
 
 class CompanySelfUpdateView(LoginRequiredMixin, UpdateView):
-    """Permite al DUEÑO de la compañía editar exclusivamente SU propia compañía.
-
-    Reglas:
-    - Debe estar autenticado.
-    - Debe ser el owner de una compañía (request.user.owned_company).
-    - Si no tiene compañía propia, se redirige al onboarding para crearla.
-    """
-
     template_name = 'company/create.html'
     form_class = CompanyForm
     model = Company
     success_url = settings.LOGIN_REDIRECT_URL
 
     def get_user_company(self):
-        # Usar exclusivamente la compañía donde el usuario es owner
         return getattr(self.request.user, 'owned_company', None)
 
     def dispatch(self, request, *args, **kwargs):
@@ -221,71 +212,93 @@ class CompanyOnboardingView(GroupPermissionMixin, FormView):
     template_name = 'company/onboarding.html'
     form_class = CompanyOnboardingForm
     success_url = settings.LOGIN_REDIRECT_URL
-    permission_required = None  # Se maneja solo por autenticación y lógica de owner
+    permission_required = None
 
     def dispatch(self, request, *args, **kwargs):
-        # Debug info
-        print(f"[CompanyOnboardingView] Usuario: {request.user}, autenticado: {request.user.is_authenticated}")
-        print(f"[CompanyOnboardingView] Tiene company: {hasattr(request.user, 'company')}")
-        if hasattr(request.user, 'company'):
-            print(f"[CompanyOnboardingView] Company actual: {request.user.company}")
-        
-        # Si el usuario ya tiene una compañía asignada, redirigimos (evitar duplicados)
+        print("──────────────────────────────────────────────────────────────")
+        print("[CompanyOnboardingView] → dispatch()")
+        print(f"Usuario: {request.user} | Autenticado: {request.user.is_authenticated}")
         if request.user.is_authenticated and hasattr(request.user, 'company') and request.user.company is not None:
-            print(f"[CompanyOnboardingView] Usuario ya tiene company, redirigiendo a {self.success_url}")
+            print(f"Ya tiene una compañía asignada → Redirigiendo a {self.success_url}")
             return redirect(self.success_url)
         return super().dispatch(request, *args, **kwargs)
 
     def form_valid(self, form):
+        print("──────────────────────────────────────────────────────────────")
+        print("[CompanyOnboardingView] → form_valid() iniciado")
+        print(f"Usuario: {self.request.user} (ID: {self.request.user.id})")
+
         try:
-            print("[CompanyOnboardingView] Iniciando form_valid")
-            print(f"[CompanyOnboardingView] Usuario actual: {self.request.user} (ID: {self.request.user.id})")
-            
-            # Verificar si el usuario ya posee una compañía
+            # Verificar si el usuario ya tiene compañía
             if hasattr(self.request.user, 'owned_company') and self.request.user.owned_company:
-                print(f"[CompanyOnboardingView] Usuario ya posee una compañía: {self.request.user.owned_company}")
+                print("[ERROR] El usuario ya posee una compañía registrada")
                 form.add_error(None, "Ya tienes una compañía registrada.")
                 return self.form_invalid(form)
-            
-            # Crear la compañía
-            company = form.save(commit=False)
+
+            # Guardar el formulario (soporte para dict o instancia)
+            result = form.save(commit=False)
+            print(f"[DEBUG] Resultado de form.save(): tipo = {type(result)}")
+
+            if isinstance(result, dict):
+                print(f"[DEBUG] Contenido de result: {json.dumps(result, default=str)}")
+                company = result.get('instance')
+                if not company:
+                    print("[ERROR] El formulario devolvió un dict sin 'instance'")
+                    form.add_error(None, "Error interno: el formulario no devolvió la instancia de la compañía.")
+                    return self.form_invalid(form)
+            else:
+                company = result
+
+            print(f"[OK] Se obtuvo instancia de Company: {company}")
+
+            # Validar campos obligatorios antes de guardar
+            missing_fields = [f.name for f in company._meta.fields if getattr(company, f.name) in (None, '', []) and not f.null and not f.blank]
+            if missing_fields:
+                print(f"[WARNING] Campos requeridos sin valor: {missing_fields}")
+
+            # Asignar propietario
             company.owner = self.request.user
-            print(f"[CompanyOnboardingView] Asignando owner: {self.request.user} (ID: {self.request.user.id})")
-            
-            # Guardar la compañía primero
+            print(f"[OK] Owner asignado: {company.owner}")
+
+            # Guardar en base de datos
             company.save()
-            print(f"[CompanyOnboardingView] Compañía creada con ID: {company.id}")
-            print(f"[CompanyOnboardingView] Owner asignado: {company.owner}")
-            
-            # Ahora asignar la compañía al usuario (relación ForeignKey)
+            print(f"[OK] Compañía guardada con ID: {company.id}")
+
+            # Relacionar usuario con la compañía
             self.request.user.company = company
             self.request.user.save()
-            print(f"[CompanyOnboardingView] Usuario actualizado. Company ID: {self.request.user.company_id}")
-            
-            # Verificar que las relaciones se establecieron correctamente
-            print(f"[CompanyOnboardingView] Verificación final:")
-            print(f"  - Company.owner: {company.owner}")
-            print(f"  - User.company: {self.request.user.company}")
-            print(f"  - User.owned_company: {getattr(self.request.user, 'owned_company', 'N/A')}")
-            
-            print(f"[CompanyOnboardingView] Redirigiendo a {self.success_url}")
+            print(f"[OK] Usuario actualizado → company_id={self.request.user.company_id}")
+
+            # Verificación final
+            print("[VERIFICACIÓN FINAL]")
+            print(f"Company.owner → {company.owner}")
+            print(f"User.company → {self.request.user.company}")
+            print(f"User.owned_company → {getattr(self.request.user, 'owned_company', 'N/A')}")
+            print("──────────────────────────────────────────────────────────────")
             return redirect(self.success_url)
-            
+
         except Exception as e:
-            print(f"[CompanyOnboardingView] Error en form_valid: {e}")
-            import traceback
+            print("──────────────────────────────────────────────────────────────")
+            print("[ERROR] Excepción en form_valid()")
             traceback.print_exc()
-            
-            # Agregar error al formulario para mostrarlo al usuario
             form.add_error(None, f"Error al crear la compañía: {str(e)}")
+            print("──────────────────────────────────────────────────────────────")
             return self.form_invalid(form)
 
     def form_invalid(self, form):
-        print(f"[CompanyOnboardingView] Formulario inválido. Errores: {form.errors}")
+        print("──────────────────────────────────────────────────────────────")
+        print("[CompanyOnboardingView] → form_invalid()")
+        print("Errores de formulario:")
+        for field, errors in form.errors.items():
+            print(f" - {field}: {errors}")
+        print("──────────────────────────────────────────────────────────────")
         return super().form_invalid(form)
 
     def post(self, request, *args, **kwargs):
-        print(f"[CompanyOnboardingView] POST recibido. Datos: {request.POST}")
+        print("──────────────────────────────────────────────────────────────")
+        print("[CompanyOnboardingView] → POST recibido")
+        print(f"Datos del formulario: {json.dumps(request.POST.dict(), indent=2, ensure_ascii=False)}")
+        print("──────────────────────────────────────────────────────────────")
         return super().post(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
@@ -293,3 +306,4 @@ class CompanyOnboardingView(GroupPermissionMixin, FormView):
         context['title'] = 'Configuración Inicial de la Compañía'
         context['action'] = 'create'
         return context
+

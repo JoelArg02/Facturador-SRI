@@ -4,11 +4,56 @@
     <script src="{% static 'customer/js/list.js' %}"></script>
 {% endblock %}
 
+{% block content %}
+    {% if quota_info %}
+        <div class="row mb-2">
+            <div class="col-md-12">
+                {% if quota_info.can_create %}
+                    <div class="alert alert-info alert-dismissible fade show" role="alert">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Límite de clientes:</strong> {{ quota_info.current_count }} de {{ quota_info.max_allowed }} utilizados.
+                        {{ quota_info.message }}
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                {% else %}
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <strong>¡Límite alcanzado!</strong> {{ quota_info.message }}
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    {% endif %}
+    {{ block.super }}
+{% endblock %}
+
+{% block box_footer_buttons %}
+    {% if quota_info.can_create %}
+        {% if create_url %}
+            <a href="{{ create_url }}" class="btn btn-primary btn-flat">
+                <i class="fas fa-plus"></i> Nuevo Registro
+            </a>
+        {% endif %}
+    {% else %}
+        <button type="button" class="btn btn-secondary btn-flat" disabled data-toggle="tooltip" title="Has alcanzado el límite de clientes de tu plan">
+            <i class="fas fa-ban"></i> Límite Alcanzado
+        </button>
+    {% endif %}
+    <a href="{{ list_url }}" class="btn btn-success btn-flat">
+        <i class="fas fa-sync-alt"></i> Actualizar
+    </a>
+{% endblock %}
+
 {% block columns %}
     <th>Id</th>
     <th>Nombres</th>
     <th>Tipo de identificación</th>
-    <th>Identificación</th>
+    <th>Número de cedula</th>
     <th>Teléfono</th>
     <th>Email</th>
     <th class="text-center">Opciones</th>

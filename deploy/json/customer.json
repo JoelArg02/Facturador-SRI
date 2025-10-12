@@ -2,12 +2,13 @@
   {
     "names": "CONSUMIDOR FINAL",
     "dni": "9999999999999",
-    "email": "consumidorfinal@hotmail.com",
+    "email": "consumidorfinal@optimuspos.com",
     "mobile": "0999999999",
     "address": "ECUADOR",
     "birthdate": "2003-05-13",
     "identification_type": "07",
-    "send_email_invoice": false
+    "send_email_invoice": false,
+    "is_global": true
   },
   {
     "names": "AGUSTIN GARCIA CADENA ABONOS",

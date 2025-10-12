@@ -1,65 +1,46 @@
+from datetime import datetime
 from django.db import models
-from django.db.models import Q, UniqueConstraint
 from django.forms import model_to_dict
-
 from core.pos.choices import IDENTIFICATION_TYPE
 from core.user.models import User
 
-
 class Customer(models.Model):
     company = models.ForeignKey('pos.Company', null=True, blank=True, related_name='customers', on_delete=models.CASCADE, verbose_name='Compañía')
-
-    user = models.ForeignKey(User, related_name='customers', on_delete=models.CASCADE)
-
-    dni = models.CharField(max_length=10, null=True, blank=True, verbose_name='Cédula')
-    ruc = models.CharField(max_length=13, null=True, blank=True, verbose_name='RUC')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='customers')
+    dni = models.CharField(max_length=13, help_text='Ingrese un número de cédula o RUC', verbose_name='Número de cédula o RUC')
     mobile = models.CharField(max_length=10, null=True, blank=True, help_text='Ingrese un teléfono', verbose_name='Teléfono')
+    birthdate = models.DateField(default=datetime.now, verbose_name='Fecha de nacimiento')
     address = models.CharField(max_length=500, null=True, blank=True, help_text='Ingrese una dirección', verbose_name='Dirección')
-    business_name = models.CharField(max_length=250, null=True, blank=True, verbose_name='Razón Social')
-    commercial_name = models.CharField(max_length=250, null=True, blank=True, verbose_name='Nombre Comercial')
-    tradename = models.CharField(max_length=200, null=True, blank=True, verbose_name='Nombre Comercial Facturación')
-    is_business = models.BooleanField(default=False, verbose_name='Es Empresa')
-    is_credit_authorized = models.BooleanField(default=False, verbose_name='Está autorizado para crédito')
-    credit_limit = models.DecimalField(max_digits=9, decimal_places=2, default=0.00, verbose_name='Límite de crédito')
+    identification_type = models.CharField(max_length=30, choices=IDENTIFICATION_TYPE, default=IDENTIFICATION_TYPE[0][0], verbose_name='Tipo de identificación')
 
     def __str__(self):
         return self.get_full_name()
 
     @property
     def identification(self):
-        return self.ruc or self.dni or ''
+        return getattr(self, 'ruc', None) or self.dni or ''
 
     def get_full_name(self):
-        return f'{self.user.names} ({self.identification})'
+        user_name = getattr(self.user, 'names', 'Sin nombre')
+        return f'{user_name} ({self.identification})'
 
     def formatted_birthdate(self):
-        return ''
+        return self.birthdate.strftime('%d/%m/%Y') if self.birthdate else ''
 
     def as_dict(self):
         item = model_to_dict(self)
         item['text'] = self.get_full_name()
-        item['user'] = self.user.as_dict()
-        item['birthdate'] = self.formatted_birthdate()
-        ident_type = self.identification_type
-        item['identification_type'] = {'id': ident_type, 'name': dict(IDENTIFICATION_TYPE).get(ident_type, ident_type)}
-        item['identification'] = self.identification
-        item['send_email_invoice'] = True
-        credit_limit = item.get('credit_limit')
-        if credit_limit is not None:
+        if getattr(self, 'user', None):
             try:
-                item['credit_limit'] = float(credit_limit)
+                item['user'] = self.user.as_dict()
             except Exception:
-                item['credit_limit'] = 0.0
+                item['user'] = {'id': self.user.id, 'names': getattr(self.user, 'names', '')}
+        else:
+            item['user'] = {'id': None, 'names': ''}
+        item['birthdate'] = self.formatted_birthdate()
+        item['identification'] = self.identification
+        item['identification_type'] = {'id': self.identification_type, 'name': self.get_identification_type_display()}
         return item
-
-    @property
-    def identification_type(self):
-        ident = self.identification
-        if len(ident) == 13:
-            return '04'
-        if len(ident) == 10:
-            return '05'
-        return '07'
 
     @property
     def send_email_invoice(self):
@@ -69,14 +50,5 @@ class Customer(models.Model):
         verbose_name = 'Cliente'
         verbose_name_plural = 'Clientes'
         constraints = [
-            UniqueConstraint(
-                fields=['company', 'dni'],
-                name='unique_customer_dni_per_company',
-                condition=Q(dni__isnull=False) & ~Q(dni='')
-            ),
-            UniqueConstraint(
-                fields=['company', 'ruc'],
-                name='unique_customer_ruc_per_company',
-                condition=Q(ruc__isnull=False) & ~Q(ruc='')
-            ),
+            models.UniqueConstraint(fields=['company', 'dni'], name='unique_customer_per_company')
         ]

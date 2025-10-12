@@ -154,10 +154,6 @@ def check_quota_limits(user, resource_type='product'):
             'message': str
         }
     """
-    print(f"DEBUG check_quota_limits - user: {user}")
-    print(f"DEBUG check_quota_limits - user type: {type(user)}")
-    print(f"DEBUG check_quota_limits - resource_type: {resource_type}")
-    
     result = {
         'can_create': True,
         'current_count': 0,

@@ -520,9 +520,9 @@ class InvoiceUpdateView(AutoAssignCompanyMixin, GroupPermissionMixin, CompanyQue
                 base_filter = Q(user__names__icontains=term) | Q(dni__icontains=term)
                 
                 if company:
-                    customers_qs = Customer.objects.filter(base_filter, company=company)
+                    customers_qs = Customer.objects.filter(base_filter).filter(Q(company=company) | Q(is_global=True))
                 else:
-                    customers_qs = Customer.objects.filter(base_filter)
+                    customers_qs = Customer.objects.filter(base_filter).filter(is_global=True)
                 
                 customers_qs = customers_qs.order_by('user__names')[0:10]
                 

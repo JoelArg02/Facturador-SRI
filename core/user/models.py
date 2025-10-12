@@ -20,7 +20,6 @@ class User(AbstractBaseUser, PermissionsMixin):
     is_password_change = models.BooleanField(default=False)
     password_reset_token = models.TextField(null=True, blank=True)
     company = models.ForeignKey('pos.Company', null=True, blank=True, related_name='users', on_delete=models.SET_NULL, verbose_name='Compañía asignada')
-    # Preferencia de diseño del usuario: 1=Vertical, 2=Horizontal
     layout = models.IntegerField(choices=LAYOUT_OPTIONS, default=LAYOUT_OPTIONS[0][0], verbose_name='Diseño de interfaz')
 
     objects = UserManager()
@@ -53,15 +52,10 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     @property
     def is_customer(self):
-        # Ahora el usuario puede tener varios Customer por compañía
         return self.customers.exists()
 
     @property
     def customer(self):
-        """Compatibilidad con código previo que asumía una relación OneToOne.
-        Devuelve el Customer asociado a la compañía del request actual o, si no hay request,
-        intenta con el campo company del usuario. Si hay múltiples resultados, retorna el primero.
-        """
         try:
             request = get_current_request()
         except Exception:
