@@ -11,6 +11,7 @@ from core.pos.models import Customer
 from core.pos.utilities.sri import SRI
 from core.security.mixins import GroupPermissionMixin, GroupModuleMixin
 from core.subscription.models import check_quota_limits
+from core.user.models import User
 
 
 class CustomerListView(GroupPermissionMixin, ListView):
@@ -71,13 +72,35 @@ class CustomerCreateView(GroupPermissionMixin, CreateView):
                     form2 = self.form_class(request.POST, request.FILES, request=request)
 
                     if form1.is_valid() and form2.is_valid():
-                        user = form1.save(commit=False)
-                        user.username = form2.cleaned_data.get('dni')
-                        user.set_password(user.username)
-                        user.is_staff = False
-                        user.is_superuser = False
-                        user.is_active = True
-                        user.save()
+                        dni = form2.cleaned_data.get('dni')
+                        
+                        # Verificar si ya existe un usuario con este username (dni)
+                        existing_user = User.objects.filter(username=dni).first()
+                        
+                        if existing_user:
+                            # Reutilizar el usuario existente
+                            user = existing_user
+                            # Actualizar solo el nombre si es diferente
+                            new_names = form1.cleaned_data.get('names')
+                            if new_names and new_names != user.names:
+                                user.names = new_names
+                            # Actualizar email si es diferente y está presente
+                            new_email = form1.cleaned_data.get('email')
+                            if new_email and new_email != user.email:
+                                user.email = new_email
+                            # Actualizar imagen si se proporciona una nueva
+                            if form1.cleaned_data.get('image'):
+                                user.image = form1.cleaned_data.get('image')
+                            user.save()
+                        else:
+                            # Crear nuevo usuario
+                            user = form1.save(commit=False)
+                            user.username = dni
+                            user.set_password(user.username)
+                            user.is_staff = False
+                            user.is_superuser = False
+                            user.is_active = True
+                            user.save()
 
                         user.groups.clear()
 
