@@ -86,11 +86,10 @@ class LoginResetPasswordView(FormView):
             html = render_to_string('login/password_reset_email.html', params)
             content = MIMEText(html, 'html')
             message.attach(content)
-            server = smtplib.SMTP(settings.EMAIL_HOST, settings.EMAIL_PORT)
-            server.starttls()
-            server.login(settings.EMAIL_HOST_USER, settings.EMAIL_HOST_PASSWORD)
-            server.sendmail(settings.EMAIL_HOST_USER, user.email, message.as_string())
-            server.quit()
+            
+            # Enviar y guardar en bandeja de salida
+            from core.pos.utilities.email_sender import send_email_with_sent_copy
+            send_email_with_sent_copy(message, [user.email])
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

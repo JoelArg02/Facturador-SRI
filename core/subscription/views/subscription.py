@@ -213,11 +213,9 @@ Vigencia: {subscription.start_date} hasta {subscription.end_date}
         message.attach(MIMEText(text_content, 'plain'))
         message.attach(MIMEText(html_content, 'html'))
 
-        # Envío por SSL en puerto 465
-        server = smtplib.SMTP_SSL(settings.EMAIL_HOST, 465)
-        server.login(settings.EMAIL_HOST_USER, settings.EMAIL_HOST_PASSWORD)
-        server.sendmail(settings.EMAIL_HOST_USER, [user.email], message.as_string())
-        server.quit()
+        # Enviar y guardar en bandeja de salida
+        from core.pos.utilities.email_sender import send_email_with_sent_copy
+        send_email_with_sent_copy(message, [user.email])
 
     except Exception:
         # Se silencian errores de correo para no interrumpir el flujo

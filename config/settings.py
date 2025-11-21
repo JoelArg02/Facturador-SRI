@@ -161,6 +161,7 @@ AUTH_USER_MODEL = 'user.User'
 # Email
 
 EMAIL_USE_TLS = env('EMAIL_USE_TLS', default=True)
+EMAIL_USE_SSL = env('EMAIL_USE_SSL', default=False)
 EMAIL_HOST = env('EMAIL_HOST')
 EMAIL_PORT = env('EMAIL_PORT')
 EMAIL_HOST_USER = env('EMAIL_HOST_USER')

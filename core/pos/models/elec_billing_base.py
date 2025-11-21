@@ -314,10 +314,9 @@ class ElecBillingBase(TransactionSummary):
                 xml_part.add_header('Content-Disposition', 'attachment', filename=f'{self.access_code}.xml')
                 message.attach(xml_part)
 
-            server = smtplib.SMTP_SSL(settings.EMAIL_HOST, 465)
-            server.login(settings.EMAIL_HOST_USER, settings.EMAIL_HOST_PASSWORD)
-            server.sendmail(settings.EMAIL_HOST_USER, [customer.user.email], message.as_string())
-            server.quit()
+            # Enviar y guardar en bandeja de salida
+            from core.pos.utilities.email_sender import send_email_with_sent_copy
+            send_email_with_sent_copy(message, [customer.user.email])
 
         except Exception as exc:  # pragma: no cover
             response = {'resp': False, 'error': str(exc)}

@@ -1,0 +1,15 @@
+[2025-11-20 22:17:28] EmailSender inicializado - Host: mail.optimusposec.com, Port: 465, SSL: True, TLS: True
+[2025-11-20 22:17:28] Enviando correo a ['joel.darguello@gmail.com'] - Asunto: Factura electrónica – 001-001-000000004
+[2025-11-20 22:17:28] Conectando con SMTP_SSL a mail.optimusposec.com:465
+[2025-11-20 22:17:30] Autenticando como facturas@optimusposec.com
+[2025-11-20 22:17:30] Enviando mensaje SMTP
+[2025-11-20 22:17:31] ✓ Correo enviado exitosamente a ['joel.darguello@gmail.com']
+[2025-11-20 22:17:31] Conexión SMTP cerrada
+[2025-11-20 22:17:31] Intentando guardar en bandeja de salida - IMAP Host: imap.optimusposec.com
+[2025-11-20 22:17:31] Conectando a IMAP SSL
+[2025-11-20 22:17:32] Autenticando IMAP como facturas@optimusposec.com
+[2025-11-20 22:17:32] Listando carpetas disponibles
+[2025-11-20 22:17:32] Carpetas encontradas: ., ., ., ., .
+[2025-11-20 22:17:32] Creando carpeta 'Sent'
+[2025-11-20 22:17:32] Guardando mensaje en carpeta: Sent
+[2025-11-20 22:17:33] ✓ Mensaje guardado exitosamente en Sent

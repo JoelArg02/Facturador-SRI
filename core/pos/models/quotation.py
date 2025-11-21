@@ -52,10 +52,9 @@ class Quotation(TransactionSummary):
         pdf_part.add_header('Content-Disposition', 'attachment', filename=f'{self.formatted_number}.pdf')
         message.attach(pdf_part)
 
-        server = smtplib.SMTP_SSL(settings.EMAIL_HOST, 465)
-        server.login(settings.EMAIL_HOST_USER, settings.EMAIL_HOST_PASSWORD)
-        server.sendmail(settings.EMAIL_HOST_USER, message['To'], message.as_string())
-        server.quit()
+        # Enviar y guardar en bandeja de salida
+        from core.pos.utilities.email_sender import send_email_with_sent_copy
+        send_email_with_sent_copy(message)
 
     def calculate_detail(self):
         for detail in self.quotationdetail_set.filter():
