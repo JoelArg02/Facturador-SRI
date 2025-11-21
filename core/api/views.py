@@ -239,16 +239,11 @@ class InvoiceAPIView(View):
             ElementTree.SubElement(xml_info_invoice, 'obligadoContabilidad').text = company.get('obligated_accounting', 'NO')
             
             customer_identification = customer.get('identification')
-            identification_type = '07'
-            if customer_identification:
-                if len(customer_identification) == 13:
-                    identification_type = '04'
-                elif len(customer_identification) == 10:
-                    identification_type = '05'
-                else:
-                    customer_identification = '9999999999999'
-            else:
+            identification_type = customer.get('identification_type', '07')
+            
+            if not customer_identification or customer_identification == '9999999999999':
                 customer_identification = '9999999999999'
+                identification_type = '07'
             
             ElementTree.SubElement(xml_info_invoice, 'tipoIdentificacionComprador').text = identification_type
             ElementTree.SubElement(xml_info_invoice, 'razonSocialComprador').text = customer.get('name', 'CONSUMIDOR FINAL')[:300]

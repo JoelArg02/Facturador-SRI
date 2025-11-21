@@ -232,9 +232,9 @@ var invoice = {
         var totalAmount = invoice.detail.total_amount;
         var cash = parseFloat(input_cash.val());
         
-        if (isNaN(cash) || cash === 0) {
-            input_cash.val(totalAmount.toFixed(2));
-            cash = totalAmount;
+        if (isNaN(cash)) {
+            input_cash.val('0.00');
+            cash = 0;
         }
 
         if (cash < 0) {
@@ -242,7 +242,7 @@ var invoice = {
             return { valid: false, message: 'Ingrese un monto válido en efectivo' };
         }
 
-        if (select_payment_type.val() === 'efectivo' && cash < totalAmount) {
+        if (select_payment_type.val() === 'efectivo' && cash > 0 && cash < totalAmount) {
             input_change.val('0.00');
             return { valid: false, message: 'El efectivo debe ser mayor o igual al total a pagar' };
         }
@@ -387,14 +387,11 @@ document.addEventListener('DOMContentLoaded', function (e) {
                     loading({'text': 'Procesando factura...'});
                 },
                 success: function (request) {
-                    console.log('[Invoice Submit] Respuesta recibida:', request);
                     
                     if (!request.hasOwnProperty('error')) {
                         if (request.hasOwnProperty('resp') && request.resp === false) {
-                            console.log('[Invoice Submit] Error en resp:', request.msg);
                             message_error(request.msg);
                         } else {
-                            console.log('[Invoice Submit] ✅ Factura generada exitosamente');
                             alert_sweetalert({
                                 type: 'success',
                                 title: '¡Éxito!',
@@ -406,13 +403,11 @@ document.addEventListener('DOMContentLoaded', function (e) {
                             });
                         }
                     } else {
-                        console.log('[Invoice Submit] ❌ Error:', request.error);
                         message_error(request.error);
                         setTimeout(function(){ location.href = href_url; }, 1500);
                     }
                 },
                 error: function (jqXHR, textStatus, errorThrown) {
-                    console.log('[Invoice Submit] 💥 Error de red:', textStatus, errorThrown);
                     message_error('Error al procesar la solicitud: ' + textStatus);
                     setTimeout(function(){ location.href = href_url; }, 1500);
                 },

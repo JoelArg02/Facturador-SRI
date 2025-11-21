@@ -84,30 +84,16 @@ class Invoice(ElecBillingBase):
         ElementTree.SubElement(xml_info_invoice, 'fechaEmision').text = datetime.now().strftime('%d/%m/%Y')
         ElementTree.SubElement(xml_info_invoice, 'dirEstablecimiento').text = self.company.establishment_address
         ElementTree.SubElement(xml_info_invoice, 'obligadoContabilidad').text = self.company.obligated_accounting
-        # --- Identificación del comprador ---
-        # Reglas SRI:
-        #   04 -> RUC (13 dígitos, los 10 primeros deben ser cédula válida y terminar en 001 normalmente)
-        #   05 -> Cédula (10 dígitos)
-        #   07 -> Consumidor Final (usar 9999999999999 cuando no hay identificación válida)
+        
         raw_dni = (self.customer.dni or '').strip()
-
-        identification_value = ''
-        identification_type = ''
-
-        # RUC (13 dígitos)
-        if raw_dni and len(raw_dni) == 13 and raw_dni.isdigit():
-            identification_value = raw_dni
-            identification_type = '04'
-        # Caso Cédula (10 dígitos)
-        elif raw_dni and len(raw_dni) == 10 and raw_dni.isdigit():
-            identification_value = raw_dni
-            identification_type = '05'
-        else:
-            # Consumidor final
+        identification_type = self.customer.identification_type or '07'
+        
+        if not raw_dni or raw_dni == '9999999999999':
             identification_value = '9999999999999'
             identification_type = '07'
+        else:
+            identification_value = raw_dni
 
-        # Asignar al XML
         ElementTree.SubElement(xml_info_invoice, 'tipoIdentificacionComprador').text = identification_type
         ElementTree.SubElement(xml_info_invoice, 'razonSocialComprador').text = self.customer.user.names[:300]
         ElementTree.SubElement(xml_info_invoice, 'identificacionComprador').text = identification_value

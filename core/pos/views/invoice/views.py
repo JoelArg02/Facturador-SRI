@@ -597,7 +597,16 @@ class InvoicePrintView(GroupPermissionMixin, ListView):
     def get(self, request, *args, **kwargs):
         invoice = self.get_queryset().filter(id=self.kwargs['pk']).first()
         if invoice:
-            context = {'object': invoice, 'height': 450 + invoice.invoicedetail_set.all().count() * 10}
+            if self.kwargs['code'] == VOUCHER_TYPE[2][0]:
+                title = f'Ticket {invoice.receipt_number_full}'
+            else:
+                title = f'Factura {invoice.receipt_number_full}'
+            
+            context = {
+                'object': invoice, 
+                'title': title,
+                'height': 450 + invoice.invoicedetail_set.all().count() * 10
+            }
             pdf_file = PDFCreator(template_name=self.get_template_names()).create(context=context)
             return HttpResponse(pdf_file, content_type='application/pdf')
         return HttpResponseRedirect(self.success_url)
