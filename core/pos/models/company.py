@@ -41,10 +41,6 @@ class Company(models.Model):
     tax_percentage = models.IntegerField(choices=TAX_PERCENTAGE, default=TAX_PERCENTAGE[3][0], verbose_name='Porcentaje del impuesto IVA')
     electronic_signature = models.FileField(null=True, blank=True, upload_to='company/%Y/%m/%d', verbose_name='Firma electrónica (Archivo P12)')
     electronic_signature_key = models.CharField(max_length=100, help_text='Ingrese la clave de firma electrónica', verbose_name='Clave de firma electrónica')
-    email_host = models.CharField(max_length=30, default='smtp.gmail.com', verbose_name='Servidor de correo')
-    email_port = models.IntegerField(default=587, verbose_name='Puerto del servidor de correo')
-    email_host_user = models.CharField(max_length=100, help_text='Ingrese el nombre de usuario del servidor de correo', verbose_name='Username del servidor de correo')
-    email_host_password = models.CharField(max_length=30, help_text='Ingrese la contraseña del servidor de correo', verbose_name='Password del servidor de correo')
     owner = models.OneToOneField('user.User', null=True, blank=True, related_name='owned_company', on_delete=models.SET_NULL, verbose_name='Propietario')
 
     def __str__(self):

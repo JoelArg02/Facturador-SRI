@@ -89,17 +89,16 @@ class Invoice(ElecBillingBase):
         #   04 -> RUC (13 dígitos, los 10 primeros deben ser cédula válida y terminar en 001 normalmente)
         #   05 -> Cédula (10 dígitos)
         #   07 -> Consumidor Final (usar 9999999999999 cuando no hay identificación válida)
-        raw_ruc = (self.customer.ruc or '').strip()
         raw_dni = (self.customer.dni or '').strip()
 
         identification_value = ''
         identification_type = ''
 
-        # Preferir RUC válido
-        if raw_ruc and len(raw_ruc) == 13 and raw_ruc.isdigit():
-            identification_value = raw_ruc
+        # RUC (13 dígitos)
+        if raw_dni and len(raw_dni) == 13 and raw_dni.isdigit():
+            identification_value = raw_dni
             identification_type = '04'
-        # Caso Cédula
+        # Caso Cédula (10 dígitos)
         elif raw_dni and len(raw_dni) == 10 and raw_dni.isdigit():
             identification_value = raw_dni
             identification_type = '05'

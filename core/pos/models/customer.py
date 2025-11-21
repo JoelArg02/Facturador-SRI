@@ -18,7 +18,7 @@ class Customer(models.Model):
 
     @property
     def identification(self):
-        return getattr(self, 'ruc', None) or self.dni or ''
+        return self.dni or ''
 
     def get_full_name(self):
         user_name = getattr(self.user, 'names', 'Sin nombre')

@@ -38,8 +38,6 @@ class Command(BaseCommand):
             description='VENTA AL POR MENOR DE ARTÍCULOS DE FERRETERÍA: MARTILLOS, SIERRAS, DESTORNILLADORES Y PEQUEÑAS HERRAMIENTAS EN GENERAL, EQUIPO Y MATERIALES DE PREFABRICADOS PARA ARMADO CASERO (EQUIPO DE BRICOLAJE); ALAMBRES Y CABLES ELÉCTRICOS, CERRADURAS, MONTAJES Y ADORNOS, EXTINTORES, SEGADORAS DE CÉSPED DE CUALQUIER TIPO, ETCÉTERA EN ESTABLECIMIENTOS ESPECIALIZADOS.',
             tax=15.00,
             electronic_signature_key='JFcz0326',
-            email_host_user='netdev@in-planet.net',
-            email_host_password='llylnrfzcsvykyyl',
         )
         image_path = f'{settings.BASE_DIR}{settings.STATIC_URL}img/default/logo.png'
         company.image.save(basename(image_path), content=File(open(image_path, 'rb')), save=False)

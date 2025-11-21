@@ -108,10 +108,6 @@ Company
   - tax_percentage: IntegerField(choices=TAX_PERCENTAGE)
   - electronic_signature: FileField(upload_to='company/%Y/%m/%d', null=True, blank=True)
   - electronic_signature_key: CharField(max_length=100)
-  - email_host: CharField(max_length=30, default='smtp.gmail.com')
-  - email_port: IntegerField(default=587)
-  - email_host_user: CharField(max_length=100)
-  - email_host_password: CharField(max_length=30)
   - owner -> user.User (null=True, blank=True, related_name='companies', on_delete=SET_NULL)
 
 Provider

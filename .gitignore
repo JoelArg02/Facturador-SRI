@@ -6,3 +6,5 @@ venv/
 .env
 config/settings.py
 db.sqlite3
+.env.local
+.env.local
