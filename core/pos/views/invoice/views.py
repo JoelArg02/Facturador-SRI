@@ -85,7 +85,26 @@ class InvoiceListView(GroupPermissionMixin, CompanyQuerysetMixin, ListView):
                     credit_note.motive = F'NOTA DE CREDITO DE LA VENTA {invoice.receipt_number_full}'
                     credit_note.company = invoice.company
                     credit_note.environment_type = credit_note.company.environment_type
-                    credit_note.receipt = Receipt.objects.get(voucher_type=VOUCHER_TYPE[1][0], establishment_code=invoice.company.establishment_code, issuing_point_code=invoice.company.issuing_point_code)
+                    
+                    # Obtener o crear el Receipt para notas de crédito
+                    receipt = Receipt.objects.filter(
+                        company=invoice.company,
+                        voucher_type=VOUCHER_TYPE[1][0], 
+                        establishment_code=invoice.company.establishment_code, 
+                        issuing_point_code=invoice.company.issuing_point_code
+                    ).first()
+                    
+                    if not receipt:
+                        # Crear automáticamente el Receipt si no existe
+                        receipt = Receipt.objects.create(
+                            company=invoice.company,
+                            voucher_type=VOUCHER_TYPE[1][0],
+                            establishment_code=invoice.company.establishment_code,
+                            issuing_point_code=invoice.company.issuing_point_code,
+                            sequence=1
+                        )
+                    
+                    credit_note.receipt = receipt
                     credit_note.receipt_number = credit_note.generate_receipt_number()
                     credit_note.receipt_number_full = credit_note.get_receipt_number_full()
                     credit_note.tax = invoice.company.tax_rate

@@ -92,7 +92,26 @@ class CreditNoteCreateView(AutoAssignCompanyMixin, GroupPermissionMixin, Company
                     credit_note.motive = request.POST['motive']
                     credit_note.company = self.get_company()
                     credit_note.environment_type = credit_note.company.environment_type
-                    credit_note.receipt = Receipt.objects.get(company=credit_note.company, voucher_type=VOUCHER_TYPE[1][0], establishment_code=credit_note.company.establishment_code, issuing_point_code=credit_note.company.issuing_point_code)
+                    
+                    # Obtener o crear el Receipt para notas de crédito
+                    receipt = Receipt.objects.filter(
+                        company=credit_note.company, 
+                        voucher_type=VOUCHER_TYPE[1][0], 
+                        establishment_code=credit_note.company.establishment_code, 
+                        issuing_point_code=credit_note.company.issuing_point_code
+                    ).first()
+                    
+                    if not receipt:
+                        # Crear automáticamente el Receipt si no existe
+                        receipt = Receipt.objects.create(
+                            company=credit_note.company,
+                            voucher_type=VOUCHER_TYPE[1][0],
+                            establishment_code=credit_note.company.establishment_code,
+                            issuing_point_code=credit_note.company.issuing_point_code,
+                            sequence=1
+                        )
+                    
+                    credit_note.receipt = receipt
                     credit_note.receipt_number = credit_note.generate_receipt_number()
                     credit_note.receipt_number_full = credit_note.get_receipt_number_full()
                     credit_note.tax = credit_note.company.tax_rate
