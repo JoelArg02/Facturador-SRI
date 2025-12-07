@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: facturador-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: facturador_user
+      POSTGRES_PASSWORD: S3gur0_P@ssw0rd_2025!
+      POSTGRES_DB: facturador_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - facturador_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U facturador_user -d facturador_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  facturador_pg_data:

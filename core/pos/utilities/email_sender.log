@@ -73,3 +73,10 @@
 [2025-11-20 22:28:10] Creando carpeta 'Sent'
 [2025-11-20 22:28:10] Guardando mensaje en carpeta: Sent
 [2025-11-20 22:28:11] ✓ Mensaje guardado exitosamente en Sent
+[2025-12-06 20:09:15] EmailSender inicializado - Host: mail.optimusposec.com, Port: 465, SSL: False, TLS: True
+[2025-12-06 20:09:15] Enviando correo a ['joel.darguello@gmail.com'] - Asunto: Plan Enterprise activado - Facturador SRI
+[2025-12-06 20:09:15] Conectando con SMTP a mail.optimusposec.com:465
+[2025-12-06 20:14:12] EmailSender inicializado - Host: mail.optimusposec.com, Port: 465, SSL: False, TLS: True
+[2025-12-06 20:14:12] Enviando correo a ['joel.darguello@gmail.com'] - Asunto: Factura electrónica – 001-001-000000002
+[2025-12-06 20:14:12] Conectando con SMTP a mail.optimusposec.com:465
+[2025-12-06 20:14:20] ✗ ERROR al enviar correo: Connection unexpectedly closed

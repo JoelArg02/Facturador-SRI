@@ -151,18 +151,24 @@
             <td colspan="4" class="text-right"><b>Descuentos</b></td>
             <td class="text-center">{{ quotation.total_discount|floatformat:2 }}</td>
         </tr>
+        {% if quotation.subtotal_with_tax > 0 %}
         <tr>
             <td colspan="4" class="text-right"><b>Subtotal {{ quotation.tax_rate }}%</b></td>
             <td class="text-center">{{ quotation.subtotal_with_tax|floatformat:2 }}</td>
         </tr>
+        {% endif %}
+        {% if quotation.subtotal_without_tax > 0 %}
         <tr>
             <td colspan="4" class="text-right"><b>Subtotal 0%</b></td>
             <td class="text-center">{{ quotation.subtotal_without_tax|floatformat:2 }}</td>
         </tr>
+        {% endif %}
+        {% if quotation.total_tax > 0 %}
         <tr>
             <td colspan="4" class="text-right"><b>IVA {{ quotation.tax_rate|floatformat:2 }}%</b></td>
             <td class="text-center">{{ quotation.total_tax|floatformat:2 }}</td>
         </tr>
+        {% endif %}
         <tr>
             <td colspan="4" class="text-right"><b>Total a pagar</b></td>
             <td class="text-center">{{ quotation.total_amount|floatformat:2 }}</td>

@@ -202,18 +202,24 @@
             <td colspan="5" class="text-totals">Descuentos</td>
             <td class="text-center">{{ object.total_discount|floatformat:2 }}</td>
         </tr>
+        {% if object.subtotal_with_tax > 0 %}
         <tr>
             <td colspan="5" class="text-totals">Subtotal {{ object.tax_rate }}%</td>
             <td class="text-center">{{ object.subtotal_with_tax|floatformat:2 }}</td>
         </tr>
+        {% endif %}
+        {% if object.subtotal_without_tax > 0 %}
         <tr>
             <td colspan="5" class="text-totals">Subtotal 0%</td>
             <td class="text-center">{{ object.subtotal_without_tax|floatformat:2 }}</td>
         </tr>
+        {% endif %}
+        {% if object.total_tax > 0 %}
         <tr>
             <td colspan="5" class="text-totals">IVA {{ object.tax_rate }}%</td>
             <td class="text-center">{{ object.total_tax|floatformat:2 }}</td>
         </tr>
+        {% endif %}
         <tr>
             <td colspan="5" class="text-totals">Total</td>
             <td class="text-center">{{ object.total_amount|floatformat:2 }}</td>

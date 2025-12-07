@@ -22,6 +22,13 @@ class TransactionSummary(models.Model):
     def tax_rate(self):
         return int(self.tax * 100)
 
+    @property
+    def effective_tax_rate(self):
+        """Retorna el porcentaje de IVA solo si hay productos con IVA, de lo contrario retorna 0"""
+        if float(self.subtotal_with_tax) > 0:
+            return int(self.tax * 100)
+        return 0
+
     def formatted_date_joined(self):
         value = self.date_joined
         if isinstance(value, str):
