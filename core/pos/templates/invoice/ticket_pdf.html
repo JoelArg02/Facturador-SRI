@@ -148,18 +148,24 @@
             <td class="float-right font-weight-bold">Descuentos</td>
             <td class="text-right">{{ object.total_discount|floatformat:2 }}</td>
         </tr>
+        {% if object.subtotal_with_tax > 0 %}
         <tr>
             <td class="float-right font-weight-bold">Subtotal {{ object.tax_rate }}%</td>
             <td class="text-right">{{ object.subtotal_with_tax|floatformat:2 }}</td>
         </tr>
+        {% endif %}
+        {% if object.subtotal_without_tax > 0 %}
         <tr>
             <td class="float-right font-weight-bold">Subtotal 0%</td>
             <td class="text-right">{{ object.subtotal_without_tax|floatformat:2 }}</td>
         </tr>
+        {% endif %}
+        {% if object.total_tax > 0 %}
         <tr>
             <td class="float-right font-weight-bold">IVA {{ object.tax_rate }}%</td>
             <td class="text-right">{{ object.total_tax|floatformat:2 }}</td>
         </tr>
+        {% endif %}
         <tr>
             <td class="float-right font-weight-bold">Total</td>
             <td class="text-right">{{ object.total_amount|floatformat:2 }}</td>

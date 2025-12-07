@@ -222,6 +222,27 @@ var invoice = {
         $('input[name="total_tax"]').val(this.detail.total_tax.toFixed(2));
         $('input[name="total_discount"]').val(this.detail.total_discount.toFixed(2));
         $('input[name="total_amount"]').val(this.detail.total_amount.toFixed(2));
+        
+        // Actualizar visibilidad de filas de IVA según si hay productos con impuesto
+        var hasProductsWithTax = this.detail.subtotal_with_tax > 0;
+        var hasProductsWithoutTax = this.detail.subtotal_without_tax > 0;
+        
+        // Mostrar/ocultar fila de subtotal con IVA
+        if (hasProductsWithTax) {
+            $('#row_subtotal_with_tax').show();
+            $('#tax_percent_label').text(this.detail.tax.toFixed(2));
+        } else {
+            $('#row_subtotal_with_tax').hide();
+        }
+        
+        // Mostrar/ocultar filas de IVA
+        if (hasProductsWithTax) {
+            $('#row_tax').show();
+            $('#row_total_tax').show();
+        } else {
+            $('#row_tax').hide();
+            $('#row_total_tax').hide();
+        }
     },
     validateChange: function () {
         var is_draft_invoice = $('input[name="is_draft_invoice"]').is(':checked');
@@ -603,7 +624,7 @@ $(function () {
                 }
             });
         },
-        minLength: 3,
+        minLength: 1,
         delay: 300,
         select: function (event, ui) {
             event.preventDefault();

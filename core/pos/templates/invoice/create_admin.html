@@ -175,19 +175,19 @@
                             <td><b>{{ form.subtotal_without_tax.label|upper }}</b></td>
                             <td>{{ form.subtotal_without_tax }}</td>
                         </tr>
-                        <tr>
-                            <td><b>{{ form.subtotal_with_tax.label|upper }} {{ company.tax|safe }}%</b></td>
+                        <tr id="row_subtotal_with_tax">
+                            <td><b>{{ form.subtotal_with_tax.label|upper }} <span id="tax_percent_label">{{ company.tax|safe }}</span>%</b></td>
                             <td>{{ form.subtotal_with_tax }}</td>
                         </tr>
                         <tr>
                             <td><b>{{ form.total_discount.label|upper }}</b></td>
                             <td>{{ form.total_discount }}</td>
                         </tr>
-                        <tr>
+                        <tr id="row_tax">
                             <td><b>{{ form.tax.label|upper }}</b></td>
                             <td>{{ form.tax }}</td>
                         </tr>
-                        <tr>
+                        <tr id="row_total_tax">
                             <td><b>{{ form.total_tax.label|upper }}</b></td>
                             <td>{{ form.total_tax }}</td>
                         </tr>
