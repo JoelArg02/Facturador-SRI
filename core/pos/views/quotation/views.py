@@ -69,7 +69,10 @@ class QuotationCreateView(AutoAssignCompanyMixin, GroupPermissionMixin, CompanyQ
     permission_required = 'add_quotation'
 
     def get_company(self):
-        return Company.objects.first() or Company()
+        company = getattr(self.request, 'company', None)
+        if company is None:
+            company = getattr(self.request.user, 'company', None)
+        return company or Company.objects.first() or Company()
 
     def get_end_consumer(self):
         customer = Customer.objects.filter(dni='9999999999999').first()

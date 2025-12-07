@@ -24,10 +24,18 @@ def site_settings(request):
     except Exception:
         template_menu = dashboard.get_template_from_layout() if dashboard else 'hzt_body.html'
 
+    # Obtener la empresa del usuario actual (asignada por el middleware)
+    company = getattr(request, 'company', None)
+    if company is None and hasattr(request, 'user') and request.user.is_authenticated:
+        company = getattr(request.user, 'company', None)
+    # Fallback para superusuarios o usuarios sin empresa
+    if company is None:
+        company = Company.objects.first()
+
     params = {
         'dashboard': dashboard,
         'date_joined': datetime.now(),
-        'company': Company.objects.first(),
+        'company': company,
         'menu': template_menu,
     }
     return params

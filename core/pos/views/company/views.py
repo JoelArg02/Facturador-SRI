@@ -166,7 +166,14 @@ class CompanyUpdateView(GroupPermissionMixin, UpdateView):
     # Sin override de dispatch; se mantiene el gate por permisos tal como estaba
 
     def get_object(self, queryset=None):
-        return Company.objects.first() or Company()
+        # Obtener la empresa del usuario actual
+        company = getattr(self.request, 'company', None)
+        if company is None:
+            company = getattr(self.request.user, 'company', None)
+        # Fallback para superusuarios
+        if company is None:
+            company = Company.objects.first() or Company()
+        return company
 
     def post(self, request, *args, **kwargs):
         data = {}
