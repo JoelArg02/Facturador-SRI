@@ -80,3 +80,6 @@
 [2025-12-06 20:14:12] Enviando correo a ['joel.darguello@gmail.com'] - Asunto: Factura electrónica – 001-001-000000002
 [2025-12-06 20:14:12] Conectando con SMTP a mail.optimusposec.com:465
 [2025-12-06 20:14:20] ✗ ERROR al enviar correo: Connection unexpectedly closed
+[2025-12-06 20:23:32] EmailSender inicializado - Host: mail.optimusposec.com, Port: 465, SSL: False, TLS: True
+[2025-12-06 20:23:32] Enviando correo a ['joel.darguello@gmail.com'] - Asunto: Factura electrónica – 001-001-000000016
+[2025-12-06 20:23:32] Conectando con SMTP a mail.optimusposec.com:465
