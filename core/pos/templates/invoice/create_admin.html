@@ -21,7 +21,7 @@
     </style>
     <script type="application/javascript">
         var end_consumer = {{ end_consumer|safe }};
-        invoice.detail.tax = {{ company.tax|safe }};
+        invoice.detail.tax = {{ company.tax_percentage_value|safe }};
         invoice.detail.products = {{ products|safe }};
         invoice.detail.additional_info = {{ additional_info|safe }};
         $(function () {
@@ -175,20 +175,12 @@
                             <td><b>{{ form.subtotal_without_tax.label|upper }}</b></td>
                             <td>{{ form.subtotal_without_tax }}</td>
                         </tr>
-                        <tr id="row_subtotal_with_tax">
-                            <td><b>{{ form.subtotal_with_tax.label|upper }} <span id="tax_percent_label">{{ company.tax|safe }}</span>%</b></td>
-                            <td>{{ form.subtotal_with_tax }}</td>
-                        </tr>
-                        <tr>
+                        <tr id="row_total_discount">
                             <td><b>{{ form.total_discount.label|upper }}</b></td>
                             <td>{{ form.total_discount }}</td>
                         </tr>
-                        <tr id="row_tax">
-                            <td><b>{{ form.tax.label|upper }}</b></td>
-                            <td>{{ form.tax }}</td>
-                        </tr>
                         <tr id="row_total_tax">
-                            <td><b>{{ form.total_tax.label|upper }}</b></td>
+                            <td><b>IVA <span id="tax_percent_label_iva">{{ company.tax_percentage_value|safe }}</span>%</b></td>
                             <td>{{ form.total_tax }}</td>
                         </tr>
                         <tr>

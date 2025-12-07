@@ -14,22 +14,6 @@ $(function () {
         });
     });
 
-    // Sincronización bidireccional tax_percentage ↔ tax
-    var $taxPercentage = $('input[name="tax_percentage"]');
-    var $tax = $('input[name="tax"]');
-    
-    if ($taxPercentage.length && $tax.length) {
-        $taxPercentage.on('change keyup', function() {
-            var val = $(this).val();
-            $tax.val(val);
-        });
-        
-        $tax.on('change keyup', function() {
-            var val = $(this).val();
-            $taxPercentage.val(val);
-        });
-    }
-
     // Copiar dirección matriz a establecimiento
     var $mainAddress = $('textarea[name="main_address"]');
     var $establishmentAddress = $('textarea[name="establishment_address"]');

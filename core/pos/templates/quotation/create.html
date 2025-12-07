@@ -13,7 +13,7 @@
     <script src="{% static 'quotation/js/form.js' %}"></script>
     <script type="application/javascript">
         var end_consumer = {{ end_consumer|safe }};
-        quotation.detail.tax = {{ company.tax|safe }};
+        quotation.detail.tax = {{ company.tax_percentage_value|safe }};
         quotation.detail.products = {{ products|safe }};
         $(function () {
             quotation.listProducts();
@@ -97,7 +97,7 @@
                     <td>{{ form.subtotal_without_tax }}</td>
                 </tr>
                 <tr>
-                    <td><b>{{ form.subtotal_with_tax.label|upper }} {{ company.tax|safe }}%</b></td>
+                    <td><b>{{ form.subtotal_with_tax.label|upper }} {{ company.tax_percentage_value|safe }}%</b></td>
                     <td>{{ form.subtotal_with_tax }}</td>
                 </tr>
                 <tr>

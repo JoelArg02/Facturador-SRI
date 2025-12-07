@@ -14,6 +14,7 @@ import barcode
 from barcode import writer
 from django.core.files.base import File
 from django.db import models
+from django.utils import timezone
 
 from config import settings
 from core.pos.choices import ENVIRONMENT_TYPE, INVOICE_STATUS, VOUCHER_STAGE, VOUCHER_TYPE
@@ -24,7 +25,7 @@ from core.pos.utilities.sri import SRI
 
 class ElecBillingBase(TransactionSummary):
     receipt = models.ForeignKey('pos.Receipt', on_delete=models.PROTECT, verbose_name='Tipo de comprobante')
-    time_joined = models.DateTimeField(default=datetime.now, verbose_name='Fecha y hora de registro')
+    time_joined = models.DateTimeField(default=timezone.now, verbose_name='Fecha y hora de registro')
     receipt_number = models.CharField(max_length=9, null=True, blank=True, verbose_name='Número de comprobante')
     receipt_number_full = models.CharField(max_length=20, null=True, blank=True, verbose_name='Número completo de comprobante')
     environment_type = models.PositiveIntegerField(choices=ENVIRONMENT_TYPE, default=ENVIRONMENT_TYPE[0][0], verbose_name='Entorno de facturación electrónica')

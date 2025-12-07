@@ -14,7 +14,7 @@
     <link rel="stylesheet" href="{% static 'lib/tempusdominus-bootstrap-4.5.37.0/css/tempusdominus-bootstrap.css' %}"/>
     <script src="{% static 'credit_note/js/form_admin.js' %}"></script>
     <script type="application/javascript">
-        credit_note.detail.tax = {{ company.tax|safe }};
+        credit_note.detail.tax = {{ company.tax_percentage_value|safe }};
         $(function () {
             credit_note.listProducts();
         });
@@ -95,7 +95,7 @@
                     <td>{{ form.subtotal_without_tax }}</td>
                 </tr>
                 <tr>
-                    <td><b>{{ form.subtotal_with_tax.label|upper }} {{ company.tax|safe }}%</b></td>
+                    <td><b>{{ form.subtotal_with_tax.label|upper }} {{ company.tax_percentage_value|safe }}%</b></td>
                     <td>{{ form.subtotal_with_tax }}</td>
                 </tr>
                 <tr>

@@ -173,7 +173,7 @@
     </div>
     <script type="application/javascript">
         $(function () {
-            purchase.detail.tax = {{ company.tax|floatformat:2 }};
+            purchase.detail.tax = {{ company.tax_percentage_value|floatformat:2 }};
             purchase.listProducts();
         });
     </script>

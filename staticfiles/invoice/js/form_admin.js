@@ -216,31 +216,26 @@ var invoice = {
         this.detail.total_tax = parseFloat(this.detail.products.filter(value => value.has_tax).reduce((a, b) => a + (b.total_tax || 0), 0).toFixed(3));
         this.detail.total_amount = (Math.round(this.detail.subtotal * 100) / 100) + (Math.round(this.detail.total_tax * 100) / 100);
 
-        $('input[name="subtotal_without_tax"]').val(this.detail.subtotal_without_tax.toFixed(2));
+        $('input[name="subtotal_without_tax"]').val(this.detail.subtotal.toFixed(2));
         $('input[name="subtotal_with_tax"]').val(this.detail.subtotal_with_tax.toFixed(2));
         $('input[name="tax"]').val(this.detail.tax.toFixed(2));
         $('input[name="total_tax"]').val(this.detail.total_tax.toFixed(2));
         $('input[name="total_discount"]').val(this.detail.total_discount.toFixed(2));
         $('input[name="total_amount"]').val(this.detail.total_amount.toFixed(2));
         
-        // Actualizar visibilidad de filas de IVA según si hay productos con impuesto
-        var hasProductsWithTax = this.detail.subtotal_with_tax > 0;
-        var hasProductsWithoutTax = this.detail.subtotal_without_tax > 0;
+        var hasProductsWithTax = this.detail.total_tax > 0;
+        var hasDiscount = this.detail.total_discount > 0;
         
-        // Mostrar/ocultar fila de subtotal con IVA
-        if (hasProductsWithTax) {
-            $('#row_subtotal_with_tax').show();
-            $('#tax_percent_label').text(this.detail.tax.toFixed(2));
+        if (hasDiscount) {
+            $('#row_total_discount').show();
         } else {
-            $('#row_subtotal_with_tax').hide();
+            $('#row_total_discount').hide();
         }
         
-        // Mostrar/ocultar filas de IVA
         if (hasProductsWithTax) {
-            $('#row_tax').show();
             $('#row_total_tax').show();
+            $('#tax_percent_label_iva').text(this.detail.tax.toFixed(0));
         } else {
-            $('#row_tax').hide();
             $('#row_total_tax').hide();
         }
     },

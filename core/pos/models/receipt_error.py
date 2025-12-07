@@ -1,14 +1,13 @@
-from datetime import datetime
-
 from django.db import models
 from django.forms import model_to_dict
+from django.utils import timezone
 
 from core.pos.choices import ENVIRONMENT_TYPE, VOUCHER_STAGE
 
 
 class ReceiptError(models.Model):
-    date_joined = models.DateField(default=datetime.now, verbose_name='Fecha de registro')
-    time_joined = models.DateTimeField(default=datetime.now, verbose_name='Hora de registro')
+    date_joined = models.DateField(default=timezone.now, verbose_name='Fecha de registro')
+    time_joined = models.DateTimeField(default=timezone.now, verbose_name='Hora de registro')
     environment_type = models.PositiveIntegerField(choices=ENVIRONMENT_TYPE, default=ENVIRONMENT_TYPE[0][0], verbose_name='Tipo de entorno')
     receipt_number_full = models.CharField(max_length=50, verbose_name='Número de comprobante')
     receipt = models.ForeignKey('pos.Receipt', on_delete=models.CASCADE, verbose_name='Tipo de Comprobante')
