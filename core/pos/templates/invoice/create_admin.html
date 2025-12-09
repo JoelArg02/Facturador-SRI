@@ -511,20 +511,36 @@
                         <div class="card-body p-2">
                     <table class="table table-bordered table-sm mb-0">
                         <tbody>
+                        <tr id="row_subtotal_0">
+                            <td><b>SUBTOTAL 0%</b></td>
+                            <td><input type="text" readonly class="form-control form-control-sm text-right" id="subtotal_0" value="0.00"></td>
+                        </tr>
+                        <tr id="row_subtotal_with_tax">
+                            <td><b>SUBTOTAL <span id="tax_percent_label">{{ company.tax_percentage_value|safe }}</span>%</b></td>
+                            <td><input type="text" readonly class="form-control form-control-sm text-right" id="subtotal_tax" value="0.00"></td>
+                        </tr>
                         <tr>
-                            <td><b>{{ form.subtotal_without_tax.label|upper }}</b></td>
+                            <td><b>SUBTOTAL SIN IMPUESTOS</b></td>
                             <td>{{ form.subtotal_without_tax }}</td>
                         </tr>
                         <tr id="row_total_discount">
-                            <td><b>{{ form.total_discount.label|upper }}</b></td>
+                            <td><b>DESCUENTO</b></td>
                             <td>{{ form.total_discount }}</td>
+                        </tr>
+                        <tr style="display: none;">
+                            <td><b>ICE</b></td>
+                            <td><input type="text" readonly class="form-control form-control-sm text-right" value="0.00"></td>
                         </tr>
                         <tr id="row_total_tax">
                             <td><b>IVA <span id="tax_percent_label_iva">{{ company.tax_percentage_value|safe }}</span>%</b></td>
                             <td>{{ form.total_tax }}</td>
                         </tr>
-                        <tr>
-                            <td><b>{{ form.total_amount.label|upper }}</b></td>
+                        <tr style="display: none;">
+                            <td><b>PROPINA</b></td>
+                            <td><input type="text" readonly class="form-control form-control-sm text-right" value="0.00"></td>
+                        </tr>
+                        <tr class="table-active">
+                            <td><b>VALOR TOTAL</b></td>
                             <td>{{ form.total_amount }}</td>
                         </tr>
                         </tbody>

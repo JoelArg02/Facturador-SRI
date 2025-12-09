@@ -209,6 +209,11 @@ var invoice = {
             value.total_amount = value.subtotal - value.total_discount;
         });
 
+        // Calcular subtotales separados antes del descuento
+        var subtotal_0_before_discount = this.detail.products.filter(value => !value.has_tax).reduce((a, b) => a + (b.subtotal || 0), 0);
+        var subtotal_tax_before_discount = this.detail.products.filter(value => value.has_tax).reduce((a, b) => a + (b.subtotal || 0), 0);
+        
+        // Subtotales después del descuento (base para cálculo de IVA)
         this.detail.subtotal_without_tax = this.detail.products.filter(value => !value.has_tax).reduce((a, b) => a + (b.total_amount || 0), 0);
         this.detail.subtotal_with_tax = this.detail.products.filter(value => value.has_tax).reduce((a, b) => a + (b.total_amount || 0), 0);
         this.detail.total_discount = this.detail.products.reduce((a, b) => a + (b.total_discount || 0), 0);
@@ -216,6 +221,9 @@ var invoice = {
         this.detail.total_tax = parseFloat(this.detail.products.filter(value => value.has_tax).reduce((a, b) => a + (b.total_tax || 0), 0).toFixed(3));
         this.detail.total_amount = (Math.round(this.detail.subtotal * 100) / 100) + (Math.round(this.detail.total_tax * 100) / 100);
 
+        // Actualizar campos del resumen
+        $('#subtotal_0').val(subtotal_0_before_discount.toFixed(2));
+        $('#subtotal_tax').val(subtotal_tax_before_discount.toFixed(2));
         $('input[name="subtotal_without_tax"]').val(this.detail.subtotal.toFixed(2));
         $('input[name="subtotal_with_tax"]').val(this.detail.subtotal_with_tax.toFixed(2));
         $('input[name="tax"]').val(this.detail.tax.toFixed(2));
@@ -224,19 +232,30 @@ var invoice = {
         $('input[name="total_amount"]').val(this.detail.total_amount.toFixed(2));
         
         var hasProductsWithTax = this.detail.total_tax > 0;
+        var hasProductsWithoutTax = subtotal_0_before_discount > 0;
         var hasDiscount = this.detail.total_discount > 0;
+        
+        // Mostrar/ocultar filas según contenido
+        if (hasProductsWithoutTax) {
+            $('#row_subtotal_0').show();
+        } else {
+            $('#row_subtotal_0').hide();
+        }
+        
+        if (hasProductsWithTax) {
+            $('#row_subtotal_with_tax').show();
+            $('#row_total_tax').show();
+            $('#tax_percent_label').text(this.detail.tax.toFixed(0));
+            $('#tax_percent_label_iva').text(this.detail.tax.toFixed(0));
+        } else {
+            $('#row_subtotal_with_tax').hide();
+            $('#row_total_tax').hide();
+        }
         
         if (hasDiscount) {
             $('#row_total_discount').show();
         } else {
             $('#row_total_discount').hide();
-        }
-        
-        if (hasProductsWithTax) {
-            $('#row_total_tax').show();
-            $('#tax_percent_label_iva').text(this.detail.tax.toFixed(0));
-        } else {
-            $('#row_total_tax').hide();
         }
     },
     validateChange: function () {

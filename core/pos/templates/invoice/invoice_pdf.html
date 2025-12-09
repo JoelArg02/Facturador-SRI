@@ -194,35 +194,35 @@
                 <td class="text-center">{{ detail.total_amount|floatformat:2 }}</td>
             </tr>
         {% endfor %}
-        <tr>
-            <td colspan="5" class="text-totals">Subtotal sin impuestos</td>
-            <td class="text-center">{{ object.subtotal_without_taxes|floatformat:2 }}</td>
-        </tr>
-        <tr>
-            <td colspan="5" class="text-totals">Descuentos</td>
-            <td class="text-center">{{ object.total_discount|floatformat:2 }}</td>
-        </tr>
-        {% if object.subtotal_with_tax > 0 %}
-        <tr>
-            <td colspan="5" class="text-totals">Subtotal {{ object.tax_rate }}%</td>
-            <td class="text-center">{{ object.subtotal_with_tax|floatformat:2 }}</td>
-        </tr>
-        {% endif %}
         {% if object.subtotal_without_tax > 0 %}
         <tr>
-            <td colspan="5" class="text-totals">Subtotal 0%</td>
+            <td colspan="5" class="text-totals">SUBTOTAL 0%</td>
             <td class="text-center">{{ object.subtotal_without_tax|floatformat:2 }}</td>
         </tr>
         {% endif %}
+        {% if object.subtotal_with_tax > 0 %}
+        <tr>
+            <td colspan="5" class="text-totals">SUBTOTAL {{ object.tax_rate }}%</td>
+            <td class="text-center">{{ object.subtotal_with_tax|floatformat:2 }}</td>
+        </tr>
+        {% endif %}
+         <tr>
+            <td colspan="5" class="text-totals">SUBTOTAL SIN IMPUESTOS</td>
+            <td class="text-center">{{ object.subtotal_without_taxes|floatformat:2 }}</td>
+        </tr>
+        <tr>
+            <td colspan="5" class="text-totals">DESCUENTO</td>
+            <td class="text-center">{{ object.total_discount|floatformat:2 }}</td>
+        </tr>
         {% if object.total_tax > 0 %}
         <tr>
             <td colspan="5" class="text-totals">IVA {{ object.tax_rate }}%</td>
             <td class="text-center">{{ object.total_tax|floatformat:2 }}</td>
         </tr>
         {% endif %}
-        <tr>
-            <td colspan="5" class="text-totals">Total</td>
-            <td class="text-center">{{ object.total_amount|floatformat:2 }}</td>
+        <tr style="background-color: #f0f0f0; font-weight: bold;">
+            <td colspan="5" class="text-totals"><b>VALOR TOTAL</b></td>
+            <td class="text-center"><b>{{ object.total_amount|floatformat:2 }}</b></td>
         </tr>
         </tbody>
     </table>
