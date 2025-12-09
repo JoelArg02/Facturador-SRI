@@ -1,5 +1,6 @@
 from datetime import datetime
 
+from django.conf import settings
 from core.pos.models import Company
 from core.security.models import Dashboard
 from core.security.choices import LAYOUT_OPTIONS
@@ -37,5 +38,7 @@ def site_settings(request):
         'date_joined': datetime.now(),
         'company': company,
         'menu': template_menu,
+        'app_version': settings.APP_VERSION,
+        'now': datetime.now(),
     }
     return params

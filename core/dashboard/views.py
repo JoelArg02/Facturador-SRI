@@ -1,19 +1,25 @@
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import Sum, FloatField
+from django.db.models import Sum, FloatField, Count, Q
 from django.db.models.functions import Coalesce
 from django.http import HttpResponse
 from django.views.generic import TemplateView
+from django.utils import timezone
 
-from core.pos.models import Product, Invoice, Customer, Provider, Category, Purchase
+from core.pos.models import Product, Invoice, Customer, Provider, Category, Purchase, Company
+from core.subscription.models import Subscription, Plan
 from core.security.models import Dashboard
 from collections import OrderedDict
 
 
 class DashboardView(LoginRequiredMixin, TemplateView):
     def get_template_names(self):
+        # Superadmin ve dashboard especial
+        if self.request.user.is_superuser:
+            return ['vtc_dashboard_superadmin.html']
+        
         dashboard = Dashboard.objects.first()
         if dashboard and dashboard.layout == 1:
             return 'vtc_dashboard_client.html' if self.request.user.is_customer else 'vtc_dashboard_admin.html'
@@ -64,6 +70,84 @@ class DashboardView(LoginRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['title'] = 'Panel de administración'
+        
+        # Dashboard especial para superadmin
+        if self.request.user.is_superuser:
+            today = timezone.now().date()
+            seven_days = today + timedelta(days=7)
+            current_year = datetime.now().year
+            
+            # Estadísticas generales
+            context['total_companies'] = Company.objects.count()
+            context['active_subscriptions'] = Subscription.objects.filter(is_active=True).count()
+            context['expired_subscriptions'] = Subscription.objects.filter(
+                Q(is_active=False) | Q(end_date__lt=today)
+            ).count()
+            context['expiring_soon'] = Subscription.objects.filter(
+                is_active=True,
+                end_date__gte=today,
+                end_date__lte=seven_days
+            ).count()
+            
+            # Estadísticas por plan
+            plans = Plan.objects.all()
+            plan_stats = []
+            total_revenue = 0
+            
+            for plan in plans:
+                active_subs = Subscription.objects.filter(plan=plan, is_active=True)
+                active_count = active_subs.count()
+                expired_count = Subscription.objects.filter(
+                    plan=plan
+                ).filter(Q(is_active=False) | Q(end_date__lt=today)).count()
+                
+                revenue = active_count * float(plan.price)
+                total_revenue += revenue
+                
+                plan_stats.append({
+                    'plan_name': plan.name,
+                    'plan_price': plan.price,
+                    'plan_days': plan.period_days,
+                    'active_count': active_count,
+                    'expired_count': expired_count,
+                    'total_count': active_count + expired_count,
+                    'revenue': revenue
+                })
+            
+            context['plan_stats'] = plan_stats
+            context['total_revenue'] = total_revenue
+            
+            # Últimas suscripciones
+            context['recent_subscriptions'] = Subscription.objects.select_related(
+                'user', 'plan', 'user__company'
+            ).order_by('-created_at')[:10]
+            
+            # Datos para gráficos
+            # Suscripciones creadas por mes del año actual
+            subscriptions_per_month = []
+            for month in range(1, 13):
+                count = Subscription.objects.filter(
+                    created_at__year=current_year,
+                    created_at__month=month
+                ).count()
+                subscriptions_per_month.append(count)
+            context['companies_per_month'] = json.dumps(subscriptions_per_month)
+            context['current_year'] = current_year
+            
+            # Distribución de planes (para gráfico pie)
+            plan_distribution = []
+            for plan in plans:
+                count = Subscription.objects.filter(plan=plan, is_active=True).count()
+                if count > 0:
+                    plan_distribution.append({
+                        'name': plan.name,
+                        'y': count
+                    })
+            context['plan_distribution'] = json.dumps(plan_distribution)
+            
+            return context
+        
+        # Dashboard normal para otros usuarios
         if not self.request.user.is_customer:
             company = getattr(self.request, 'company', None) or getattr(getattr(self.request, 'user', None), 'company', None)
             cust_qs = Customer.objects.all()

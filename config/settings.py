@@ -15,6 +15,9 @@ SECRET_KEY = env('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env('DEBUG', default=True)
 
+# Application version
+APP_VERSION = env('VERSION', default='1.0.0')
+
 ALLOWED_HOSTS = ['*']
 
 # Application definition

@@ -1,0 +1,221 @@
+{% extends 'skin.html' %}
+{% load static %}
+{% block assets_body %}
+    <script src="{% static 'lib/highcharts-9.1.1/highcharts.js' %}" type="text/javascript"></script>
+    <script src="{% static 'lib/highcharts-9.1.1/highcharts-3d.js' %}" type="text/javascript"></script>
+    <script src="{% static 'lib/highcharts-9.1.1/modules/exporting.js' %}" type="text/javascript"></script>
+    <script src="{% static 'lib/highcharts-9.1.1/modules/data.js' %}" type="text/javascript"></script>
+    <script src="{% static 'lib/highcharts-9.1.1/modules/drilldown.js' %}" type="text/javascript"></script>
+{% endblock %}
+{% block breadcrumb %}
+{% endblock %}
+
+{% block content %}
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-3 col-sm-6 col-12">
+                <div class="info-box">
+                    <span class="info-box-icon bg-primary"><i class="fas fa-building"></i></span>
+                    <div class="info-box-content">
+                        <span class="info-box-text">Total Empresas</span>
+                        <span class="info-box-number">{{ total_companies }}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6 col-12">
+                <div class="info-box">
+                    <span class="info-box-icon bg-success"><i class="fas fa-check-circle"></i></span>
+                    <div class="info-box-content">
+                        <span class="info-box-text">Suscripciones Activas</span>
+                        <span class="info-box-number">{{ active_subscriptions }}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6 col-12">
+                <div class="info-box">
+                    <span class="info-box-icon bg-warning"><i class="fas fa-exclamation-triangle"></i></span>
+                    <div class="info-box-content">
+                        <span class="info-box-text">Por Vencer (7 días)</span>
+                        <span class="info-box-number">{{ expiring_soon }}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6 col-12">
+                <div class="info-box">
+                    <span class="info-box-icon bg-danger"><i class="fas fa-times-circle"></i></span>
+                    <div class="info-box-content">
+                        <span class="info-box-text">Suscripciones Expiradas</span>
+                        <span class="info-box-number">{{ expired_subscriptions }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title"><i class="fas fa-chart-line"></i> Resumen de Suscripciones por Plan</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-hover">
+                                <thead class="bg-dark">
+                                    <tr>
+                                        <th>Plan</th>
+                                        <th>Precio</th>
+                                        <th>Duración (días)</th>
+                                        <th>Activas</th>
+                                        <th>Expiradas</th>
+                                        <th>Total</th>
+                                        <th>Ingresos Activos</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                {% for plan_stat in plan_stats %}
+                                    <tr>
+                                        <td><strong>{{ plan_stat.plan_name }}</strong></td>
+                                        <td>${{ plan_stat.plan_price|floatformat:2 }}</td>
+                                        <td>{{ plan_stat.plan_days }}</td>
+                                        <td><span class="badge badge-success">{{ plan_stat.active_count }}</span></td>
+                                        <td><span class="badge badge-danger">{{ plan_stat.expired_count }}</span></td>
+                                        <td><span class="badge badge-info">{{ plan_stat.total_count }}</span></td>
+                                        <td><strong>${{ plan_stat.revenue|floatformat:2 }}</strong></td>
+                                    </tr>
+                                {% endfor %}
+                                </tbody>
+                                <tfoot class="bg-light">
+                                    <tr>
+                                        <td colspan="6"><strong>TOTAL INGRESOS ACTIVOS</strong></td>
+                                        <td><strong>${{ total_revenue|floatformat:2 }}</strong></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header border-transparent">
+                        <h3 class="card-title"><i class="fas fa-list"></i> Últimas Suscripciones Registradas</h3>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table m-0">
+                                <thead>
+                                <tr>
+                                    <th>Empresa</th>
+                                    <th>Usuario</th>
+                                    <th>Plan</th>
+                                    <th>Inicio</th>
+                                    <th>Fin</th>
+                                    <th>Días Restantes</th>
+                                    <th>Estado</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                {% for subscription in recent_subscriptions %}
+                                    <tr>
+                                        <td>{{ subscription.company.commercial_name|default:"Sin empresa" }}</td>
+                                        <td>{{ subscription.user.get_full_name|default:subscription.user.username }}</td>
+                                        <td>{{ subscription.plan.name }}</td>
+                                        <td>{{ subscription.start_date|date:'d/m/Y' }}</td>
+                                        <td>{{ subscription.end_date|date:'d/m/Y' }}</td>
+                                        <td>
+                                            {% if subscription.days_left > 7 %}
+                                                <span class="badge badge-success">{{ subscription.days_left }} días</span>
+                                            {% elif subscription.days_left > 0 %}
+                                                <span class="badge badge-warning">{{ subscription.days_left }} días</span>
+                                            {% else %}
+                                                <span class="badge badge-danger">Expirada</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if subscription.is_active %}
+                                                <span class="badge badge-success"><i class="fas fa-check"></i> Activa</span>
+                                            {% else %}
+                                                <span class="badge badge-secondary"><i class="fas fa-ban"></i> Inactiva</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title"><i class="fas fa-calendar-plus"></i> Suscripciones Creadas por Mes ({{ current_year }})</h3>
+                    </div>
+                    <div class="card-body p-0">
+                        <div id="graph-companies-per-month" style="height: 400px;"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title"><i class="fas fa-chart-pie"></i> Distribución de Planes</h3>
+                    </div>
+                    <div class="card-body p-0">
+                        <div id="graph-plan-distribution" style="height: 400px;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Gráfico de suscripciones por mes
+        $(function () {
+            Highcharts.chart('graph-companies-per-month', {
+                chart: { type: 'column' },
+                title: { text: 'Suscripciones Creadas por Mes' },
+                xAxis: {
+                    categories: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
+                },
+                yAxis: {
+                    title: { text: 'Cantidad' },
+                    allowDecimals: false
+                },
+                series: [{
+                    name: 'Suscripciones',
+                    data: {{ companies_per_month|safe }},
+                    color: '#28a745'
+                }]
+            });
+        });
+
+        // Gráfico de distribución de planes
+        $(function () {
+            Highcharts.chart('graph-plan-distribution', {
+                chart: { type: 'pie' },
+                title: { text: 'Distribución de Suscripciones por Plan' },
+                plotOptions: {
+                    pie: {
+                        allowPointSelect: true,
+                        cursor: 'pointer',
+                        dataLabels: {
+                            enabled: true,
+                            format: '<b>{point.name}</b>: {point.percentage:.1f} %'
+                        }
+                    }
+                },
+                series: [{
+                    name: 'Suscripciones',
+                    data: {{ plan_distribution|safe }}
+                }]
+            });
+        });
+    </script>
+{% endblock %}

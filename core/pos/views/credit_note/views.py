@@ -93,7 +93,6 @@ class CreditNoteCreateView(AutoAssignCompanyMixin, GroupPermissionMixin, Company
                     credit_note.company = self.get_company()
                     credit_note.environment_type = credit_note.company.environment_type
                     
-                    # Obtener o crear el Receipt para notas de crédito
                     receipt = Receipt.objects.filter(
                         company=credit_note.company, 
                         voucher_type=VOUCHER_TYPE[1][0], 
@@ -102,7 +101,6 @@ class CreditNoteCreateView(AutoAssignCompanyMixin, GroupPermissionMixin, Company
                     ).first()
                     
                     if not receipt:
-                        # Crear automáticamente el Receipt si no existe
                         receipt = Receipt.objects.create(
                             company=credit_note.company,
                             voucher_type=VOUCHER_TYPE[1][0],

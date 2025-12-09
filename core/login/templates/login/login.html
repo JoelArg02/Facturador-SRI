@@ -2,6 +2,23 @@
 {% load static %}
 {% block assets_login %}
     <link rel="stylesheet" href="{% static 'login/css/optimus.css' %}">
+    <style>
+        .input-icon input {
+            color: #fff !important;
+            -webkit-text-fill-color: #fff !important;
+        }
+        .input-icon input::placeholder {
+            color: #fff;
+        }
+        .input-icon input:-webkit-autofill,
+        .input-icon input:-webkit-autofill:hover,
+        .input-icon input:-webkit-autofill:focus,
+        .input-icon input:-webkit-autofill:active {
+            -webkit-text-fill-color: #fff !important;
+            -webkit-box-shadow: 0 0 0 30px transparent inset !important;
+            transition: background-color 5000s ease-in-out 0s;
+        }
+    </style>
     <script src="{% static 'login/js/login.js' %}"></script>
 {% endblock %}
 
@@ -19,7 +36,7 @@
                 <li><i class="fas fa-check-circle"></i> Control de Inventario</li>
                 <li><i class="fas fa-check-circle"></i> Reportes en Tiempo Real</li>
             </ul>
-            <p class="brand-footer">&copy; {{ now|date:'Y' }} OptimusPos</p>
+            <p class="brand-footer">&copy; {{ now|date:'Y' }} OptimusPos v{{ app_version }}</p>
         </div>
     </div>
     <div class="optimus-form-panel">
