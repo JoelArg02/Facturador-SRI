@@ -74,7 +74,7 @@ var invoice = {
                     targets: [-3],
                     class: 'text-center',
                     render: function (data, type, row) {
-                        return '<input type="text" class="form-control" autocomplete="off" name="current_price" value="' + row.current_price + '">';
+                        return '<input type="text" class="form-control" autocomplete="off" name="current_price" value="' + parseFloat(row.current_price).toFixed(2) + '">';
                     }
                 },
                 {
@@ -82,7 +82,7 @@ var invoice = {
                     class: 'text-center',
                     width: '20%',
                     render: function (data, type, row) {
-                        return '<input type="text" class="form-control" autocomplete="off" name="discount" value="' + row.discount + '">';
+                        return '<input type="text" class="form-control" autocomplete="off" name="discount" value="' + parseFloat(row.discount).toFixed(2) + '">';
                     }
                 },
                 {
@@ -113,10 +113,10 @@ var invoice = {
 
                 tr.find('input[name="current_price"]')
                     .TouchSpin({
-                        min: 0.0000,
+                        min: 0.00,
                         max: 1000000,
-                        step: 0.0001,
-                        decimals: 4,
+                        step: 0.01,
+                        decimals: 2,
                         boostat: 5,
                         maxboostedstep: 10
                     })

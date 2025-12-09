@@ -12,12 +12,352 @@
     <link rel="stylesheet" href="{% static 'lib/tempusdominus-bootstrap-4.5.37.0/css/tempusdominus-bootstrap.css' %}"/>
     <script src="{% static 'invoice/js/form_admin.js' %}"></script>
     <style>
-        .card-invoice { border: 1px solid #e9ecef; border-radius: .5rem; }
-        .card-invoice .card-header { background: #f8f9fa; font-weight: 600; }
-        .sticky-summary { position: sticky; top: 1rem; }
-        .badge-soft { background: #eef2ff; color: #2745eb; border: 1px solid #cdd7ff; }
-        .form-label { margin-bottom: .25rem; }
-        #tblProducts th, #tblProducts td { vertical-align: middle; }
+        /* Diseño moderno y limpio */
+        .content-wrapper {
+            background: #f8f9fa;
+        }
+        
+        .card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+            margin-bottom: 1.5rem;
+        }
+        
+        .card-header {
+            background: #fff;
+            border-bottom: 2px solid #e9ecef;
+            font-weight: 600;
+            font-size: 1.1rem;
+            padding: 1.25rem;
+            border-radius: 12px 12px 0 0 !important;
+        }
+        
+        .card-body {
+            padding: 1.5rem;
+        }
+        
+        /* Formulario */
+        .form-label {
+            margin-bottom: .5rem;
+            font-weight: 600;
+            color: #495057;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .form-control, .form-select {
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 0.6rem 0.75rem;
+            font-size: 0.95rem;
+            transition: all 0.2s;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: #4361ee;
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
+        }
+        
+        /* Tabs modernos */
+        .nav-tabs {
+            border-bottom: 2px solid #e9ecef;
+            margin-bottom: 1.5rem;
+        }
+        
+        .nav-tabs .nav-link {
+            border: none;
+            border-bottom: 3px solid transparent;
+            color: #6c757d;
+            font-weight: 600;
+            padding: 1rem 1.5rem;
+            transition: all 0.2s;
+        }
+        
+        .nav-tabs .nav-link:hover {
+            color: #4361ee;
+            border-bottom-color: #4361ee;
+            background: transparent;
+        }
+        
+        .nav-tabs .nav-link.active {
+            color: #4361ee;
+            border-bottom-color: #4361ee;
+            background: transparent;
+        }
+        
+        /* Tabla de productos */
+        #tblProducts {
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        #tblProducts thead th {
+            background: #f8f9fa;
+            color: #495057;
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border: none;
+            padding: 1rem 0.75rem;
+        }
+        
+        #tblProducts tbody td {
+            padding: 0.75rem;
+            vertical-align: middle;
+            border-top: 1px solid #e9ecef;
+        }
+        
+        #tblProducts tbody tr {
+            transition: background 0.15s;
+        }
+        
+        #tblProducts tbody tr:hover {
+            background-color: #f8f9fa;
+        }
+        
+        /* Card de resumen */
+        .card-invoice {
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        
+        .card-invoice .card-header {
+            background: #4361ee;
+            color: white;
+            border: none;
+        }
+        
+        .card-invoice .table {
+            margin-bottom: 0;
+        }
+        
+        .card-invoice .table td {
+            padding: 0.75rem;
+            font-size: 0.95rem;
+        }
+        
+        .card-invoice .table td:first-child {
+            font-weight: 600;
+            color: #495057;
+        }
+        
+        .card-invoice .table td:last-child {
+            text-align: right;
+            font-weight: 700;
+            color: #212529;
+        }
+        
+        .sticky-summary {
+            position: sticky;
+            top: 1rem;
+        }
+        
+        /* Badges */
+        .badge-soft {
+            background: #e7f1ff;
+            color: #4361ee;
+            padding: 0.4rem 0.8rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            border-radius: 6px;
+        }
+        
+        /* Botones */
+        .btn {
+            border-radius: 8px;
+            font-weight: 600;
+            padding: 0.6rem 1.2rem;
+            transition: all 0.2s;
+        }
+        
+        .btn-primary {
+            background: #4361ee;
+            border-color: #4361ee;
+        }
+        
+        .btn-primary:hover {
+            background: #3651d4;
+            border-color: #3651d4;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(67, 97, 238, 0.3);
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            border-color: #6c757d;
+        }
+        
+        .btn-secondary:hover {
+            background: #5a6268;
+            border-color: #5a6268;
+        }
+        
+        .btn-success {
+            background: #06d6a0;
+            border-color: #06d6a0;
+        }
+        
+        .btn-success:hover {
+            background: #05c490;
+            border-color: #05c490;
+        }
+        
+        .btn-danger {
+            background: #ef476f;
+            border-color: #ef476f;
+        }
+        
+        .btn-danger:hover {
+            background: #ed2f5f;
+            border-color: #ed2f5f;
+        }
+        
+        /* Input groups */
+        .input-group-append .btn {
+            border-radius: 0 8px 8px 0;
+        }
+        
+        /* Alertas */
+        .alert {
+            border-radius: 10px;
+            border: none;
+            font-weight: 500;
+        }
+        
+        .alert-info {
+            background: #e7f1ff;
+            color: #4361ee;
+        }
+        
+        /* Bootstrap TouchSpin - Botones más grandes en móvil */
+        .bootstrap-touchspin .btn {
+            padding: 0.6rem 1rem;
+            min-width: 44px;
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .bootstrap-touchspin .btn i {
+            font-size: 1rem;
+        }
+        
+        .bootstrap-touchspin-down, .bootstrap-touchspin-up {
+            background: #4361ee !important;
+            border-color: #4361ee !important;
+            color: white !important;
+        }
+        
+        .bootstrap-touchspin-down:hover, .bootstrap-touchspin-up:hover {
+            background: #3651d4 !important;
+            border-color: #3651d4 !important;
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 1199px) {
+            .sticky-summary {
+                position: static;
+                margin-top: 1.5rem;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .card-body {
+                padding: 1rem;
+            }
+            
+            .form-label {
+                font-size: 0.8rem;
+            }
+            
+            .nav-tabs .nav-link {
+                padding: 0.75rem 1rem;
+                font-size: 0.9rem;
+            }
+            
+            /* Tabla responsive con scroll horizontal */
+            .table-responsive {
+                border-radius: 8px;
+                box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            }
+            
+            #tblProducts thead th {
+                font-size: 0.75rem;
+                padding: 0.75rem 0.5rem;
+                white-space: nowrap;
+            }
+            
+            #tblProducts tbody td {
+                padding: 0.5rem;
+                font-size: 0.85rem;
+            }
+            
+            /* Inputs dentro de tabla más pequeños */
+            #tblProducts .form-control {
+                padding: 0.4rem 0.5rem;
+                font-size: 0.85rem;
+            }
+            
+            /* Botones TouchSpin más grandes para tocar */
+            .bootstrap-touchspin .btn {
+                min-width: 50px;
+                min-height: 50px;
+                padding: 0.75rem;
+            }
+            
+            .bootstrap-touchspin .btn i {
+                font-size: 1.2rem;
+            }
+            
+            .bootstrap-touchspin-prefix,
+            .bootstrap-touchspin-postfix {
+                min-width: 50px;
+                font-size: 0.9rem;
+            }
+            
+            /* Botones de acción más grandes */
+            .btn-xs {
+                padding: 0.5rem 0.75rem;
+                font-size: 0.9rem;
+            }
+            
+            .card-invoice .table td {
+                font-size: 0.85rem;
+                padding: 0.5rem;
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .nav-tabs {
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+            
+            .nav-tabs .nav-link {
+                white-space: nowrap;
+            }
+            
+            /* Botones aún más grandes en pantallas muy pequeñas */
+            .bootstrap-touchspin .btn {
+                min-width: 55px;
+                min-height: 55px;
+            }
+            
+            .btn {
+                padding: 0.75rem 1rem;
+            }
+            
+            /* Cards con menos padding */
+            .card-header {
+                padding: 1rem;
+                font-size: 1rem;
+            }
+        }
     </style>
     <script type="application/javascript">
         var end_consumer = {{ end_consumer|safe }};
