@@ -191,11 +191,13 @@
             {% endif %}
             <br>
             <b style="text-transform: uppercase;">INSTRUCCIONES DE ACCESO A DOCUMENTOS ELECTRÓNICOS:</b><br>
-            {% if object.company.scheme and object.company.scheme.get_full_domain %}
             <b>PARA ACCEDER A SUS DOCUMENTOS ELECTRÓNICOS DEBE INGRESAR AL PORTAL:</b><br>
-            http://{{ object.company.scheme.get_full_domain }}<br>
-            <br>
+            {% if object.company.scheme and object.company.scheme.get_full_domain %}
+                http://{{ object.company.scheme.get_full_domain }}<br>
+            {% else %}
+                http://optimusposec.com<br>
             {% endif %}
+            <br>
             {% if object.customer.dni %}
             <b>CON SU USUARIO:</b> {{ object.customer.dni }} <b>Y CLAVE:</b> {{ object.customer.dni }}<br>
             <br>
