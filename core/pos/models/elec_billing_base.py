@@ -301,7 +301,7 @@ class ElecBillingBase(TransactionSummary):
                 
                 </div>
                 <div class="footer">
-                Sistema administrado por <a href="https://allpasoft.com" target="_blank" rel="noopener" style="color:#2e59d9; text-decoration:none;">AllpaSoft</a>
+                © {self.company.commercial_name} – Todos los derechos reservados
                 </div>
             </div>
             </body>
