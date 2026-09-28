@@ -281,41 +281,6 @@
         </thead>
     </table>
     <br>
-    <div style="margin: 20px; padding: 15px; background-color: #f8f9fa; border: 1px solid #dee2e6; border-radius: 5px; font-size: 11px; line-height: 1.6;">
-        <p style="margin: 0 0 10px 0; font-weight: bold; text-align: center; text-transform: uppercase;">
-            INSTRUCCIONES DE ACCESO A DOCUMENTOS ELECTRÓNICOS
-        </p>
-        {% if object.company.scheme and object.company.scheme.get_full_domain %}
-        <p style="margin: 0 0 8px 0;">
-            <b>PARA ACCEDER A SUS DOCUMENTOS ELECTRÓNICOS DEBE INGRESAR AL PORTAL:</b><br>
-            <a href="http://{{ object.company.scheme.get_full_domain }}" style="color: #007bff;">http://{{ object.company.scheme.get_full_domain }}</a>
-        </p>
-        {% endif %}
-        {% if object.customer.dni %}
-        <p style="margin: 0 0 8px 0;">
-            <b>CON SU USUARIO:</b> {{ object.customer.dni }} <b>Y CLAVE:</b> {{ object.customer.dni }}
-        </p>
-        <p style="margin: 0 0 8px 0; font-size: 10px; color: #856404; background-color: #fff3cd; padding: 8px; border-radius: 3px;">
-            <b>NOTA:</b> Por defecto, su usuario y contraseña son su número de cédula o RUC.
-            Si usted cambia su contraseña en el sistema, deberá usar la nueva contraseña para ingresar.
-            Este documento no se actualizará automáticamente con su nueva contraseña.
-        </p>
-        {% endif %}
-        <p style="margin: 0 0 15px 0;">
-            <b>SI TIENE DIFICULTAD PARA INGRESAR O DESCARGAR SUS COMPROBANTES PUEDE COMUNICARSE AL CORREO:</b><br>
-            <a href="mailto:joel.darguello@gmail.com" style="color: #007bff;">joel.darguello@gmail.com</a>
-        </p>
-        <hr style="border: none; border-top: 1px solid #dee2e6; margin: 15px 0;">
-        <p style="margin: 0; font-size: 9px; text-align: justify; color: #6c757d;">
-            <b>AVISO LEGAL:</b> Este documento electrónico ha sido generado conforme a la normativa establecida por el Servicio de Rentas Internas (SRI) del Ecuador,
-            según la Resolución NAC-DGERCGC12-00105 y sus reformas. La factura electrónica tiene la misma validez legal que una factura física.
-            El emisor garantiza la autenticidad e integridad de este comprobante mediante firma electrónica.
-            La información contenida en este documento es confidencial y está dirigida únicamente al destinatario especificado.
-            Cualquier uso, reproducción o divulgación no autorizada está prohibida. En caso de haber recibido este documento por error,
-            por favor notifique inmediatamente al remitente y elimínelo de su sistema.
-            Para verificar la autenticidad de este documento, puede consultar en el portal del SRI: <a href="https://srienlinea.sri.gob.ec" style="color: #007bff;">https://srienlinea.sri.gob.ec</a>
-        </p>
-    </div>
 </main>
 </body>
 </html>

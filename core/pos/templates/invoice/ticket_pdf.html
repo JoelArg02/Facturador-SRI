@@ -192,28 +192,6 @@
             <br>
             <b style="text-transform: uppercase;">CAMPO ADICIONAL:</b><br>
             RUC PROVEEDOR: {{ object.provider_system_ruc }}<br>
-            <br>
-            <b style="text-transform: uppercase;">INSTRUCCIONES DE ACCESO A DOCUMENTOS ELECTRÓNICOS:</b><br>
-            {% if object.company.scheme and object.company.scheme.get_full_domain %}
-            <b>PARA ACCEDER A SUS DOCUMENTOS ELECTRÓNICOS DEBE INGRESAR AL PORTAL:</b><br>
-            http://{{ object.company.scheme.get_full_domain }}<br>
-            <br>
-            {% endif %}
-            {% if object.customer.dni %}
-            <b>CON SU USUARIO:</b> {{ object.customer.dni }} <b>Y CLAVE:</b> {{ object.customer.dni }}<br>
-            <br>
-            <div style="background-color: #fff3cd; padding: 5px; margin: 5px 0; border-radius: 3px;">
-                <b>NOTA:</b> Por defecto, su usuario y contraseña son su cédula o RUC. Si cambió su contraseña, use la nueva. Este documento no se actualiza.
-            </div>
-            <br>
-            {% endif %}
-            <b>SI TIENE DIFICULTAD PARA INGRESAR O DESCARGAR SUS COMPROBANTES PUEDE COMUNICARSE AL CORREO:</b><br>
-            joel.darguello@gmail.com<br>
-            <br>
-            <hr style="border: none; border-top: 1px solid #dee2e6; margin: 10px 0;">
-            <b>AVISO LEGAL:</b> Este documento electrónico ha sido generado conforme a la normativa del SRI (Resolución NAC-DGERCGC12-00105).
-            La factura electrónica tiene la misma validez legal que una factura física. El emisor garantiza la autenticidad e integridad mediante firma electrónica.
-            La información es confidencial y dirigida únicamente al destinatario especificado. Para verificar autenticidad consulte: https://srienlinea.sri.gob.ec
         </div>
     {% endif %}
 </div>
