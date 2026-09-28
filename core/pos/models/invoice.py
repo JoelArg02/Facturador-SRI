@@ -8,6 +8,7 @@ from django.db.models.functions import Coalesce
 from core.pos.choices import (
     INVOICE_PAYMENT_METHOD,
     PAYMENT_TYPE,
+    PROVIDER_SYSTEM_RUC,
     RETENTION_AGENT,
     TAX_CODES,
 )
@@ -147,6 +148,9 @@ class Invoice(ElecBillingBase):
                 ElementTree.SubElement(xml_tax, 'tarifa').text = '0'
                 ElementTree.SubElement(xml_tax, 'baseImponible').text = f'{detail.total_amount:.2f}'
                 ElementTree.SubElement(xml_tax, 'valor').text = '0'
+
+        xml_additional_info = ElementTree.SubElement(root, 'infoAdicional')
+        ElementTree.SubElement(xml_additional_info, 'campoAdicional', nombre='RUC PROVEEDOR').text = PROVIDER_SYSTEM_RUC
         return ElementTree.tostring(root, xml_declaration=True, encoding='utf-8').decode('utf-8').replace("'", '"'), access_key
 
     def create_invoice_pdf(self):

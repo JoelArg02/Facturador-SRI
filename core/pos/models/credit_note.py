@@ -5,7 +5,7 @@ from django.db import models
 from django.db.models import FloatField, Sum
 from django.db.models.functions import Coalesce
 
-from core.pos.choices import INVOICE_STATUS, RETENTION_AGENT, TAX_CODES
+from core.pos.choices import INVOICE_STATUS, PROVIDER_SYSTEM_RUC, RETENTION_AGENT, TAX_CODES
 from core.pos.models.elec_billing_base import ElecBillingBase
 from core.pos.utilities.pdf_creator import PDFCreator
 from core.pos.utilities.sri import SRI
@@ -126,6 +126,7 @@ class CreditNote(ElecBillingBase):
         if self.invoice.customer.mobile:
             ElementTree.SubElement(xml_additional_info, 'campoAdicional', nombre='telfCliente').text = self.invoice.customer.mobile
         ElementTree.SubElement(xml_additional_info, 'campoAdicional', nombre='Observacion').text = f'NOTA_CREDITO # {self.receipt_number}'
+        ElementTree.SubElement(xml_additional_info, 'campoAdicional', nombre='RUC PROVEEDOR').text = PROVIDER_SYSTEM_RUC
         return ElementTree.tostring(root, xml_declaration=True, encoding='UTF-8').decode('UTF-8').replace("'", '"'), access_key
 
     def create_invoice_pdf(self):

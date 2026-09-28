@@ -174,3 +174,78 @@
 [2025-12-08 20:12:04] Creando carpeta 'Sent'
 [2025-12-08 20:12:04] Guardando mensaje en carpeta: Sent
 [2025-12-08 20:12:05] ✓ Mensaje guardado exitosamente en Sent
+[2026-09-28 13:33:33] EmailSender inicializado - Host: mail.optimusposec.com, Port: 465, SSL: True, TLS: False
+[2026-09-28 13:33:33] Enviando correo a ['joel.darguello@gmail.com'] - Asunto: Plan Enterprise activado - Facturador SRI
+[2026-09-28 13:33:33] Conectando con SMTP_SSL a mail.optimusposec.com:465
+[2026-09-28 13:33:36] Autenticando como facturas@optimusposec.com
+[2026-09-28 13:33:36] Enviando mensaje SMTP
+[2026-09-28 13:33:37] ✓ Correo enviado exitosamente a ['joel.darguello@gmail.com']
+[2026-09-28 13:33:37] Conexión SMTP cerrada
+[2026-09-28 13:33:37] Intentando guardar en bandeja de salida - IMAP Host: imap.optimusposec.com
+[2026-09-28 13:33:37] Conectando a IMAP SSL
+[2026-09-28 13:33:38] Autenticando IMAP como facturas@optimusposec.com
+[2026-09-28 13:33:38] Listando carpetas disponibles
+[2026-09-28 13:33:38] Carpetas encontradas: ., ., ., ., .
+[2026-09-28 13:33:38] Creando carpeta 'Sent'
+[2026-09-28 13:33:38] Guardando mensaje en carpeta: Sent
+[2026-09-28 13:33:39] ✓ Mensaje guardado exitosamente en Sent
+[2026-09-28 13:57:29] EmailSender inicializado - Host: mail.optimusposec.com, Port: 465, SSL: True, TLS: False
+[2026-09-28 13:57:29] Enviando correo a ['joel.darguello@gmail.com'] - Asunto: Factura electrónica – 001-001-000000002
+[2026-09-28 13:57:29] Conectando con SMTP_SSL a mail.optimusposec.com:465
+[2026-09-28 13:57:32] Autenticando como facturas@optimusposec.com
+[2026-09-28 13:57:32] Enviando mensaje SMTP
+[2026-09-28 13:57:33] ✓ Correo enviado exitosamente a ['joel.darguello@gmail.com']
+[2026-09-28 13:57:33] Conexión SMTP cerrada
+[2026-09-28 13:57:33] Intentando guardar en bandeja de salida - IMAP Host: imap.optimusposec.com
+[2026-09-28 13:57:33] Conectando a IMAP SSL
+[2026-09-28 13:57:34] Autenticando IMAP como facturas@optimusposec.com
+[2026-09-28 13:57:34] Listando carpetas disponibles
+[2026-09-28 13:57:34] Carpetas encontradas: ., ., ., ., .
+[2026-09-28 13:57:34] Creando carpeta 'Sent'
+[2026-09-28 13:57:35] Guardando mensaje en carpeta: Sent
+[2026-09-28 13:57:35] ✓ Mensaje guardado exitosamente en Sent
+[2026-09-28 14:00:17] EmailSender inicializado - Host: mail.optimusposec.com, Port: 465, SSL: True, TLS: False
+[2026-09-28 14:00:17] Enviando correo a ['joel.darguello@gmail.com'] - Asunto: Factura electrónica – 001-001-000000002
+[2026-09-28 14:00:17] Conectando con SMTP_SSL a mail.optimusposec.com:465
+[2026-09-28 14:00:19] Autenticando como facturas@optimusposec.com
+[2026-09-28 14:00:19] Enviando mensaje SMTP
+[2026-09-28 14:00:20] ✓ Correo enviado exitosamente a ['joel.darguello@gmail.com']
+[2026-09-28 14:00:21] Conexión SMTP cerrada
+[2026-09-28 14:00:21] Intentando guardar en bandeja de salida - IMAP Host: imap.optimusposec.com
+[2026-09-28 14:00:21] Conectando a IMAP SSL
+[2026-09-28 14:00:21] Autenticando IMAP como facturas@optimusposec.com
+[2026-09-28 14:00:21] Listando carpetas disponibles
+[2026-09-28 14:00:22] Carpetas encontradas: ., ., ., ., .
+[2026-09-28 14:00:22] Creando carpeta 'Sent'
+[2026-09-28 14:00:22] Guardando mensaje en carpeta: Sent
+[2026-09-28 14:00:23] ✓ Mensaje guardado exitosamente en Sent
+[2026-09-28 14:01:57] EmailSender inicializado - Host: mail.optimusposec.com, Port: 465, SSL: True, TLS: False
+[2026-09-28 14:01:57] Enviando correo a ['joel.darguello@gmail.com'] - Asunto: Factura electrónica – 001-001-000000002
+[2026-09-28 14:01:57] Conectando con SMTP_SSL a mail.optimusposec.com:465
+[2026-09-28 14:01:59] Autenticando como facturas@optimusposec.com
+[2026-09-28 14:01:59] Enviando mensaje SMTP
+[2026-09-28 14:02:00] ✓ Correo enviado exitosamente a ['joel.darguello@gmail.com']
+[2026-09-28 14:02:00] Conexión SMTP cerrada
+[2026-09-28 14:02:00] Intentando guardar en bandeja de salida - IMAP Host: imap.optimusposec.com
+[2026-09-28 14:02:00] Conectando a IMAP SSL
+[2026-09-28 14:02:01] Autenticando IMAP como facturas@optimusposec.com
+[2026-09-28 14:02:01] Listando carpetas disponibles
+[2026-09-28 14:02:01] Carpetas encontradas: ., ., ., ., .
+[2026-09-28 14:02:01] Creando carpeta 'Sent'
+[2026-09-28 14:02:01] Guardando mensaje en carpeta: Sent
+[2026-09-28 14:02:02] ✓ Mensaje guardado exitosamente en Sent
+[2026-09-28 14:03:12] EmailSender inicializado - Host: mail.optimusposec.com, Port: 465, SSL: True, TLS: False
+[2026-09-28 14:03:12] Enviando correo a ['joel.darguello@gmail.com'] - Asunto: Factura electrónica – 001-001-000000002
+[2026-09-28 14:03:12] Conectando con SMTP_SSL a mail.optimusposec.com:465
+[2026-09-28 14:03:14] Autenticando como facturas@optimusposec.com
+[2026-09-28 14:03:15] Enviando mensaje SMTP
+[2026-09-28 14:03:16] ✓ Correo enviado exitosamente a ['joel.darguello@gmail.com']
+[2026-09-28 14:03:16] Conexión SMTP cerrada
+[2026-09-28 14:03:16] Intentando guardar en bandeja de salida - IMAP Host: imap.optimusposec.com
+[2026-09-28 14:03:16] Conectando a IMAP SSL
+[2026-09-28 14:03:17] Autenticando IMAP como facturas@optimusposec.com
+[2026-09-28 14:03:17] Listando carpetas disponibles
+[2026-09-28 14:03:17] Carpetas encontradas: ., ., ., ., .
+[2026-09-28 14:03:17] Creando carpeta 'Sent'
+[2026-09-28 14:03:17] Guardando mensaje en carpeta: Sent
+[2026-09-28 14:03:18] ✓ Mensaje guardado exitosamente en Sent

@@ -17,7 +17,7 @@ from django.db import models
 from django.utils import timezone
 
 from config import settings
-from core.pos.choices import ENVIRONMENT_TYPE, INVOICE_STATUS, VOUCHER_STAGE, VOUCHER_TYPE
+from core.pos.choices import ENVIRONMENT_TYPE, INVOICE_STATUS, PROVIDER_SYSTEM_RUC, VOUCHER_STAGE, VOUCHER_TYPE
 from core.pos.models.transaction_summary import TransactionSummary
 from core.pos.utilities.pdf_creator import PDFCreator
 from core.pos.utilities.sri import SRI
@@ -39,6 +39,10 @@ class ElecBillingBase(TransactionSummary):
 
     class Meta:
         abstract = True
+
+    @property
+    def provider_system_ruc(self):
+        return PROVIDER_SYSTEM_RUC
 
     @property
     def voucher_type_code(self):
@@ -297,7 +301,7 @@ class ElecBillingBase(TransactionSummary):
                 
                 </div>
                 <div class="footer">
-                © {self.company.commercial_name} – Todos los derechos reservados
+                Sistema administrado por <a href="https://allpasoft.com" target="_blank" rel="noopener" style="color:#2e59d9; text-decoration:none;">AllpaSoft</a>
                 </div>
             </div>
             </body>

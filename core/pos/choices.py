@@ -3,6 +3,10 @@ OBLIGATED_ACCOUNTING = (
     ('NO', 'No'),
 )
 
+# RUC del proveedor del sistema de facturación electrónica, exigido en infoAdicional
+# por la Resolución NAC-DGERCGC26-00000027 del SRI.
+PROVIDER_SYSTEM_RUC = '1313455113001'
+
 ENVIRONMENT_TYPE = (
     (1, 'PRUEBAS'),
     (2, 'PRODUCCIÓN'),

@@ -202,7 +202,7 @@ Vigencia: {subscription.start_date} hasta {subscription.end_date}
         </tr>
         <tr>
             <td style="background:#edf2f7; color:#4a5568; padding:15px; text-align:center; font-size:12px;">
-                © 2025 OptimusPos - Todos los derechos reservados.
+                Sistema administrado por <a href="https://allpasoft.com" target="_blank" rel="noopener" style="color:#3182ce; text-decoration:none;">AllpaSoft</a>
             </td>
         </tr>
     </table>

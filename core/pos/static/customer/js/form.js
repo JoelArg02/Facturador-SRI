@@ -61,12 +61,6 @@ document.addEventListener('DOMContentLoaded', function (e) {
                             min: 10
                         },
                         digits: {},
-                        callback: {
-                            message: 'El número de cedula o ruc es incorrecto',
-                            callback: function (input) {
-                                return validate_dni_ruc(input.value);
-                            },
-                        },
                         remote: {
                             url: pathname,
                             data: function () {

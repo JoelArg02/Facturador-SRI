@@ -45,6 +45,7 @@ class Quotation(TransactionSummary):
 
         content = f'Estimado(a)\n\n{self.customer.user.names.upper()}\n\n'
         content += 'La cotización solicitada ha sido enviada a su correo electrónico para su revisión.\n\n'
+        content += 'Sistema administrado por AllpaSoft - https://allpasoft.com\n'
         message.attach(MIMEText(content))
 
         pdf_file = PDFCreator(template_name='quotation/invoice_pdf.html').create(context={'quotation': self})

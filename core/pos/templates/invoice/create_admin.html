@@ -256,6 +256,12 @@
             background: #3651d4 !important;
             border-color: #3651d4 !important;
         }
+
+        .bootstrap-touchspin .form-control {
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+        }
         
         /* Responsive Design */
         @media (max-width: 1199px) {
@@ -357,6 +363,39 @@
                 padding: 1rem;
                 font-size: 1rem;
             }
+        }
+
+        /* Alinear el select2 de cliente con el botón de agregar */
+        .input-group-append {
+            display: flex;
+            align-items: stretch;
+        }
+
+        .input-group-append .select2-container {
+            flex: 1 1 auto;
+        }
+
+        .input-group-append .select2-container .select2-selection--single {
+            height: 38px;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-group-append .btnAddCustomer {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Alinear el buscador de productos con su botón de acciones */
+        #{{ form.search.id_for_label }} {
+            height: 38px;
+        }
+
+        .input-group .dropdown-toggle {
+            height: 38px;
+            display: flex;
+            align-items: center;
         }
     </style>
     <script type="application/javascript">
